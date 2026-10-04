@@ -104,7 +104,7 @@ export function Coach({ lesson, step, text, cta, canShow, onNext, onShow, onRetr
   );
 }
 
-const COLORS = ['#f4b41a', '#ff4f8b', '#3fd0a8', '#b48cff', '#f6efe1', '#cf3426'];
+const COLORS = ['#d4a24c', '#cf6a3f', '#93b38c', '#c08a96', '#f3e9d8', '#b8392a'];
 
 export function Confetti({ pieces = 70 }: { pieces?: number }) {
   const bits = useMemo(

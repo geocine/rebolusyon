@@ -22,7 +22,7 @@ export interface Sprite {
   quirk: string;
 }
 
-const INK = '#1d1b30';
+const INK = '#221a15';
 export const BODY_ROW = 14;
 
 export const SPRITES: Record<string, Sprite> = {
@@ -45,7 +45,7 @@ export const SPRITES: Record<string, Sprite> = {
       '..BBBBBssBBBBB..',
       '.BBBBBBBBBBBBBB.',
     ],
-    palette: { H: '#3b2a20', S: '#d99a6c', s: '#b4744a', B: '#f6efe1' },
+    palette: { H: '#3b2a20', S: '#d99a6c', s: '#b4744a', B: '#f3e9d8' },
     eyes: [
       [5, 8],
       [10, 8],
@@ -79,12 +79,12 @@ export const SPRITES: Record<string, Sprite> = {
       '..BBBPBPPBPBBB..',
       '.BBBBbBBBBbBBBB.',
     ],
-    palette: { H: '#dcd8e4', h: '#a9a3b8', S: '#d9a070', s: '#b57a4c', K: '#8a5a2b', W: '#e4f2ff', C: '#ee8a78', B: '#3fd0a8', b: '#279b7c', P: '#fff6e0' },
+    palette: { H: '#dcd8e4', h: '#a9a3b8', S: '#d9a070', s: '#b57a4c', K: '#8a5a2b', W: '#e4f2ff', C: '#ee8a78', B: '#93b38c', b: '#6c8c66', P: '#fff6e0' },
     eyes: [
       [5, 8],
       [10, 8],
     ],
-    mouth: { x: 7, y: 12, w: 2, color: '#8c2f22' },
+    mouth: { x: 7, y: 12, w: 2, color: '#7a2e20' },
     fx: [
       {
         className: 'fx-glint',
@@ -113,7 +113,7 @@ export const SPRITES: Record<string, Sprite> = {
       '..JJJJJNNJJJJJ..',
       '.JJJJJJNNJJJJJJ.',
     ],
-    palette: { C: '#ff4f8b', c: '#c23468', Y: '#f4b41a', H: '#1d1b30', S: '#c98a5a', s: '#a46a3e', J: '#f4b41a', N: INK },
+    palette: { C: '#cf6a3f', c: '#9e4a2a', Y: '#d4a24c', H: '#221a15', S: '#c98a5a', s: '#a46a3e', J: '#d4a24c', N: INK },
     eyes: [
       [5, 8],
       [10, 8],
@@ -140,12 +140,12 @@ export const SPRITES: Record<string, Sprite> = {
       '..dBBBBBBBBBBd..',
       '.BBBBBBBBBBBBBB.',
     ],
-    palette: { H: '#2a2440', h: '#4a4070', S: '#e8b48a', s: '#c48a62', D: '#f4b41a', d: '#c98a2b', B: '#2d6e8e' },
+    palette: { H: '#2a1f1c', h: '#4a3a33', S: '#e8b48a', s: '#c48a62', D: '#d4a24c', d: '#b98a3e', B: '#4d6b80' },
     eyes: [
       [5, 8],
       [10, 8],
     ],
-    mouth: { x: 7, y: 11, w: 2, color: '#8c2f22' },
+    mouth: { x: 7, y: 11, w: 2, color: '#7a2e20' },
     quirk: 'q-dart',
   },
   TC: {
@@ -167,16 +167,16 @@ export const SPRITES: Record<string, Sprite> = {
       '.HBBBBBBBBBBBBH.',
       'BBBBBbBBBBbBBBBB',
     ],
-    palette: { H: '#4a2a5e', h: '#6e4590', S: '#d9a070', s: '#b57a4c', K: INK, C: '#ee8a78', F: '#ff4f8b', f: '#f4b41a', B: '#b48cff', b: '#8a62d6' },
+    palette: { H: '#3e2530', h: '#6a3f4c', S: '#d9a070', s: '#b57a4c', K: INK, C: '#ee8a78', F: '#cf6a3f', f: '#d4a24c', B: '#c08a96', b: '#93606d' },
     eyes: [
       [5, 8],
       [10, 8],
     ],
-    mouth: { x: 6, y: 11, w: 4, color: '#cf3426' },
+    mouth: { x: 6, y: 11, w: 4, color: '#b8392a' },
     fx: [
       {
         className: 'fx-earrings',
-        palette: { R: '#f4b41a' },
+        palette: { R: '#d4a24c' },
         rows: [
           ...Array(10).fill('................'),
           '..R..........R..',

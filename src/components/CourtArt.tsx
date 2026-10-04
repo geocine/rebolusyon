@@ -63,9 +63,9 @@ export const COURTS: Record<'J' | 'Q' | 'K', readonly string[]> = {
 
 export const COURT_PALETTE: Record<string, string> = {
   X: 'currentColor',
-  G: '#d99a12',
+  G: '#c69443',
   S: '#f3d9b8',
-  K: '#1d1b30',
+  K: '#221a15',
   W: '#fffaf0',
 };
 

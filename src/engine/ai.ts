@@ -22,7 +22,7 @@ export const PERSONAS: Persona[] = [
   {
     name: 'You',
     title: 'The Challenger',
-    color: '#f6efe1',
+    color: '#f3e9d8',
     initials: 'YOU',
     hoard: 0.6,
     memory: 1,
@@ -33,7 +33,7 @@ export const PERSONAS: Persona[] = [
   {
     name: 'Lola Nena',
     title: 'The Patient Matriarch',
-    color: '#3fd0a8',
+    color: '#93b38c',
     initials: 'LN',
     hoard: 1,
     memory: 0.95,
@@ -44,7 +44,7 @@ export const PERSONAS: Persona[] = [
   {
     name: 'Kuya Jun',
     title: 'The Jeepney King',
-    color: '#ff4f8b',
+    color: '#cf6a3f',
     initials: 'KJ',
     hoard: 0.2,
     memory: 0.55,
@@ -55,7 +55,7 @@ export const PERSONAS: Persona[] = [
   {
     name: 'Mika',
     title: 'The Counter',
-    color: '#f4b41a',
+    color: '#d4a24c',
     initials: 'MK',
     hoard: 0.55,
     memory: 1,

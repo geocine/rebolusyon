@@ -8,7 +8,7 @@ import { Avatar } from './Seat';
 import { Confetti } from './Tutorial';
 
 const ORDINAL = ['st', 'nd', 'rd', 'th'];
-const FLAG_COLORS = ['#f4b41a', '#ff4f8b', '#3fd0a8', '#f6efe1', '#cf3426', '#4a7bff'];
+const FLAG_COLORS = ['#d4a24c', '#cf6a3f', '#93b38c', '#f3e9d8', '#b8392a', '#6f8ea3'];
 
 /** Fiesta bunting: two swags of triangular flags hung along quadratic curves. */
 function Banderitas() {
@@ -56,7 +56,7 @@ function Crown() {
     <svg className="pd-crown" viewBox="0 0 11 6" shapeRendering="crispEdges" aria-hidden="true">
       {CROWN.flatMap((row, y) =>
         [...row].map((c, x) =>
-          c === '.' ? null : <rect key={`${x}-${y}`} x={x} y={y} width={1.02} height={1.02} fill={c === '*' ? '#ff4f8b' : c === '=' ? '#c98a10' : '#ffd86b'} />,
+          c === '.' ? null : <rect key={`${x}-${y}`} x={x} y={y} width={1.02} height={1.02} fill={c === '*' ? '#cf6a3f' : c === '=' ? '#9e7330' : '#ebc878'} />,
         ),
       )}
     </svg>

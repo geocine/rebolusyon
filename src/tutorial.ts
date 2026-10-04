@@ -12,7 +12,7 @@ export function c(label: string): Card {
 }
 const cs = (labels: string) => labels.split(' ').map(c);
 
-export const HOST = { name: 'Tita Cora', title: 'Your host', color: '#b48cff', initials: 'TC' };
+export const HOST = { name: 'Tita Cora', title: 'Your host', color: '#c08a96', initials: 'TC' };
 
 export interface StepCtx {
   /** Reason the last play attempt was refused, if any. */
