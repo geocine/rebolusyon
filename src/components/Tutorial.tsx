@@ -213,7 +213,7 @@ export function LessonClear({ index, onReplay, onNext }: { index: number; onRepl
   return (
     <Scrim className="celebrate">
       <Confetti />
-      <motion.div className="tut-card clear" {...pop} transition={{ ...pop.transition, delay: 0.5 }}>
+      <motion.div className="tut-pop" {...pop} transition={{ ...pop.transition, delay: 0.5 }}>
         <motion.div
           className="tut-stamp"
           initial={{ scale: 3, rotate: -24, opacity: 0 }}
@@ -223,17 +223,19 @@ export function LessonClear({ index, onReplay, onNext }: { index: number; onRepl
           {stamp.word}
           <small>{stamp.en}</small>
         </motion.div>
-        <div className="tut-eyebrow">
-          Lesson {index + 1} cleared · {l.short}
-        </div>
-        <p className="tut-tagline">{l.clear}</p>
-        <div className="tut-actions">
-          <button className="btn ghost" onClick={onReplay}>
-            Replay
-          </button>
-          <button className="btn primary" onClick={onNext} autoFocus>
-            {last ? 'Graduate' : 'Next lesson'}
-          </button>
+        <div className="tut-card clear">
+          <div className="tut-eyebrow">
+            Lesson {index + 1} cleared · {l.short}
+          </div>
+          <p className="tut-tagline">{l.clear}</p>
+          <div className="tut-actions">
+            <button className="btn ghost" onClick={onReplay}>
+              Replay
+            </button>
+            <button className="btn primary" onClick={onNext} autoFocus>
+              {last ? 'Graduate' : 'Next lesson'}
+            </button>
+          </div>
         </div>
       </motion.div>
     </Scrim>
@@ -243,21 +245,23 @@ export function LessonClear({ index, onReplay, onNext }: { index: number; onRepl
 export function LessonFail({ winner, onRetry, onExit }: { winner: number; onRetry: () => void; onExit: () => void }) {
   return (
     <Scrim>
-      <motion.div className="tut-card fail" {...pop}>
+      <motion.div className="tut-pop" {...pop}>
         <motion.div className="tut-stamp sad" initial={{ scale: 2.4, rotate: 18, opacity: 0 }} animate={{ scale: 1, rotate: 6, opacity: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 14, delay: 0.2 }}>
           SAYANG!
           <small>So close!</small>
         </motion.div>
-        <p className="tut-tagline">
-          {PERSONAS[winner].name} went out first. Happens to the best of us, anak. Try it again, and follow the glowing cards.
-        </p>
-        <div className="tut-actions">
-          <button className="btn ghost" onClick={onExit}>
-            Leave
-          </button>
-          <button className="btn primary" onClick={onRetry} autoFocus>
-            Try again
-          </button>
+        <div className="tut-card fail">
+          <p className="tut-tagline">
+            {PERSONAS[winner].name} went out first. Happens to the best of us, anak. Try it again, and follow the glowing cards.
+          </p>
+          <div className="tut-actions">
+            <button className="btn ghost" onClick={onExit}>
+              Leave
+            </button>
+            <button className="btn primary" onClick={onRetry} autoFocus>
+              Try again
+            </button>
+          </div>
         </div>
       </motion.div>
     </Scrim>
@@ -274,50 +278,52 @@ export function Diploma({ onPlay, onTitle }: { onPlay: () => void; onTitle: () =
   return (
     <Scrim className="celebrate">
       <Confetti pieces={110} />
-      <motion.div className="diploma" initial={{ y: 80, rotate: 4, opacity: 0 }} animate={{ y: 0, rotate: -1, opacity: 1 }} transition={{ type: 'spring', stiffness: 160, damping: 16, delay: 0.3 }}>
-        <div className="dp-school">{HOST.name}’s Pusoy School</div>
-        <div className="dp-certifies">This certifies that</div>
-        <div className="dp-name">You</div>
-        <div className="dp-certifies">are now a certified</div>
-        <div className="dp-title">
-          Rebolusyonaryo
-          <small>(Revolutionary)</small>
-        </div>
-        <div className="dp-learned">
-          {(['revolution', 'bantay', 'buwis'] as const).map((m) => (
-            <span key={m} className="dp-chip">
-              <Term m={m} />
-            </span>
-          ))}
-          <span className="dp-chip">Grand Finish</span>
-        </div>
-        <div className="dp-sigs">
-          {SIGNATURES.map(({ seat, quote }) => (
-            <div key={seat} className="dp-sig">
-              <Avatar persona={PERSONAS[seat]} size={34} mood="happy" />
-              <div>
-                <div className="dp-sig-name" style={{ color: PERSONAS[seat].color }}>
-                  {PERSONAS[seat].name}
-                </div>
-                <div className="dp-sig-quote">“{quote}”</div>
-              </div>
-            </div>
-          ))}
-        </div>
+      <motion.div className="dp-wrap" initial={{ y: 80, rotate: 4, opacity: 0 }} animate={{ y: 0, rotate: -1, opacity: 1 }} transition={{ type: 'spring', stiffness: 160, damping: 16, delay: 0.3 }}>
         <motion.div className="dp-seal" initial={{ scale: 2.6, rotate: -30, opacity: 0 }} animate={{ scale: 1, rotate: -12, opacity: 1 }} transition={{ type: 'spring', stiffness: 260, damping: 12, delay: 1.1 }}>
           PASADO
           <small>Passed</small>
         </motion.div>
-        <p className="dp-extra">
-          Want it harder? <b>House rules</b> has Strict pass and <Term m="memory" />: no tracker, count the cards yourself.
-        </p>
-        <div className="tut-actions">
-          <button className="btn ghost" onClick={onTitle}>
-            Back to title
-          </button>
-          <button className="btn primary" onClick={onPlay} autoFocus>
-            Play a real match
-          </button>
+        <div className="diploma">
+          <div className="dp-school">{HOST.name}’s Pusoy School</div>
+          <div className="dp-certifies">This certifies that</div>
+          <div className="dp-name">You</div>
+          <div className="dp-certifies">are now a certified</div>
+          <div className="dp-title">
+            Rebolusyonaryo
+            <small>(Revolutionary)</small>
+          </div>
+          <div className="dp-learned">
+            {(['revolution', 'bantay', 'buwis'] as const).map((m) => (
+              <span key={m} className="dp-chip">
+                <Term m={m} />
+              </span>
+            ))}
+            <span className="dp-chip">Grand Finish</span>
+          </div>
+          <div className="dp-sigs">
+            {SIGNATURES.map(({ seat, quote }) => (
+              <div key={seat} className="dp-sig">
+                <Avatar persona={PERSONAS[seat]} size={34} mood="happy" />
+                <div>
+                  <div className="dp-sig-name" style={{ color: PERSONAS[seat].color }}>
+                    {PERSONAS[seat].name}
+                  </div>
+                  <div className="dp-sig-quote">“{quote}”</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="dp-extra">
+            Want it harder? <b>House rules</b> has Strict pass and <Term m="memory" />: no tracker, count the cards yourself.
+          </p>
+          <div className="tut-actions">
+            <button className="btn ghost" onClick={onTitle}>
+              Back to title
+            </button>
+            <button className="btn primary" onClick={onPlay} autoFocus>
+              Play a real match
+            </button>
+          </div>
         </div>
       </motion.div>
     </Scrim>

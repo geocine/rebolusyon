@@ -773,7 +773,7 @@ export default function App() {
       <RoundEndModal open={resultOpen} result={lastResult} game={g} personas={PERSONAS} onNext={onNext} host={hostInModal} nextLabel={tut ? tutStep?.cta : undefined} />
       <AnimatePresence>
         {tut?.status === 'intro' && (
-          <LessonIntro key={`intro-${tut.lesson}`} index={tut.lesson} cleared={progress.cleared} onStart={() => setTut({ ...tut, status: 'play' })} onPick={(i) => startLesson(i)} onExit={exitTutorial} />
+          <LessonIntro key={`intro-${tut.lesson}`} index={tut.lesson} cleared={progress.cleared} onStart={() => setTut((t) => t && { ...t, status: 'play' })} onPick={(i) => startLesson(i)} onExit={exitTutorial} />
         )}
         {tut?.status === 'clear' && (
           <LessonClear

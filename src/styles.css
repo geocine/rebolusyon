@@ -4,6 +4,7 @@
    ===================================================================== */
 
 :root {
+  color-scheme: dark;
   --ink: #0f101a;
   --ink-2: #171927;
   --ink-3: #22253a;
@@ -3181,6 +3182,27 @@ kbd {
   text-shadow: 3px 3px 0 var(--ink);
 }
 
+/* The stamp sits outside the scrolling card, so its slam-in can't overflow it. */
+.tut-pop {
+  position: relative;
+  width: min(500px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.tut-pop > .tut-stamp {
+  position: relative;
+  z-index: 2;
+  margin: 0 0 -28px;
+  background: var(--ink-2);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+.tut-pop > .tut-card {
+  width: 100%;
+  padding-top: 46px;
+  max-height: calc(100dvh - 150px);
+}
+
 /* confetti */
 .confetti {
   position: absolute;
@@ -3202,9 +3224,16 @@ kbd {
 }
 
 /* graduation */
-.diploma {
+.dp-wrap {
   position: relative;
   width: min(560px, 100%);
+}
+.dp-wrap > .dp-seal {
+  z-index: 2;
+}
+.diploma {
+  position: relative;
+  width: 100%;
   max-height: calc(100dvh - 40px);
   overflow-y: auto;
   padding: 34px 32px 26px;
