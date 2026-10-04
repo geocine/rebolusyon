@@ -196,9 +196,55 @@ button {
   padding: 16px 54px;
 }
 .pass-btn {
+  position: relative;
+  overflow: hidden;
   font-family: var(--display);
   font-weight: 400;
   letter-spacing: 0.06em;
+}
+/* Nothing beats the table: Pass becomes the button to press. */
+.pass-btn.must:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--ink);
+  animation: must-pass 1.1s ease-in-out infinite;
+}
+@keyframes must-pass {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent), 0 6px 18px rgba(0, 0, 0, 0.35); }
+  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 0%, transparent), 0 6px 22px color-mix(in srgb, var(--accent) 40%, transparent); }
+}
+.pass-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.5em;
+  height: 1.5em;
+  margin-left: 0.5em;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--accent);
+  font-size: 0.8em;
+  line-height: 1;
+  vertical-align: 0.08em;
+}
+.pass-drain {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: var(--ink);
+  opacity: 0.55;
+  transform-origin: left;
+  animation: pass-drain linear forwards;
+}
+@keyframes pass-drain {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pass-btn.must:not(:disabled) {
+    animation: none;
+  }
 }
 
 .segmented {
@@ -1089,6 +1135,7 @@ button {
   padding: 3px 8px;
   border-radius: 999px;
   background: rgba(246, 239, 225, 0.1);
+  white-space: nowrap;
 }
 .chip.score {
   font-family: var(--display);

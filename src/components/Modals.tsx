@@ -299,6 +299,12 @@ export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { 
           onChange={(v) => set('speed', v)}
         />
       </div>
+      <Toggle
+        label="Auto-pass"
+        desc="When nothing in your hand beats the table, pass for you after a 5-second countdown."
+        value={settings.autoPass}
+        onChange={(v) => set('autoPass', v)}
+      />
       <Toggle label="Sound" desc="Synthesized table sounds." value={settings.sound} onChange={(v) => set('sound', v)} />
       <Toggle label="Vibration" desc="Haptic taps on supported phones." value={settings.haptics} onChange={(v) => set('haptics', v)} />
     </Modal>

@@ -34,6 +34,8 @@ export interface Settings {
   speed: Speed;
   sound: boolean;
   haptics: boolean;
+  /** When nothing in your hand beats the table, pass for you after a short countdown. */
+  autoPass: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -47,6 +49,7 @@ export const DEFAULT_SETTINGS: Settings = {
   speed: 'normal',
   sound: true,
   haptics: true,
+  autoPass: true,
 };
 
 export interface TrickPlay {

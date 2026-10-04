@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { type PointerEvent, useLayoutEffect, useRef, useState } from 'react';
+import { type PointerEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { type Card, rankOf } from '../engine/cards';
 import { isPowerRank } from '../engine/combos';
 import { useViewportHeight } from '../hooks';
@@ -146,6 +146,10 @@ export function PlayerHand({ hand, selected, hinted, fresh, pointed, revolution,
 interface ActionProps {
   isTurn: boolean;
   canPass: boolean;
+  /** Nothing in hand beats the table: passing is the only move. */
+  mustPass: boolean;
+  /** Auto-pass countdown length, or null when it isn't running. */
+  autoPassMs: number | null;
   canPlay: boolean;
   status: { tone: 'ok' | 'bad' | 'idle'; text: string };
   onPlay: () => void;
@@ -156,6 +160,23 @@ interface ActionProps {
   onSort: () => void;
   sortMode: 'rank' | 'suit';
   hasSelection: boolean;
+}
+
+function PassCountdown({ ms }: { ms: number }) {
+  const [left, setLeft] = useState(Math.ceil(ms / 1000));
+  useEffect(() => {
+    const end = performance.now() + ms;
+    const id = window.setInterval(() => setLeft(Math.max(0, Math.ceil((end - performance.now()) / 1000))), 200);
+    return () => clearInterval(id);
+  }, [ms]);
+  return (
+    <>
+      <span className="pass-count" aria-label={`Passing in ${left} seconds`}>
+        {left}
+      </span>
+      <span className="pass-drain" style={{ animationDuration: `${ms}ms` }} aria-hidden="true" />
+    </>
+  );
 }
 
 export function ActionBar(p: ActionProps) {
@@ -188,8 +209,9 @@ export function ActionBar(p: ActionProps) {
         {p.status.text}
       </motion.div>
       <div className="ab-group ab-main">
-        <button className="btn pass-btn" onClick={p.onPass} disabled={!p.canPass} title="Pass (Space)">
+        <button className={`btn pass-btn ${p.mustPass ? 'must' : ''}`} onClick={p.onPass} disabled={!p.canPass} title="Pass (Space)">
           Pass
+          {p.autoPassMs !== null && <PassCountdown ms={p.autoPassMs} />}
         </button>
         <button className="btn primary play-btn" onClick={p.onPlay} disabled={!p.canPlay} title="Play (Enter)">
           Play

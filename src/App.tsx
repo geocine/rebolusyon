@@ -56,7 +56,9 @@ const SEATS: { player: number; position: SeatPosition }[] = [
 const PACE = { chill: 1400, normal: 900, fast: 420 } as const;
 
 /** Settings that may change mid-match without altering the rules being played. */
-const LIVE_KEYS = ['difficulty', 'speed', 'sound', 'haptics', 'memoryMode'] as const;
+const LIVE_KEYS = ['difficulty', 'speed', 'sound', 'haptics', 'memoryMode', 'autoPass'] as const;
+
+const AUTO_PASS_MS = 5000;
 
 function comboWeight(c: Combo, rev: boolean) {
   return c.cards.length * 100 + Math.max(...c.cards.map((x) => power(x, rev)));
@@ -521,6 +523,19 @@ export default function App() {
   const modalOpen =
     showRules || showSettings || resultOpen || matchOpen || (game?.phase === 'exchange' && game.exchange?.to === HUMAN) || (!!tut && tut.status !== 'play');
 
+  const mustPass = !!game && myTurn && !isLeading(game) && !myOptions.length && canPass(game, HUMAN);
+  const autoPassing = mustPass && !!game?.settings.autoPass && !tut && !modalOpen;
+
+  useEffect(() => {
+    if (!autoPassing || !game) return;
+    const t = window.setTimeout(() => {
+      setGame((g) => (g === game ? pass(g, HUMAN) : g));
+      setSelected(new Set());
+      setHinted(new Set());
+    }, AUTO_PASS_MS);
+    return () => clearTimeout(t);
+  }, [autoPassing, game]);
+
   useEffect(() => {
     if (!game) return;
     const onKey = (e: KeyboardEvent) => {
@@ -619,7 +634,8 @@ export default function App() {
   } else if (!selArr.length) {
     if (g.firstPlay) status = { tone: 'idle', text: 'Your opening — must include 3♣' };
     else if (leading) status = { tone: 'idle', text: 'Your lead — play anything' };
-    else if (!myOptions.length) status = { tone: 'bad', text: `Nothing beats ${describeCombo(top!)} — pass` };
+    else if (!myOptions.length)
+      status = { tone: 'bad', text: `Nothing beats ${describeCombo(top!)} — ${autoPassing ? 'passing for you' : 'pass'}` };
     else status = { tone: 'idle', text: `Beat ${describeCombo(top!)} or pass` };
   } else if (validation?.ok)
     status = { tone: 'ok', text: phone ? `${describeCombo(validation.combo)} · swipe up to play` : describeCombo(validation.combo) };
@@ -743,6 +759,8 @@ export default function App() {
           <ActionBar
             isTurn={myTurn}
             canPass={canPass(g, HUMAN)}
+            mustPass={mustPass}
+            autoPassMs={autoPassing ? AUTO_PASS_MS : null}
             canPlay={!!validation?.ok}
             status={status}
             onPlay={() => doPlay()}
