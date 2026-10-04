@@ -39,7 +39,7 @@ export const PERSONAS: Persona[] = [
     memory: 0.95,
     revLove: 0.15,
     chaos: 0.3,
-    blurb: 'Everyone’s lola (grandma). Sits on her Twos like heirlooms and remembers every card since 1974.',
+    blurb: 'Everyone’s lola (grandma). Sits on her Twos like heirlooms, remembers every card since 1974, and hates getting caught with a full hand.',
   },
   {
     name: 'Kuya Jun',
@@ -50,7 +50,7 @@ export const PERSONAS: Persona[] = [
     memory: 0.55,
     revLove: 1,
     chaos: 0.9,
-    blurb: 'Every friend group’s kuya (big brother). Plays loud, plays fast, and flips the table the moment he gets four of anything.',
+    blurb: 'Every friend group’s kuya (big brother). Plays loud, plays fast, swings for the win, and flips the table the moment he gets four of anything.',
   },
   {
     name: 'Mika',
@@ -61,7 +61,7 @@ export const PERSONAS: Persona[] = [
     memory: 1,
     revLove: 0.5,
     chaos: 0.15,
-    blurb: 'Quiet. Tracks the deck. Knows exactly when your Two is the last one.',
+    blurb: 'Quiet. Tracks the deck and reads every pass. Knows exactly when your Two is the last one.',
   },
 ];
 
@@ -69,6 +69,7 @@ const DIFFICULTY = {
   easy: { memoryScale: 0.35, noise: 7, lookahead: false },
   normal: { memoryScale: 0.75, noise: 2.5, lookahead: true },
   hard: { memoryScale: 1, noise: 0.6, lookahead: true },
+  rival: { memoryScale: 1, noise: 0.6, lookahead: true },
 } satisfies Record<Difficulty, { memoryScale: number; noise: number; lookahead: boolean }>;
 
 /** Deterministic 0..1 hash so an AI "forgets" the same cards consistently. */
@@ -208,8 +209,10 @@ export function decide(
   persona: Persona,
   difficulty: Difficulty,
   rng: Rng,
+  noiseScale = 1,
 ): Decision {
-  const cfg = DIFFICULTY[difficulty];
+  const base = DIFFICULTY[difficulty];
+  const cfg = { ...base, noise: base.noise * noiseScale };
   const hand = s.hands[player];
   const rev = s.revolution;
   const leading = isLeading(s);

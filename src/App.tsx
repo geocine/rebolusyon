@@ -33,6 +33,8 @@ import { TitleScreen } from './components/TitleScreen';
 import { Icon } from './components/Icons';
 import { haptic, setHapticsEnabled } from './haptics';
 import { usePhone } from './hooks';
+import { askAI } from './aiClient';
+import type { Thought } from './engine/search';
 
 const SEATS: { player: number; position: SeatPosition }[] = [
   { player: 1, position: 'left' },
@@ -47,6 +49,23 @@ const LIVE_KEYS = ['difficulty', 'speed', 'sound', 'haptics', 'memoryMode'] as c
 
 function comboWeight(c: Combo, rev: boolean) {
   return c.cards.length * 100 + Math.max(...c.cards.map((x) => power(x, rev)));
+}
+
+/** Once-per-round mood lines, driven by the bot's own win estimate. */
+const moodsSaid = new Set<string>();
+function moodFor(g: GameState, seat: number, t: Thought): Moment | null {
+  if (t.winProb === null) return null;
+  const left = g.hands[seat].length - (t.combo?.cards.length ?? 0);
+  const key = `${g.seed}:${g.round}:${seat}`;
+  const pick = (m: Moment) => {
+    if (moodsSaid.has(`${key}:${m}`)) return null;
+    moodsSaid.add(`${key}:${m}`);
+    return m;
+  };
+  if (t.winProb >= 0.8 && left > 0 && left <= 7) return pick('confident');
+  const someoneClose = g.hands.some((h, p) => p !== seat && h.length <= 4);
+  if (t.winProb <= 0.03 && left >= 7 && someoneClose) return pick('worried');
+  return null;
 }
 
 export default function App() {
@@ -74,6 +93,11 @@ export default function App() {
   const prevTurn = useRef(-1);
   const bannerSeq = useRef(0);
   const timers = useRef<number[]>([]);
+  const moodRef = useRef<Moment | null>(null);
+  const gameRef = useRef(game);
+  useEffect(() => {
+    gameRef.current = game;
+  }, [game]);
 
   const later = useCallback((fn: () => void, ms: number) => {
     timers.current.push(window.setTimeout(fn, ms));
@@ -139,6 +163,11 @@ export default function App() {
   const handleEvent = useCallback(
     (e: GameEvent, g: GameState) => {
       const name = (p: number) => PERSONAS[p].name;
+      const takeMood = () => {
+        const m = moodRef.current;
+        moodRef.current = null;
+        return m;
+      };
       switch (e.kind) {
         case 'deal': {
           sfx.deal();
@@ -157,6 +186,7 @@ export default function App() {
           break;
         }
         case 'play': {
+          const mood = takeMood();
           sfx.play(e.combo.cards.length);
           const hasPower = e.combo.cards.some((c) => isPowerRank(rankOf(c), !e.flipped ? g.revolution : !g.revolution));
           if (hasPower) sfx.power();
@@ -171,14 +201,21 @@ export default function App() {
               showBanner({ kind: 'unrev', title: 'RESTORED!', sub: `${name(e.player)} flipped it back. The Twos rule again.` }, 2400);
               say(e.player, 'unrevolution');
             }
-          } else if (hasPower) say(e.player, 'two', 0.6);
+          } else if (mood) say(e.player, mood);
+          else if (hasPower) say(e.player, 'two', 0.6);
           else if (e.combo.cards.length === 5) say(e.player, 'big', 0.45);
           break;
         }
-        case 'pass':
+        case 'pass': {
+          const mood = takeMood();
           sfx.pass();
-          say(e.player, 'pass', 0.25);
+          const fact = g.facts[g.facts.length - 1];
+          const exposed = e.player === HUMAN && fact?.kind === 'noBeat' && fact.hard && g.settings.difficulty !== 'easy';
+          if (exposed) say(Math.random() < 0.65 ? 3 : 1, 'read', 0.8);
+          else if (mood) say(e.player, mood);
+          else say(e.player, 'pass', 0.25);
           break;
+        }
         case 'clear':
           sfx.clear();
           if (e.leader === HUMAN) showBanner({ kind: 'info', title: 'Table clear', sub: 'Everyone passed. Your lead.' }, 1600);
@@ -250,14 +287,26 @@ export default function App() {
     if (game.phase === 'playing' && game.turn !== HUMAN) {
       const base = PACE[game.settings.speed];
       const delay = base * (game.trick.done ? 1.3 : 1) * (game.firstPlay ? 1.5 : 1) + Math.random() * base * 0.5;
-      const t = window.setTimeout(() => {
-        setGame((g) => {
-          if (g !== game) return g;
-          const d = decide(g, g.turn, PERSONAS[g.turn], g.settings.difficulty, Math.random);
-          return d.combo ? play(g, g.turn, d.combo.cards) : pass(g, g.turn);
-        });
-      }, delay);
-      return () => clearTimeout(t);
+      const started = performance.now();
+      const seat = game.turn;
+      let cancelled = false;
+      let t = 0;
+      askAI(game, seat, game.settings.difficulty).then((thought) => {
+        if (cancelled) return;
+        t = window.setTimeout(() => {
+          moodRef.current = moodFor(game, seat, thought);
+          setGame((g) => {
+            if (g !== game) return g;
+            let combo = thought.combo;
+            if (combo && !validatePlay(g, seat, combo.cards).ok) combo = decide(g, seat, PERSONAS[seat], 'normal', Math.random).combo;
+            return combo ? play(g, seat, combo.cards) : pass(g, seat);
+          });
+        }, Math.max(0, delay - (performance.now() - started)));
+      });
+      return () => {
+        cancelled = true;
+        clearTimeout(t);
+      };
     }
     if (game.phase === 'exchange' && game.exchange && game.exchange.to !== HUMAN) {
       const t = window.setTimeout(() => {
@@ -294,9 +343,9 @@ export default function App() {
     });
   };
 
-  const flash = (msg: string) => {
+  const flash = (msg: string, ms = 1800) => {
     setStatusFlash(msg);
-    later(() => setStatusFlash((m) => (m === msg ? null : m)), 1800);
+    later(() => setStatusFlash((m) => (m === msg ? null : m)), ms);
   };
 
   const doPlay = (extra: Card | null = null) => {
@@ -337,12 +386,17 @@ export default function App() {
 
   const doHint = () => {
     if (!game || !myTurn) return;
-    const d = decide(game, HUMAN, PERSONAS[3], 'hard', Math.random);
-    if (d.combo) {
-      setSelected(new Set(d.combo.cards));
-      setHinted(new Set(d.combo.cards));
-      flash(`Try: ${describeCombo(d.combo)}`);
-    } else flash('Hint: save your strength — pass');
+    const asked = game;
+    flash('Thinking…');
+    askAI(asked, HUMAN, 'hard').then((t) => {
+      if (gameRef.current !== asked) return;
+      const odds = t.winProb === null ? '' : ` · ~${Math.round(t.winProb * 100)}% to win from here`;
+      if (t.combo) {
+        setSelected(new Set(t.combo.cards));
+        setHinted(new Set(t.combo.cards));
+        flash(`Try: ${describeCombo(t.combo)}${odds}`, 4000);
+      } else flash(`Hint: save your strength, pass${odds}`, 4000);
+    });
   };
 
   const modalOpen = showRules || showSettings || resultOpen || matchOpen || (game?.phase === 'exchange' && game.exchange?.to === HUMAN);

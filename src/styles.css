@@ -1653,6 +1653,26 @@ kbd {
   border-bottom: 1px solid var(--line);
   font-weight: 700;
 }
+.row:has(+ .row-desc) {
+  border-bottom: 0;
+  padding-bottom: 4px;
+}
+.row-desc {
+  margin: 0;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5px;
+  opacity: 0.65;
+}
+.ts-diff-desc {
+  max-width: 340px;
+  min-height: 2.8em;
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+  opacity: 0.65;
+}
 
 .tribute-card {
   display: grid;

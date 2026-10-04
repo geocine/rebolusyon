@@ -15,7 +15,7 @@ import { type Combo, beats, classify, enumerateCombos } from './combos';
 export const PLAYERS = 4;
 export const HUMAN = 0;
 
-export type Difficulty = 'easy' | 'normal' | 'hard';
+export type Difficulty = 'easy' | 'normal' | 'hard' | 'rival';
 export type Speed = 'chill' | 'normal' | 'fast';
 
 export interface Settings {
@@ -114,6 +114,18 @@ export interface MatchStats {
   cardsShed: number[];
 }
 
+/**
+ * Deductions anyone watching the table could make. Hands only shrink during a round, so a fact
+ * stays true for the rest of it.
+ */
+export type Fact =
+  /** Passed on `top`. `hard` when the player could have gone out with a beating combo, so they had none. */
+  | { kind: 'noBeat'; player: number; top: Combo; rev: boolean; hard: boolean }
+  /** Every other card in the player's hand is weaker than `card` under `rev`. */
+  | { kind: 'maxSingle'; player: number; card: Card; rev: boolean; except?: Card; knownTo?: number[] }
+  /** The player is holding `card` until it shows up on the table. */
+  | { kind: 'holds'; player: number; card: Card; knownTo?: number[] };
+
 export type Phase = 'exchange' | 'playing' | 'roundEnd' | 'matchEnd';
 
 export interface GameState {
@@ -128,6 +140,8 @@ export interface GameState {
   firstPlay: boolean;
   /** Every card played this round, in order. */
   played: Card[];
+  /** Public deductions about hidden hands this round. */
+  facts: Fact[];
   scores: number[];
   history: RoundResult[];
   exchange: Exchange | null;
@@ -172,6 +186,7 @@ function dealRound(base: GameState, round: number): GameState {
   const hands = Array.from({ length: PLAYERS }, (_, p) => deck.slice(p * 13, p * 13 + 13));
 
   let exchange: Exchange | null = null;
+  const facts: Fact[] = [];
   const last = base.history[base.history.length - 1];
   if (base.settings.buwis && last) {
     const loser = pickTributePayer(last);
@@ -179,6 +194,11 @@ function dealRound(base: GameState, round: number): GameState {
     hands[loser] = removeCards(hands[loser], [given]);
     hands[last.winner] = [...hands[last.winner], given];
     exchange = { from: loser, to: last.winner, given, returned: null };
+    const pair = [loser, last.winner];
+    facts.push(
+      { kind: 'maxSingle', player: loser, card: given, rev: false, knownTo: pair },
+      { kind: 'holds', player: last.winner, card: given, knownTo: pair },
+    );
   }
 
   const leader = holderOf(hands, THREE_OF_CLUBS);
@@ -192,6 +212,7 @@ function dealRound(base: GameState, round: number): GameState {
     revolution: false,
     firstPlay: true,
     played: [],
+    facts,
     exchange,
     events: [{ kind: 'deal' }],
     eventSeq: base.eventSeq + 1,
@@ -227,6 +248,7 @@ export function createMatch(settings: Settings, seed = Math.floor(Math.random() 
     revolution: false,
     firstPlay: true,
     played: [],
+    facts: [],
     scores: [0, 0, 0, 0],
     history: [],
     exchange: null,
@@ -253,10 +275,17 @@ export function returnTribute(s: GameState, card: Card): GameState {
   hands[from] = [...hands[from], card];
   const exchange = { ...s.exchange, returned: card };
   const leader = holderOf(hands, THREE_OF_CLUBS);
+  const pair = [from, to];
+  // The payer's "best card" fact no longer covers the card they just got back.
+  const facts = s.facts.map((f): Fact =>
+    f.kind === 'maxSingle' && f.player === from && f.card === s.exchange!.given ? { ...f, except: card } : f,
+  );
+  facts.push({ kind: 'holds', player: from, card, knownTo: pair });
   return {
     ...s,
     phase: 'playing',
     hands,
+    facts,
     exchange,
     turn: leader,
     trick: emptyTrick(leader),
@@ -355,6 +384,11 @@ export function play(s: GameState, player: number, cards: Card[]): GameState {
     cardsShed: s.stats.cardsShed.map((n, p) => (p === player ? n + combo.cards.length : n)),
   };
 
+  const guarded = s.settings.bantay && combo.type === 'single' && s.hands[nextSeat(player)].length === 1;
+  const facts: Fact[] = guarded
+    ? [...s.facts, { kind: 'maxSingle', player, card: combo.cards[0], rev: s.revolution }]
+    : s.facts;
+
   const events: GameEvent[] = [{ kind: 'play', player, combo, flipped }];
   let next: GameState = {
     ...s,
@@ -363,6 +397,7 @@ export function play(s: GameState, player: number, cards: Card[]): GameState {
     revolution,
     firstPlay: false,
     played: [...s.played, ...combo.cards],
+    facts,
     stats,
     log: pushLog(s, [{ kind: 'play', player, combo, flipped }]),
   };
@@ -392,6 +427,11 @@ export function pass(s: GameState, player: number): GameState {
     passesSinceTop: s.trick.passesSinceTop + 1,
     plays: [...s.trick.plays, { player, combo: null }],
   };
+  const top = s.trick.top!;
+  const facts: Fact[] = [
+    ...s.facts,
+    { kind: 'noBeat', player, top, rev: s.revolution, hard: s.hands[player].length === top.cards.length },
+  ];
   const events: GameEvent[] = [{ kind: 'pass', player }];
   let log = pushLog(s, [{ kind: 'pass', player }]);
 
@@ -405,7 +445,7 @@ export function pass(s: GameState, player: number): GameState {
   } else {
     turn = nextActive(trick, player, strict);
   }
-  return { ...s, trick, turn, events, log, eventSeq: s.eventSeq + 1 };
+  return { ...s, trick, turn, facts, events, log, eventSeq: s.eventSeq + 1 };
 }
 
 /* ------------------------------------------------------------------ */

@@ -9,6 +9,7 @@ import { CardView } from './CardView';
 import { Avatar } from './Seat';
 import { MECHANICS, Term } from '../mechanics';
 import { usePhone } from '../hooks';
+import { DIFFICULTIES } from '../difficulty';
 
 export function Modal({ open, onClose, children, wide, className = '' }: { open: boolean; onClose?: () => void; children: ReactNode; wide?: boolean; className?: string }) {
   const phone = usePhone();
@@ -178,7 +179,23 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             <li><kbd>Space</kbd> pass</li>
             <li><kbd>Tab</kbd> cycle playable combos</li>
             <li><kbd>H</kbd> hint · <kbd>S</kbd> sort · <kbd>Esc</kbd> clear</li>
+            <li>On phones: tap or slide across cards to pick, swipe up to play</li>
           </ul>
+        </section>
+
+        <section>
+          <h4>How the bots think</h4>
+          <p>
+            On Sharp and up, each bot imagines dozens to hundreds of ways the hidden cards could be spread, plays every
+            promising move out to the end in its head, and goes with what wins most. It only “knows” what a real
+            player could: the cards it remembers and what your passes give away. Pass while holding one card, and
+            Mika now knows that card can’t beat the table.
+          </p>
+          <p className="small">
+            Each has a temperament: Lola avoids getting caught with a big hand, Kuya Jun swings for wins, Mika plays
+            the cold odds. When a bot says it likes its chances, it’s reading its own estimate. The Hint button
+            uses the same brain and shows your odds.
+          </p>
         </section>
 
         <section className="glossary">
@@ -257,16 +274,9 @@ export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { 
       <h4 className="section-label">Table</h4>
       <div className="row">
         <span>Opponents</span>
-        <Segmented
-          value={settings.difficulty}
-          options={[
-            { value: 'easy', label: 'Chill' },
-            { value: 'normal', label: 'Sharp' },
-            { value: 'hard', label: 'Hustler' },
-          ]}
-          onChange={(v) => set('difficulty', v)}
-        />
+        <Segmented value={settings.difficulty} options={DIFFICULTIES} onChange={(v) => set('difficulty', v)} />
       </div>
+      <p className="row-desc">{DIFFICULTIES.find((d) => d.value === settings.difficulty)?.desc}</p>
       <div className="row">
         <span>Rounds</span>
         <Segmented value={settings.rounds} options={[3, 6, 10].map((n) => ({ value: n, label: String(n) }))} onChange={(v) => set('rounds', v)} />

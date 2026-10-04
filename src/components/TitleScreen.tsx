@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { makeCard } from '../engine/cards';
 import type { Difficulty } from '../engine/game';
 import { PERSONAS } from '../engine/ai';
+import { DIFFICULTIES } from '../difficulty';
 import type { LifetimeStats } from '../storage';
 import { CardView } from './CardView';
 import { Avatar } from './Seat';
@@ -76,18 +77,13 @@ export function TitleScreen({ stats, difficulty, onDifficulty, onPlay, onRules, 
             </button>
           </div>
           <div className="segmented ts-diff">
-            {(
-              [
-                ['easy', 'Chill'],
-                ['normal', 'Sharp'],
-                ['hard', 'Hustler'],
-              ] as const
-            ).map(([d, label]) => (
-              <button key={d} className={difficulty === d ? 'on' : ''} onClick={() => onDifficulty(d)}>
+            {DIFFICULTIES.map(({ value, label }) => (
+              <button key={value} className={difficulty === value ? 'on' : ''} onClick={() => onDifficulty(value)}>
                 {label}
               </button>
             ))}
           </div>
+          <p className="ts-diff-desc">{DIFFICULTIES.find((d) => d.value === difficulty)?.desc}</p>
         </motion.div>
 
         <motion.div className="roster" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}>
