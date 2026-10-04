@@ -25,8 +25,10 @@ export interface Settings {
   bantay: boolean;
   /** Between rounds, the biggest loser hands their best card to the winner, who returns one. */
   buwis: boolean;
-  /** Last round's winner pays double if someone else wins this round. */
-  bagsak: boolean;
+  /** The match leader pays double if they lose a round. */
+  patong: boolean;
+  /** The final round's penalties are doubled. */
+  hirit: boolean;
   /** Once you pass, you're out until the trick clears. */
   strictPass: boolean;
   /** Alaala mode: no card tracker; cleared tricks go face-down. Pure memory. */
@@ -44,7 +46,8 @@ export const DEFAULT_SETTINGS: Settings = {
   revolution: true,
   bantay: true,
   buwis: true,
-  bagsak: false,
+  patong: true,
+  hirit: true,
   strictPass: false,
   memoryMode: false,
   difficulty: 'normal',
@@ -470,14 +473,27 @@ export function penaltyFor(hand: Card[], grandFinish: boolean): { penalty: numbe
   return { penalty, multipliers };
 }
 
-/** With Bagsak on, last round's winner: they pay double unless they win this round too. */
-export function defendingChampion(s: GameState): number {
-  return s.settings.bagsak && s.history.length ? s.history[s.history.length - 1].winner : -1;
+/** With Patong on, the sole match leader carries a bounty: they pay double if they lose this round. */
+export function bountySeat(s: GameState): number {
+  if (!s.settings.patong) return -1;
+  const top = Math.max(...s.scores);
+  const leaders = s.scores.filter((v) => v === top).length;
+  return top > 0 && leaders === 1 ? s.scores.indexOf(top) : -1;
+}
+
+/** With Huling Hirit on, every penalty in the match's last round is doubled. */
+export const isHulingHirit = (s: GameState) => s.settings.hirit && s.round === s.settings.rounds;
+
+/** Patong and Huling Hirit on top of the hand-based multipliers. */
+export function roundMultipliers(s: GameState, player: number): Multiplier[] {
+  const extra: Multiplier[] = [];
+  if (player === bountySeat(s)) extra.push({ label: 'Patong', factor: 2 });
+  if (isHulingHirit(s)) extra.push({ label: 'Huling Hirit', factor: 2 });
+  return extra;
 }
 
 function endRound(s: GameState, winner: number, finishingCombo: Combo): GameState {
   const grandFinish = finishingCombo.type === 'quads' || finishingCombo.type === 'straightflush';
-  const champion = defendingChampion(s);
   const penalties: number[] = [];
   const multipliers: Multiplier[][] = [];
   for (let p = 0; p < PLAYERS; p++) {
@@ -487,9 +503,9 @@ function endRound(s: GameState, winner: number, finishingCombo: Combo): GameStat
       continue;
     }
     const r = penaltyFor(s.hands[p], grandFinish);
-    if (p === champion) {
-      r.multipliers.push({ label: 'Fallen champion', factor: 2 });
-      r.penalty *= 2;
+    for (const m of roundMultipliers(s, p)) {
+      r.multipliers.push(m);
+      r.penalty *= m.factor;
     }
     penalties.push(r.penalty);
     multipliers.push(r.multipliers);

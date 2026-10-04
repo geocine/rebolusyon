@@ -156,24 +156,28 @@ describe('scoring', () => {
   });
 });
 
-describe('bagsak', () => {
-  const lastWonBy = (winner: number) => [{ winner }] as GameState['history'];
+describe('comeback stakes', () => {
+  const hands = () => [[0], [mk(6, C), mk(12, D)], [mk(7, C)], [mk(8, C)]];
+  const finish = (patch: Partial<GameState>, rules: Partial<Settings> = {}) => play(stateWith(hands(), patch, rules), 0, [0]).history[0];
 
-  it('doubles the last winner’s penalty when someone else goes out', () => {
-    let s = stateWith([[0], [mk(6, C), mk(12, D)], [mk(7, C)], [mk(8, C)]], { history: lastWonBy(1) }, { bagsak: true });
-    s = play(s, 0, [0]);
-    const r = s.history[1];
+  it('Patong doubles the match leader’s penalty when someone else wins', () => {
+    const r = finish({ scores: [0, 10, -5, -5] });
     expect(r.penalties).toEqual([0, 8, 1, 1]);
-    expect(r.multipliers[1].map((m) => m.label)).toContain('Fallen champion');
+    expect(r.multipliers[1].map((m) => m.label)).toContain('Patong');
     expect(r.deltas[0]).toBe(10);
   });
 
-  it('leaves penalties alone when the champion defends or the rule is off', () => {
-    const hands = () => [[0], [mk(6, C), mk(12, D)], [mk(7, C)], [mk(8, C)]];
-    const defended = play(stateWith(hands(), { history: lastWonBy(0) }, { bagsak: true }), 0, [0]);
-    expect(defended.history[1].penalties).toEqual([0, 4, 1, 1]);
-    const off = play(stateWith(hands(), { history: lastWonBy(1) }, { bagsak: false }), 0, [0]);
-    expect(off.history[1].penalties).toEqual([0, 4, 1, 1]);
+  it('Patong needs a sole leader and the rule on', () => {
+    expect(finish({ scores: [10, 0, -5, -5] }).penalties).toEqual([0, 4, 1, 1]);
+    expect(finish({ scores: [0, 10, 10, -20] }).penalties).toEqual([0, 4, 1, 1]);
+    expect(finish({ scores: [0, 10, -5, -5] }, { patong: false }).penalties).toEqual([0, 4, 1, 1]);
+  });
+
+  it('Huling Hirit doubles every penalty in the final round and stacks with Patong', () => {
+    expect(finish({ round: 6 }).penalties).toEqual([0, 8, 2, 2]);
+    expect(finish({ round: 6, scores: [0, 10, -5, -5] }).penalties).toEqual([0, 16, 2, 2]);
+    expect(finish({ round: 5 }).penalties).toEqual([0, 4, 1, 1]);
+    expect(finish({ round: 6 }, { hirit: false }).penalties).toEqual([0, 4, 1, 1]);
   });
 });
 
@@ -205,7 +209,7 @@ describe('AI self-play', () => {
     { strictPass: true },
     { revolution: false, bantay: false, buwis: false },
     { memoryMode: true },
-    { bagsak: true },
+    { patong: false, hirit: false },
   ];
 
   it('plays hundreds of full matches with only legal moves', () => {

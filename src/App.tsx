@@ -8,8 +8,10 @@ import {
   type GameState,
   type Settings,
   HUMAN,
+  bountySeat,
   canPass,
   createMatch,
+  isHulingHirit,
   isLeading,
   legalPlays,
   nextRound,
@@ -24,7 +26,7 @@ import { lineFor, type Moment } from './lines';
 import { type Mechanic, Term } from './mechanics';
 import { loadSettings, loadStats, saveSettings, saveStats, type LifetimeStats } from './storage';
 import { ActionBar, PlayerHand } from './components/PlayerHand';
-import { Avatar, PassStamp, Seat, type SeatPosition } from './components/Seat';
+import { Avatar, BountyChip, PassStamp, Seat, type SeatPosition } from './components/Seat';
 import { TrickArea } from './components/TrickArea';
 import { Tracker } from './components/Tracker';
 import { ExchangeModal, RoundEndModal, RulesModal, SettingsModal } from './components/Modals';
@@ -231,6 +233,11 @@ export default function App() {
                 ? `You pay ${cardLabel(ex.given)} to ${name(ex.to)}`
                 : `${name(ex.from)} pays ${ex.to === HUMAN ? 'you' : name(ex.to)} their best card`;
             showBanner({ kind: 'info', title: 'Buwis · Tribute', sub }, 2600);
+          }
+          if (isHulingHirit(g)) {
+            const hirit = () => showBanner({ kind: 'warn', title: 'Huling Hirit · Final round', sub: 'Every penalty counts double. Anyone can still win.' }, 2600);
+            if (ex) later(hirit, 2700);
+            else hirit();
           }
           break;
         }
@@ -643,11 +650,14 @@ export default function App() {
   else status = { tone: 'bad', text: validation?.reason ?? '' };
 
   const lastResult = g.history[g.history.length - 1] ?? null;
+  const bounty = bountySeat(g);
+  const finalDouble = isHulingHirit(g);
   const flags = [
     g.settings.revolution && 'revolution',
     g.settings.bantay && 'bantay',
     g.settings.buwis && 'buwis',
-    g.settings.bagsak && 'bagsak',
+    g.settings.patong && 'patong',
+    finalDouble && 'hirit',
     memoryMode && 'memory',
   ].filter(Boolean) as Mechanic[];
 
@@ -671,8 +681,8 @@ export default function App() {
         </div>
         <div className="tb-flags">
           {flags.map((f) => (
-            <span key={f} className="flag">
-              <Term m={f} english />
+            <span key={f} className={`flag ${f === 'hirit' ? 'hot' : ''}`}>
+              {f === 'hirit' ? 'Final round ×2' : <Term m={f} english />}
             </span>
           ))}
           {g.settings.strictPass && <span className="flag">Strict pass</span>}
@@ -707,6 +717,7 @@ export default function App() {
               isTurn={g.phase === 'playing' && g.turn === player}
               passed={g.trick.passed[player] && !g.trick.done}
               isLeader={!!top && !g.trick.done && g.trick.topBy === player}
+              bounty={bounty === player}
               bubble={bubbles[player]}
             />
           ))}
@@ -742,6 +753,7 @@ export default function App() {
               <div className="seat-name">You</div>
               <div className="seat-chips">
                 <span className={`chip score ${g.scores[HUMAN] < 0 ? 'neg' : ''}`}>{g.scores[HUMAN] > 0 ? `+${g.scores[HUMAN]}` : g.scores[HUMAN]}</span>
+                {bounty === HUMAN && <BountyChip />}
                 {myTurn && <span className="chip your-turn">YOUR TURN</span>}
                 {!myTurn && !!top && !g.trick.done && g.trick.topBy === HUMAN && <span className="chip lead">ON TOP</span>}
               </div>

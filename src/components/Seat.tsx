@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import type { Card } from '../engine/cards';
 import type { Persona } from '../engine/ai';
+import { MECHANICS } from '../mechanics';
 import { CardView } from './CardView';
 import { type AvatarMood, PixelAvatar, SPRITES } from './PixelAvatar';
 
@@ -78,10 +79,20 @@ interface SeatProps {
   isTurn: boolean;
   passed: boolean;
   isLeader: boolean;
+  /** Carries the Patong: leads the match, pays double if they lose this round. */
+  bounty: boolean;
   bubble: string | null;
 }
 
-export function Seat({ player, persona, cards, score, position, isTurn, passed, isLeader, bubble }: SeatProps) {
+export function BountyChip() {
+  return (
+    <span className="chip bounty" title={`${MECHANICS.patong.name} (${MECHANICS.patong.en}): ${MECHANICS.patong.desc}`}>
+      BOUNTY
+    </span>
+  );
+}
+
+export function Seat({ player, persona, cards, score, position, isTurn, passed, isLeader, bounty, bubble }: SeatProps) {
   const n = cards.length;
   const vertical = position !== 'top';
   return (
@@ -101,6 +112,7 @@ export function Seat({ player, persona, cards, score, position, isTurn, passed, 
           <div className="seat-title">{persona.title}</div>
           <div className="seat-chips">
             <span className={`chip score ${score < 0 ? 'neg' : ''}`}>{score > 0 ? `+${score}` : score}</span>
+            {bounty && <BountyChip />}
             {isTurn && (
               <span className="chip thinking" title="Thinking">
                 <i />

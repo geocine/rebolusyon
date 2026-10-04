@@ -1033,6 +1033,12 @@ button {
   border: 1px solid var(--line);
   opacity: 0.65;
 }
+.flag.hot {
+  opacity: 1;
+  color: var(--gold-2);
+  border-color: var(--gold);
+  background: rgba(212, 162, 76, 0.14);
+}
 .tb-actions {
   display: flex;
   gap: 8px;
@@ -1143,6 +1149,11 @@ button {
 .chip.lead {
   background: var(--accent);
   color: var(--ink);
+}
+.chip.bounty {
+  background: var(--clay);
+  color: var(--paper);
+  cursor: help;
 }
 .chip.your-turn {
   background: var(--accent);

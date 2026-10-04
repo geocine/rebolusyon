@@ -3,7 +3,7 @@ import { type ReactNode, useState } from 'react';
 import { type Card, makeCard, rankOf } from '../engine/cards';
 import { describeCombo, isPowerRank } from '../engine/combos';
 import type { Exchange, GameState, RoundResult, Settings } from '../engine/game';
-import { pickTributePayer } from '../engine/game';
+import { bountySeat, isHulingHirit, pickTributePayer } from '../engine/game';
 import type { Persona } from '../engine/ai';
 import { CardView } from './CardView';
 import { Avatar } from './Seat';
@@ -152,11 +152,20 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag ink">OPTIONAL</span> <Term m="bagsak" />
+            <span className="tw-tag pink">COMEBACK</span> <Term m="patong" />
           </h4>
           <p>
-            Off by default. Win a round and you’re the champion to beat: if someone else wins the next one, your penalty is{' '}
-            <b>doubled</b>. Pairs well with Buwis, since it punishes a champion who can’t turn the tribute into another win.
+            Whoever leads the match wears a <b>bounty</b>. If anyone else wins the round, the leader’s penalty is{' '}
+            <b>doubled</b> and the winner collects it. Leads are earned, never safe.
+          </p>
+        </section>
+
+        <section className="twist">
+          <h4>
+            <span className="tw-tag gold">COMEBACK</span> <Term m="hirit" />
+          </h4>
+          <p>
+            The <b>final round counts double</b>. Every penalty is ×2, so whoever is behind always has one big swing left.
           </p>
         </section>
 
@@ -177,7 +186,8 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             <li><b>×2</b> with 10–12 cards left</li>
             <li><b>×3</b> if you never played (13)</li>
             <li><b>×2</b> if caught holding any Two</li>
-            <li><b>×2</b> for last round’s winner if they lose this one (<i>Bagsak</i>, when on)</li>
+            <li><b>×2</b> for the match leader if they lose the round (<i>Patong</i>)</li>
+            <li><b>×2</b> for everyone in the final round (<i>Huling Hirit</i>)</li>
             <li><b>×2</b> for everyone if the winner goes out on Four of a Kind or a Straight Flush (<i>Grand Finish</i>)</li>
           </ul>
           <p>The winner collects it all. Highest total after the last round wins the match.</p>
@@ -285,7 +295,8 @@ export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { 
       <Toggle label={<Term m="revolution" />} desc={MECHANICS.revolution.desc} value={settings.revolution} onChange={(v) => set('revolution', v)} />
       <Toggle label={<Term m="bantay" />} desc={MECHANICS.bantay.desc} value={settings.bantay} onChange={(v) => set('bantay', v)} />
       <Toggle label={<Term m="buwis" />} desc={MECHANICS.buwis.desc} value={settings.buwis} onChange={(v) => set('buwis', v)} />
-      <Toggle label={<Term m="bagsak" />} desc={MECHANICS.bagsak.desc} value={settings.bagsak} onChange={(v) => set('bagsak', v)} />
+      <Toggle label={<Term m="patong" />} desc={MECHANICS.patong.desc} value={settings.patong} onChange={(v) => set('patong', v)} />
+      <Toggle label={<Term m="hirit" />} desc={MECHANICS.hirit.desc} value={settings.hirit} onChange={(v) => set('hirit', v)} />
       <Toggle label="Strict pass" desc="Once you pass, you sit out until the table clears." value={settings.strictPass} onChange={(v) => set('strictPass', v)} />
       <Toggle label={<Term m="memory" />} desc="Hide the card tracker. One 4-second peek per round." value={settings.memoryMode} onChange={(v) => set('memoryMode', v)} />
 
@@ -448,13 +459,7 @@ export function RoundEndModal({
               {tributeNote(result, personas)}
             </p>
           )}
-          {game.settings.bagsak && !last && (
-            <p className="note">
-              {result.winner === 0
-                ? 'Bagsak (Fall) next round: you pay double unless you win again.'
-                : `Bagsak (Fall) next round: ${personas[result.winner].name} pays double unless they win again.`}
-            </p>
-          )}
+          {!last && stakesNote(game, personas) && <p className="note">{stakesNote(game, personas)}</p>}
           {host && <HostNote text={host} />}
           <div className="modal-actions">
             <button className="btn primary" onClick={onNext} autoFocus>
@@ -465,6 +470,15 @@ export function RoundEndModal({
       )}
     </Modal>
   );
+}
+
+function stakesNote(game: GameState, personas: Persona[]) {
+  const next = { ...game, round: game.round + 1 };
+  const bounty = bountySeat(next);
+  const parts: string[] = [];
+  if (bounty >= 0) parts.push(bounty === 0 ? 'you lead, so you carry the Patong (Bounty)' : `${personas[bounty].name} leads and carries the Patong (Bounty)`);
+  if (isHulingHirit(next)) parts.push('the final round counts double (Huling Hirit)');
+  return parts.length ? `Next round: ${parts.join('; ')}.` : null;
 }
 
 function tributeNote(r: RoundResult, personas: Persona[]) {
