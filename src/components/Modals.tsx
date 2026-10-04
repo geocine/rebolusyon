@@ -192,6 +192,11 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             player could: the cards it remembers and what your passes give away. Pass while holding one card, and
             Mika now knows that card can’t beat the table.
           </p>
+          <p>
+            They don’t always play their biggest cards. About a quarter of the time a bot could beat the table, it
+            passes on purpose, usually to keep a Two for later. Beat them the same way: make them spend their Twos
+            on cheap singles, lead pairs or five-card hands when someone is short on cards, and watch the card counts.
+          </p>
           <p className="small">
             Each has a temperament: Lola avoids getting caught with a big hand, Kuya Jun swings for wins, Mika plays
             the cold odds. When a bot says it likes its chances, it’s reading its own estimate. The Hint button

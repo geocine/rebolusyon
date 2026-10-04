@@ -3,8 +3,8 @@
  *   $env:BENCH=1; npx vitest run src/engine/ai.bench.test.ts
  */
 import { describe, expect, it } from 'vitest';
-import { mulberry32 } from './cards';
-import { type Difficulty, type GameState, DEFAULT_SETTINGS, createMatch, pass, play } from './game';
+import { RANK_TWO, mulberry32, rankOf } from './cards';
+import { type Difficulty, type GameState, DEFAULT_SETTINGS, createMatch, isLeading, legalPlays, pass, play } from './game';
 import { PERSONAS, decide } from './ai';
 import { think } from './search';
 import { playout, rolloutMove, simFrom } from './sim';
@@ -96,6 +96,34 @@ bench('AI benchmark', () => {
       console.log(`rule-based player vs 3× ${d}: win ${(r.winRate * 100).toFixed(1)}% (fair share 25%), avg points ${r.avgPoints.toFixed(2)}`);
     }
   }, 3_600_000);
+
+  it('strategic passes: how often bots pass while holding a legal beat', () => {
+    for (const d of ['easy', 'normal', 'hard'] as const) {
+      const rng = mulberry32(41);
+      let canBeat = 0;
+      let passed = 0;
+      let twosHeld = 0;
+      let twosSaved = 0;
+      for (let r = 0; r < ROUNDS; r++) {
+        let g = createMatch({ ...DEFAULT_SETTINGS, buwis: false, rounds: 1 }, 2000 + r);
+        for (let i = 0; i < 400 && g.phase === 'playing'; i++) {
+          const p = g.turn;
+          const options = isLeading(g) ? [] : legalPlays(g, p);
+          const c = think(g, p, d, rng).combo;
+          if (options.length) {
+            canBeat++;
+            if (!c) passed++;
+            if (g.trick.top?.type === 'single' && options.some((o) => o.cards.some((x) => rankOf(x) === RANK_TWO))) {
+              twosHeld++;
+              if (!c || !c.cards.some((x) => rankOf(x) === RANK_TWO)) twosSaved++;
+            }
+          }
+          g = c ? play(g, p, c.cards) : pass(g, p);
+        }
+      }
+      console.log(`${d}: passed ${((passed / canBeat) * 100).toFixed(1)}% of ${canBeat} turns where a beat was legal; kept the Two back on ${((twosSaved / Math.max(1, twosHeld)) * 100).toFixed(1)}% of ${twosHeld} single-card turns where a Two could beat`);
+    }
+  }, 1_800_000);
 
   it('heuristic (hard) vs heuristic (hard) control', () => {
     const r = tournament(heuristic('hard'), heuristic('hard'), ROUNDS);
