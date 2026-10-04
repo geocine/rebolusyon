@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { makeCard } from '../engine/cards';
 import type { Difficulty, RuleMode } from '../engine/game';
 import { MODES, modeOf } from '../mechanics';
-import { PERSONAS } from '../engine/ai';
+import { REGULARS } from '../engine/ai';
 import { DIFFICULTIES } from '../difficulty';
 import type { LifetimeStats } from '../storage';
 import { CardView } from './CardView';
@@ -110,14 +110,19 @@ export function TitleScreen({ stats, mode, onMode, difficulty, onDifficulty, onP
           <p className="ts-fair">No peeking: bots only see their own hand, the cards played, and who passed. Same as you.</p>
         </motion.div>
 
+        <motion.div className="roster-head" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.95 }}>
+          <h3>The regulars</h3>
+          <p>Three of them sit down each match, in random seats. Learn their habits.</p>
+        </motion.div>
         <motion.div className="roster" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}>
-          {PERSONAS.slice(1).map((p) => (
+          {REGULARS.map((p) => (
             <div key={p.name} className="roster-card" style={{ ['--persona' as string]: p.color }}>
               <Avatar persona={p} size={48} />
               <div>
                 <div className="rc-name">{p.name}</div>
                 <div className="rc-title">{p.title}</div>
                 <div className="rc-blurb">{p.blurb}</div>
+                <div className="rc-tell">{p.tell}</div>
               </div>
             </div>
           ))}

@@ -751,6 +751,15 @@ button {
 .q-sway .fx-earrings {
   animation: px-wiggle 0.8s steps(1) infinite;
 }
+.q-fidget .fx-fidget {
+  animation: px-wiggle 1.1s steps(1) infinite var(--px-delay);
+}
+.q-bop .px-head {
+  animation: px-hop 0.5s steps(1) infinite;
+}
+.q-bop.active .px-head {
+  animation-duration: 0.3s;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .px * {
@@ -887,12 +896,42 @@ button {
   display: flex;
   gap: 10px;
 }
-.roster {
+.roster-head {
   margin-top: 42px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 14px;
+  text-align: center;
+}
+.roster-head h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  color: var(--gold-2);
+}
+.roster-head p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: 0.65;
+}
+.rc-tell {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed color-mix(in srgb, var(--persona) 35%, transparent);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--persona) 55%, var(--paper));
+}
+.roster {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 14px;
   width: 100%;
+}
+.roster > .roster-card {
+  flex: 0 1 calc((100% - 3 * 14px) / 4);
+  min-width: 220px;
 }
 .roster-card {
   position: relative;
@@ -2745,8 +2784,8 @@ kbd {
   .rules-grid {
     grid-template-columns: 1fr;
   }
-  .roster {
-    grid-template-columns: 1fr;
+  .roster > .roster-card {
+    flex-basis: 100%;
   }
 }
 

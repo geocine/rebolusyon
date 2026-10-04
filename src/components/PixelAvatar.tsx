@@ -188,6 +188,128 @@ export const SPRITES: Record<string, Sprite> = {
     ],
     quirk: 'q-sway',
   },
+  AJ: {
+    rows: [
+      '......HHHH......',
+      '.....HHhHHH.....',
+      '......HHHH......',
+      '....HHHHHHHH....',
+      '...HHHHHHHHHH...',
+      '...HHHhHHhHHH...',
+      '...HSSSSSSSSH...',
+      '...HSSSSSSSSH...',
+      '...HSSSSSSSSH...',
+      '...SSSSSSSSSS...',
+      '...SCSSSSSSCS...',
+      '...sSSSSSSSSs...',
+      '....SSSSSSSS....',
+      '.....sSSSSs.....',
+      '..BBBAAAAAABBB..',
+      '.BBBBAAAAAABBBB.',
+    ],
+    palette: { H: '#3a2418', h: '#5e3c28', S: '#d29a6a', s: '#ae744a', C: '#ee8a78', B: '#4fb6b0', A: '#f3e9d8' },
+    eyes: [
+      [5, 8],
+      [10, 8],
+    ],
+    mouth: { x: 7, y: 11, w: 2, color: '#7a2e20' },
+    fx: [
+      {
+        className: 'fx-fidget',
+        palette: { Y: '#e8c04a', e: '#e58fa0' },
+        rows: ['............e...', '...........Y....', '..........Y.....', ...Array(13).fill('................')],
+      },
+    ],
+    quirk: 'q-fidget',
+  },
+  TB: {
+    rows: [
+      '................',
+      '................',
+      '.....SSSSSS.....',
+      '....SSSSSSSS....',
+      '...HFFFFFFFFH...',
+      '...HLLFSSFLLH...',
+      '...HFFFSSFFFH...',
+      '...HSSSSSSSSH...',
+      '...HSSSSSSSSH...',
+      '...SSSSSSSSSS...',
+      '...SSSSSSSSSS...',
+      '...sSMMMMMMSs...',
+      '....SSSSSSSS....',
+      '.....sSSSSs.....',
+      '..BBBBWssWBBBB..',
+      '.BBBBBBbBBBBBBB.',
+    ],
+    palette: { H: '#2b211c', S: '#c98a5a', s: '#a46a3e', F: '#221a15', L: '#3f6b8a', M: '#2b211c', W: '#f3e9d8', B: '#6f8fe0', b: '#4f6cb8' },
+    eyes: [
+      [5, 8],
+      [10, 8],
+    ],
+    mouth: { x: 6, y: 12, w: 4, color: '#fff6e0' },
+    fx: [
+      {
+        className: 'fx-glint',
+        palette: { G: '#ffffff' },
+        rows: [...Array(5).fill('................'), '....G.....G.....', ...Array(10).fill('................')],
+      },
+    ],
+    quirk: 'q-glint',
+  },
+  BE: {
+    rows: [
+      '.....KKKKKK.....',
+      '....K.HHHH.K....',
+      '...K.HHHHHH.K...',
+      '...KHHHHPPHHK...',
+      '...KHHHHHPPHK...',
+      '..RRHSSSSSSHRR..',
+      '..RRSSSSSSSSRR..',
+      '..RRSSSSSSSSRR..',
+      '...HSSSSSSSSH...',
+      '...HSSSSSSSSH...',
+      '...HSCSSSSCSH...',
+      '...HsSSSSSSsH...',
+      '....HSSSSSSH....',
+      '.....sSSSSs.....',
+      '..BBBBBssBBBBB..',
+      '.BBBBDBBBBDBBBB.',
+    ],
+    palette: { K: '#ece4f2', R: '#ece4f2', H: '#241a22', P: '#e0608a', S: '#e2ab80', s: '#bf8458', C: '#ee8a78', B: '#e0608a', D: '#f3e9d8' },
+    eyes: [
+      [5, 8],
+      [10, 8],
+    ],
+    mouth: { x: 7, y: 11, w: 2, color: '#7a2e20' },
+    quirk: 'q-bop',
+  },
+  MC: {
+    rows: [
+      '................',
+      '......hhhh......',
+      '....HHHhhhHH....',
+      '...HHHHHHHHHH...',
+      '...HHHHHHHHHHc..',
+      '...HSSSSSSSSHc..',
+      '...HSSSSSSSSH...',
+      '...SHHSSSSHHS...',
+      '...SSSSSSSSSS...',
+      '...SSSSSSSSSS...',
+      '...SSSSSSSSSS...',
+      '...sSMMSSMMSs...',
+      '....SSSSSSSS....',
+      '.....sSSSSs.....',
+      '..WWWWWssWWWWW..',
+      '.WWWWVWWWWVWWWW.',
+    ],
+    palette: { H: '#8a8494', h: '#c9c4d0', c: '#a083d6', S: '#c08458', s: '#9c6440', M: '#4a4450', W: '#f3e9d8', V: '#a083d6' },
+    eyes: [
+      [5, 8],
+      [10, 8],
+    ],
+    mouth: { x: 7, y: 12, w: 2, color: '#7a2e20' },
+    quirk: 'q-dart',
+  },
 };
 
 interface Run {
@@ -250,7 +372,7 @@ interface Props {
 }
 
 /** Desynchronises blinks so a table of avatars doesn't blink in unison. */
-const DELAYS: Record<string, string> = { YOU: '-0.4s', LN: '-1.7s', KJ: '-3.1s', MK: '-2.2s', TC: '-0.9s' };
+const DELAYS: Record<string, string> = { YOU: '-0.4s', LN: '-1.7s', KJ: '-3.1s', MK: '-2.2s', TC: '-0.9s', AJ: '-2.7s', TB: '-1.2s', BE: '-3.5s', MC: '-0.6s' };
 
 export const PixelAvatar = memo(function PixelAvatar({ id, active, talking, mood }: Props) {
   const sprite = SPRITES[id];

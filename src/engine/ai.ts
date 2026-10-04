@@ -1,12 +1,27 @@
 import { type Card, type Rng, RANK_TWO, newDeck, power, rankOf, rankPower, removeCards } from './cards';
 import { type Combo, FIVE_ORDER, enumerateFives } from './combos';
-import { type Difficulty, type GameState, PLAYERS, flipsOrder, isLeading, legalPlays, nextSeat } from './game';
+import { type Cast, type Difficulty, type GameState, DEFAULT_CAST, PLAYERS, flipsOrder, isLeading, legalPlays, nextSeat } from './game';
+
+/** How a persona weighs outcomes in search. Same search, different temperament. */
+export interface Style {
+  /** Bonus for winning the round on top of the points (risk appetite). */
+  winWeight: number;
+  /** Softmax temperature multiplier. Higher = more surprising picks. */
+  temperature: number;
+  /** Thinking-time multiplier. */
+  patience: number;
+  /** How hard passes are read as weakness (0..1). */
+  inference: number;
+  /** Appetite for dragging down whoever leads the match. */
+  leaderAim: number;
+}
 
 export interface Persona {
+  /** Also the pixel-portrait key. */
+  initials: string;
   name: string;
   title: string;
   color: string;
-  initials: string;
   /** Reluctance to spend strong cards early (0..1). */
   hoard: number;
   /** Fraction of played cards remembered at Hard difficulty (0..1). */
@@ -15,55 +30,147 @@ export interface Persona {
   revLove: number;
   /** Randomness in decisions. */
   chaos: number;
+  style: Style;
   blurb: string;
+  /** One line on how they play, shown when they sit down. */
+  tell: string;
 }
 
-export const PERSONAS: Persona[] = [
+const YOU: Persona = {
+  initials: 'YOU',
+  name: 'You',
+  title: 'The Challenger',
+  color: '#f3e9d8',
+  hoard: 0.6,
+  memory: 1,
+  revLove: 0.5,
+  chaos: 0,
+  // Powers the hint button.
+  style: { winWeight: 0.5, temperature: 0, patience: 1.2, inference: 1, leaderAim: 0 },
+  blurb: 'You.',
+  tell: '',
+};
+
+/** Everyone who might sit down at your table. Three are drawn each match. */
+export const REGULARS: Persona[] = [
   {
-    name: 'You',
-    title: 'The Challenger',
-    color: '#f3e9d8',
-    initials: 'YOU',
-    hoard: 0.6,
-    memory: 1,
-    revLove: 0.5,
-    chaos: 0,
-    blurb: 'You.',
-  },
-  {
+    initials: 'LN',
     name: 'Lola Nena',
     title: 'The Patient Matriarch',
     color: '#93b38c',
-    initials: 'LN',
     hoard: 1,
     memory: 0.95,
     revLove: 0.15,
     chaos: 0.3,
+    style: { winWeight: 0.25, temperature: 0.7, patience: 1.3, inference: 0.7, leaderAim: 0.15 },
     blurb: 'Everyone’s lola (grandma). Sits on her Twos like heirlooms, remembers every card since 1974, and hates getting caught with a full hand.',
+    tell: 'Holds her Twos forever. Remembers everything.',
   },
   {
+    initials: 'KJ',
     name: 'Kuya Jun',
     title: 'The Jeepney King',
     color: '#cf6a3f',
-    initials: 'KJ',
     hoard: 0.2,
     memory: 0.55,
     revLove: 1,
     chaos: 0.9,
+    style: { winWeight: 1.1, temperature: 2.2, patience: 0.6, inference: 0.3, leaderAim: 0.35 },
     blurb: 'Every friend group’s kuya (big brother). Plays loud, plays fast, swings for the win, and flips the table the moment he gets four of anything.',
+    tell: 'Wild. Flips the order any chance he gets.',
   },
   {
+    initials: 'MK',
     name: 'Mika',
     title: 'The Counter',
     color: '#d4a24c',
-    initials: 'MK',
     hoard: 0.55,
     memory: 1,
     revLove: 0.5,
     chaos: 0.15,
+    style: { winWeight: 0.55, temperature: 0.4, patience: 1.4, inference: 1, leaderAim: 0.25 },
     blurb: 'Quiet. Tracks the deck and reads every pass. Knows exactly when your Two is the last one.',
+    tell: 'Counts every card and reads every pass.',
+  },
+  {
+    initials: 'AJ',
+    name: 'Ate Joy',
+    title: 'The Bookkeeper',
+    color: '#4fb6b0',
+    hoard: 0.5,
+    memory: 0.85,
+    revLove: 0.4,
+    chaos: 0.25,
+    style: { winWeight: 0.4, temperature: 0.6, patience: 1.1, inference: 0.8, leaderAim: 0.85 },
+    blurb: 'Runs the sari-sari store (corner shop) and keeps a tab on everyone. Whoever is ahead owes her, and she always collects.',
+    tell: 'Hunts whoever is leading the match.',
+  },
+  {
+    initials: 'TB',
+    name: 'Tito Boy',
+    title: 'The Sandbagger',
+    color: '#6f8fe0',
+    hoard: 1,
+    memory: 0.7,
+    revLove: 0.3,
+    chaos: 0.4,
+    style: { winWeight: 1, temperature: 0.9, patience: 1, inference: 0.6, leaderAim: 0.2 },
+    blurb: 'Every reunion’s tito (uncle). Passes, passes, passes, then drops three Twos in a row and sings about it.',
+    tell: 'Passes a lot. Then he pounces.',
+  },
+  {
+    initials: 'BE',
+    name: 'Bea',
+    title: 'The Speedrunner',
+    color: '#e0608a',
+    hoard: 0.05,
+    memory: 0.5,
+    revLove: 0.75,
+    chaos: 0.5,
+    style: { winWeight: 0.7, temperature: 1.4, patience: 0.5, inference: 0.4, leaderAim: 0.3 },
+    blurb: 'Plays between ranked matches on her phone. Sheds cards as fast as the rules allow and never, ever saves a Two for later.',
+    tell: 'Dumps cards fast. Never saves a Two.',
+  },
+  {
+    initials: 'MC',
+    name: 'Mang Caloy',
+    title: 'The Barbero',
+    color: '#a083d6',
+    hoard: 0.6,
+    memory: 0.45,
+    revLove: 0.5,
+    chaos: 0.3,
+    style: { winWeight: 0.5, temperature: 0.6, patience: 1, inference: 1, leaderAim: 0.3 },
+    blurb: 'The neighborhood barber. Forgets half the cards, but reads every pass and every sigh. Knows what you hold by how you hold it.',
+    tell: 'Forgets cards, but reads every pass.',
   },
 ];
+
+const BY_ID: Record<string, Persona> = Object.fromEntries([YOU, ...REGULARS].map((p) => [p.initials, p]));
+
+export const personaById = (id: string): Persona => BY_ID[id] ?? REGULARS[0];
+
+/** Who sits in each seat this match. */
+export const castOf = (s: Pick<GameState, 'cast'>): Persona[] => s.cast.map(personaById);
+export const personaAt = (s: Pick<GameState, 'cast'>, seat: number): Persona => personaById(s.cast[seat]);
+
+/** The classic table: tests, benchmarks and the tutorial use it so they stay reproducible. */
+export const PERSONAS: Persona[] = castOf({ cast: DEFAULT_CAST });
+
+/** Three regulars in random seats, with at least one face that wasn't at the previous table. */
+export function drawCast(rng: Rng, previous?: Cast): Cast {
+  for (let attempt = 0; ; attempt++) {
+    const pool = REGULARS.map((p) => p.initials);
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const cast: Cast = ['YOU', ...pool.slice(0, 3)];
+    if (!previous || attempt >= 20) return cast;
+    const same = cast.slice(1).every((id) => previous.includes(id));
+    if (!same) return cast;
+  }
+}
 
 const DIFFICULTY = {
   easy: { memoryScale: 0.25, noise: 9, lookahead: false },

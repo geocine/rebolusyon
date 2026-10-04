@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { PERSONAS } from '../engine/ai';
+import { PERSONAS, REGULARS } from '../engine/ai';
 import { HOST } from '../tutorial';
 import { SPRITES } from './PixelAvatar';
 
 describe('pixel sprites', () => {
-  it('covers every character at the table', () => {
-    for (const p of [...PERSONAS, HOST]) expect(SPRITES[p.initials]).toBeDefined();
+  it('covers every character who can sit at the table', () => {
+    for (const p of [...PERSONAS, ...REGULARS, HOST]) expect(SPRITES[p.initials], p.name).toBeDefined();
   });
 
   it('are 16×16 grids drawn only with their own palette', () => {

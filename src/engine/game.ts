@@ -157,9 +157,15 @@ export type Fact =
 
 export type Phase = 'exchange' | 'playing' | 'roundEnd' | 'matchEnd';
 
+/** Persona id per seat. Seat 0 is always the human. */
+export type Cast = readonly string[];
+
+export const DEFAULT_CAST: Cast = ['YOU', 'LN', 'KJ', 'MK'];
+
 export interface GameState {
   seed: number;
   settings: Settings;
+  cast: Cast;
   phase: Phase;
   round: number;
   hands: Card[][];
@@ -265,10 +271,11 @@ export function pickTributePayer(r: RoundResult): number {
   return best;
 }
 
-export function createMatch(settings: Settings, seed = Math.floor(Math.random() * 2 ** 31)): GameState {
+export function createMatch(settings: Settings, seed = Math.floor(Math.random() * 2 ** 31), cast: Cast = DEFAULT_CAST): GameState {
   const base: GameState = {
     seed,
     settings,
+    cast,
     phase: 'playing',
     round: 0,
     hands: [[], [], [], []],

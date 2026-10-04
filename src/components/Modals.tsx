@@ -221,7 +221,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             On Sharp and up, each bot imagines dozens to hundreds of ways the hidden cards could be spread, plays every
             promising move out to the end in its head, and goes with what wins most. It only “knows” what a real
             player could: the cards it remembers and what your passes give away. Pass while holding one card, and
-            Mika now knows that card can’t beat the table.
+            the sharpest reader at the table now knows that card can’t beat it.
           </p>
           <p>
             They don’t always play their biggest cards. About a quarter of the time a bot could beat the table, it
@@ -229,9 +229,10 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             on cheap singles, lead pairs or five-card hands when someone is short on cards, and watch the card counts.
           </p>
           <p className="small">
-            Each has a temperament: Lola avoids getting caught with a big hand, Kuya Jun swings for wins, Mika plays
-            the cold odds. When a bot says it likes its chances, it’s reading its own estimate. The Hint button
-            uses the same brain and shows your odds.
+            Seven regulars take turns at your table, three per match, in random seats. Each has a temperament: Lola
+            hoards her Twos, Ate Joy hunts the leader, Bea dumps cards fast, Mika and Mang Caloy read your passes.
+            Hover a name at the table to see their habit. When a bot says it likes its chances, it’s reading its
+            own estimate. The Hint button uses the same brain and shows your odds.
           </p>
         </section>
 
@@ -245,8 +246,10 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             <dd>“I’ll pass for now”</dd>
             <dt>Pare</dt>
             <dd>buddy, mate</dd>
-            <dt>Lola / Kuya</dt>
-            <dd>grandma / big brother</dd>
+            <dt>Lola · Kuya · Ate · Tito · Mang</dt>
+            <dd>grandma · big brother · big sister · uncle · mister (older man)</dd>
+            <dt>Sari-sari · Suki · Utang</dt>
+            <dd>corner shop · regular customer · debt</dd>
             <dt>Anak · Apo · Iho</dt>
             <dd>child · grandchild · son (said with affection; <i>mga</i> makes it plural)</dd>
             <dt>Sorry na lang</dt>

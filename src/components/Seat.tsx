@@ -117,7 +117,7 @@ export function Seat({ player, persona, cards, score, position, isTurn, passed, 
           <PassStamp show={passed && !isTurn} />
           <Bubble text={bubble} position={position} />
         </div>
-        <div className="seat-meta">
+        <div className="seat-meta" title={persona.tell ? `${persona.name}: ${persona.tell}` : undefined}>
           <div className="seat-name">{persona.name}</div>
           <div className="seat-title">{persona.title}</div>
           <div className="seat-chips">

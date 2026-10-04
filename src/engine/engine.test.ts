@@ -18,7 +18,7 @@ import {
   validatePlay,
   withMode,
 } from './game';
-import { PERSONAS, chooseTributeReturn, decide } from './ai';
+import { PERSONAS, REGULARS, castOf, chooseTributeReturn, decide, drawCast, personaAt } from './ai';
 
 // rank indices: 3=0 4=1 5=2 6=3 7=4 8=5 9=6 10=7 J=8 Q=9 K=10 A=11 2=12; suits ♣0 ♠1 ♥2 ♦3
 const C = 0, S = 1, H = 2, D = 3;
@@ -169,6 +169,47 @@ describe('scoring', () => {
     expect(penaltyFor([mk(1, C), mk(2, C)], true).penalty).toBe(4);
   });
 });
+
+describe('who sits at the table', () => {
+  it('draws three different regulars, with you in seat 0', () => {
+    const rng = mulberry32(9);
+    for (let i = 0; i < 200; i++) {
+      const cast = drawCast(rng);
+      expect(cast[0]).toBe('YOU');
+      expect(new Set(cast.slice(1)).size).toBe(3);
+      for (const id of cast.slice(1)) expect(REGULARS.some((p) => p.initials === id)).toBe(true);
+    }
+  });
+
+  it('always brings at least one new face', () => {
+    const rng = mulberry32(4);
+    let prev = drawCast(rng);
+    for (let i = 0; i < 300; i++) {
+      const next = drawCast(rng, prev);
+      expect(next.slice(1).every((id) => prev.includes(id))).toBe(false);
+      prev = next;
+    }
+  });
+
+  it('puts every regular in every seat over time', () => {
+    const rng = mulberry32(21);
+    const seen = new Set<string>();
+    for (let i = 0; i < 600; i++) drawCast(rng).forEach((id, seat) => seat && seen.add(`${id}@${seat}`));
+    expect(seen.size).toBe(REGULARS.length * 3);
+  });
+
+  it('the bots in a match are the ones its cast names', () => {
+    const s = createMatch(DEFAULT_SETTINGS, 1, ['YOU', 'BE', 'AJ', 'TB']);
+    expect(castOf(s).map((p) => p.name)).toEqual(['You', 'Bea', 'Ate Joy', 'Tito Boy']);
+    expect(personaAt(nextRoundAfterPlay(s), 2).name).toBe('Ate Joy');
+  });
+});
+
+/** Any state derived from a match keeps its cast. */
+function nextRoundAfterPlay(s: GameState): GameState {
+  const d = decide(s, s.turn, personaAt(s, s.turn), 'easy', mulberry32(1));
+  return d.combo ? play(s, s.turn, d.combo.cards) : pass(s, s.turn);
+}
 
 describe('rule modes', () => {
   it('a mode overrides every rule flag, whatever was stored before', () => {

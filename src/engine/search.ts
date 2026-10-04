@@ -7,34 +7,9 @@
 import { type Rng, mulberry32 } from './cards';
 import type { Combo } from './combos';
 import { type Difficulty, type GameState, HUMAN, flipsOrder, isLeading } from './game';
-import { type Persona, PERSONAS, decide } from './ai';
+import { type Persona, type Style, decide, personaAt } from './ai';
 import { sampleWorld } from './belief';
 import { playout, simFrom, simPass, simPlay } from './sim';
-
-/** How a persona weighs outcomes. Same search, different temperament. */
-export interface Style {
-  /** Bonus for winning the round on top of the points (risk appetite). */
-  winWeight: number;
-  /** Softmax temperature multiplier. Higher = more surprising picks. */
-  temperature: number;
-  /** Thinking-time multiplier. */
-  patience: number;
-  /** How hard passes are read as weakness. */
-  inference: number;
-  /** Appetite for dragging down whoever leads the match. */
-  leaderAim: number;
-}
-
-export const STYLES: Style[] = [
-  // Seat 0 is the human; this profile powers the hint button.
-  { winWeight: 0.5, temperature: 0, patience: 1.2, inference: 1, leaderAim: 0 },
-  // Lola Nena: patient, avoids getting caught with a big hand.
-  { winWeight: 0.25, temperature: 0.7, patience: 1.3, inference: 0.7, leaderAim: 0.15 },
-  // Kuya Jun: plays for the win, loves chaos, thinks fast.
-  { winWeight: 1.1, temperature: 2.2, patience: 0.6, inference: 0.3, leaderAim: 0.35 },
-  // Mika: cold expected value, reads every pass.
-  { winWeight: 0.55, temperature: 0.4, patience: 1.4, inference: 1, leaderAim: 0.25 },
-];
 
 interface Level {
   /** Share of moves played on Chill instincts instead of searching. */
@@ -108,7 +83,7 @@ export function think(
   rng: Rng,
   opts: { persona?: Persona; style?: Style; budgetMs?: number } = {},
 ): Thought {
-  const persona = opts.persona ?? PERSONAS[me];
+  const persona = opts.persona ?? personaAt(s, me);
   const heuristic = decide(s, me, persona, difficulty, rng, difficulty === 'easy' ? 1 : 0.15);
   if (difficulty === 'easy') {
     return { combo: heuristic.combo, winProb: null, points: null, candidates: [], worlds: 0 };
@@ -119,7 +94,7 @@ export function think(
     const instinct = decide(s, me, persona, 'easy', rng);
     return { combo: instinct.combo, winProb: null, points: null, candidates: [], worlds: 0 };
   }
-  const style = opts.style ?? STYLES[me];
+  const style = opts.style ?? persona.style;
   const hand = s.hands[me];
 
   const finisher = heuristic.scores.find((x) => x.combo && x.combo.cards.length === hand.length);

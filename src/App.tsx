@@ -24,10 +24,10 @@ import {
   validatePlay,
   withMode,
 } from './engine/game';
-import { PERSONAS, chooseTributeReturn, decide } from './engine/ai';
+import { castOf, chooseTributeReturn, decide, drawCast, personaAt } from './engine/ai';
 import { lineFor, type Moment } from './lines';
 import { Term, modeOf, termText } from './mechanics';
-import { loadSettings, loadStats, saveSettings, saveStats, type LifetimeStats } from './storage';
+import { loadLastCast, loadSettings, loadStats, saveLastCast, saveSettings, saveStats, type LifetimeStats } from './storage';
 import { ActionBar, PlayerHand } from './components/PlayerHand';
 import { Avatar, BountyChip, PassStamp, Seat, type SeatPosition, UnderdogChip } from './components/Seat';
 import { TrickArea } from './components/TrickArea';
@@ -164,8 +164,9 @@ export default function App() {
 
   const say = useCallback(
     (player: number, moment: Moment, chance = 1) => {
-      if (player === HUMAN || Math.random() > chance) return;
-      const text = lineFor(player, moment);
+      const g = gameRef.current;
+      if (player === HUMAN || !g || Math.random() > chance) return;
+      const text = lineFor(personaAt(g, player).initials, moment);
       if (!text) return;
       setBubbles((b) => b.map((t, i) => (i === player ? text : t)));
       later(() => setBubbles((b) => b.map((t, i) => (i === player && t === text ? null : t))), 2400);
@@ -187,7 +188,9 @@ export default function App() {
   const startMatch = () => {
     resetTable();
     setTut(null);
-    setGame(createMatch(settings));
+    const cast = drawCast(Math.random, loadLastCast());
+    saveLastCast(cast);
+    setGame(createMatch(settings, undefined, cast));
   };
 
   const startLesson = (lesson: number, status: TutorialState['status'] = 'intro') => {
@@ -216,7 +219,7 @@ export default function App() {
 
   const handleEvent = useCallback(
     (e: GameEvent, g: GameState) => {
-      const name = (p: number) => PERSONAS[p].name;
+      const name = (p: number) => personaAt(g, p).name;
       const takeMood = () => {
         const m = moodRef.current;
         moodRef.current = null;
@@ -236,6 +239,10 @@ export default function App() {
                 ? `You pay ${cardLabel(ex.given)} to ${name(ex.to)}`
                 : `${name(ex.from)} pays ${ex.to === HUMAN ? 'you' : name(ex.to)} their best card`;
             showBanner({ kind: 'info', title: 'Buwis · Tribute', sub }, 2600);
+          }
+          if (g.round === 1 && !tutRef.current) {
+            const order = [1, 2, 3].sort(() => Math.random() - 0.5);
+            order.forEach((seat, i) => later(() => say(seat, 'hello', i === 0 ? 1 : 0.6), 500 + i * 1100));
           }
           if (isHulingHirit(g)) {
             const hirit = () => showBanner({ kind: 'warn', title: 'Huling Hirit · Final round', sub: 'Every penalty counts double. Anyone can still win.' }, 2600);
@@ -278,7 +285,10 @@ export default function App() {
           sfx.pass();
           const fact = g.facts[g.facts.length - 1];
           const exposed = e.player === HUMAN && fact?.kind === 'noBeat' && fact.hard && g.settings.difficulty !== 'easy';
-          if (exposed) say(Math.random() < 0.65 ? 3 : 1, 'read', 0.8);
+          if (exposed) {
+            const readers = [1, 2, 3].sort((a, b) => personaAt(g, b).style.inference - personaAt(g, a).style.inference);
+            say(readers[Math.random() < 0.65 ? 0 : 1], 'read', 0.8);
+          }
           else if (mood) say(e.player, mood);
           else say(e.player, 'pass', 0.25);
           break;
@@ -379,7 +389,7 @@ export default function App() {
           setGame((g) => {
             if (g !== game) return g;
             let combo = thought.combo;
-            if (combo && !validatePlay(g, seat, combo.cards).ok) combo = decide(g, seat, PERSONAS[seat], 'normal', Math.random).combo;
+            if (combo && !validatePlay(g, seat, combo.cards).ok) combo = decide(g, seat, personaAt(g, seat), 'normal', Math.random).combo;
             return combo ? withFlight(g, play(g, seat, combo.cards)) : pass(g, seat);
           });
         }, Math.max(0, delay - (performance.now() - started)));
@@ -635,6 +645,7 @@ export default function App() {
   }
 
   const g = game;
+  const personas = castOf(g);
   const myHand = sortHand(g.hands[HUMAN], sortMode, g.revolution);
   const memoryMode = g.settings.memoryMode;
   const visibleTrickCards = new Set(
@@ -651,7 +662,7 @@ export default function App() {
   else if (g.phase !== 'playing') status = { tone: 'idle', text: 'Round over' };
   else if (!myTurn) {
     const c = selArr.length ? classify(selArr) : null;
-    status = { tone: 'idle', text: c ? `${describeCombo(c)} · waiting for your turn` : `${PERSONAS[g.turn].name} is thinking…` };
+    status = { tone: 'idle', text: c ? `${describeCombo(c)} · waiting for your turn` : `${personas[g.turn].name} is thinking…` };
   } else if (!selArr.length) {
     if (g.firstPlay) status = { tone: 'idle', text: 'Your opening — must include 3♣' };
     else if (leading) status = { tone: 'idle', text: 'Your lead — play anything' };
@@ -725,7 +736,7 @@ export default function App() {
             <Seat
               key={player}
               player={player}
-              persona={PERSONAS[player]}
+              persona={personas[player]}
               cards={g.hands[player]}
               score={g.scores[player]}
               position={position}
@@ -737,7 +748,7 @@ export default function App() {
               bubble={bubbles[player]}
             />
           ))}
-          <TrickArea trick={g.trick} revolution={g.revolution} personas={PERSONAS} memoryMode={memoryMode} discard={discard} firstPlay={g.firstPlay} turn={g.turn} playing={g.phase === 'playing'} />
+          <TrickArea trick={g.trick} revolution={g.revolution} personas={personas} memoryMode={memoryMode} discard={discard} firstPlay={g.firstPlay} turn={g.turn} playing={g.phase === 'playing'} />
           <AnimatePresence>
             {tut && tutStep && hostText && !tutStep.inModal && (
               <Coach
@@ -762,7 +773,7 @@ export default function App() {
         <section className={`me ${myTurn ? 'my-turn' : ''}`}>
           <div className={`me-id ${humanPassed ? 'has-passed' : ''}`}>
             <div className="seat-avatar-wrap">
-              <Avatar persona={PERSONAS[HUMAN]} size={52} active={myTurn} />
+              <Avatar persona={personas[HUMAN]} size={52} active={myTurn} />
               <PassStamp show={humanPassed} />
             </div>
             <div>
@@ -814,7 +825,7 @@ export default function App() {
         peekAvailable={peekRound !== g.round}
         onPeek={onPeek}
         log={g.log}
-        personas={PERSONAS}
+        personas={personas}
         revolution={g.revolution}
         open={trackerOpen}
         onToggle={() => setTrackerOpen((o) => !o)}
@@ -823,8 +834,8 @@ export default function App() {
 
       <Banner banner={banner} />
 
-      <ExchangeModal exchange={g.phase === 'exchange' ? g.exchange : null} hand={sortHand(g.hands[HUMAN], 'rank')} personas={PERSONAS} onReturn={(c) => setGame(returnTribute(g, c))} host={hostInModal} />
-      <RoundEndModal open={resultOpen} result={lastResult} game={g} personas={PERSONAS} onNext={onNext} host={hostInModal} nextLabel={tut ? tutStep?.cta : undefined} />
+      <ExchangeModal exchange={g.phase === 'exchange' ? g.exchange : null} hand={sortHand(g.hands[HUMAN], 'rank')} personas={personas} onReturn={(c) => setGame(returnTribute(g, c))} host={hostInModal} />
+      <RoundEndModal open={resultOpen} result={lastResult} game={g} personas={personas} onNext={onNext} host={hostInModal} nextLabel={tut ? tutStep?.cta : undefined} />
       <AnimatePresence>
         {tut?.status === 'intro' && (
           <LessonIntro key={`intro-${tut.lesson}`} index={tut.lesson} cleared={progress.cleared} onStart={() => setTut((t) => t && { ...t, status: 'play' })} onPick={(i) => startLesson(i)} onExit={exitTutorial} />
@@ -843,7 +854,7 @@ export default function App() {
       <MatchEndModal
         open={matchOpen}
         game={g}
-        personas={PERSONAS}
+        personas={personas}
         onAgain={startMatch}
         onTitle={() => {
           setMatchOpen(false);
