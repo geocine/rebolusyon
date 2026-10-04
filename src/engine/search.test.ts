@@ -130,6 +130,33 @@ describe('search', () => {
     expect(estimates).toBeGreaterThan(0);
   }, 60_000);
 
+  it('never peeks: reshuffling the hidden cards between opponents changes nothing', () => {
+    let s = createMatch({ ...DEFAULT_SETTINGS, buwis: false }, 11);
+    const rng = mulberry32(6);
+    let checked = 0;
+    for (let i = 0; i < 400 && s.phase === 'playing'; i++) {
+      const me = s.turn;
+      if (!s.firstPlay) {
+        const others = [0, 1, 2, 3].filter((p) => p !== me);
+        const hidden = others.flatMap((p) => s.hands[p]);
+        const shuffled = hidden.slice().reverse();
+        const hands = s.hands.slice();
+        let k = 0;
+        for (const p of others) hands[p] = shuffled.slice(k, (k += s.hands[p].length));
+        const peeked: GameState = { ...s, hands };
+        for (const d of ['easy', 'normal', 'hard', 'rival'] as const) {
+          const a = think(s, me, d, mulberry32(i), { budgetMs: 0 });
+          const b = think(peeked, me, d, mulberry32(i), { budgetMs: 0 });
+          expect(b).toEqual(a);
+        }
+        checked++;
+      }
+      const d = decide(s, me, PERSONAS[me], 'normal', rng);
+      s = d.combo ? play(s, me, d.combo.cards) : pass(s, me);
+    }
+    expect(checked).toBeGreaterThan(20);
+  }, 60_000);
+
   it('takes the win when it can go out', () => {
     const base = createMatch({ ...DEFAULT_SETTINGS, bantay: false }, 1);
     const s: GameState = {
