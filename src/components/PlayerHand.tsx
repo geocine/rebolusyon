@@ -11,6 +11,8 @@ interface Props {
   selected: Set<Card>;
   hinted: Set<Card>;
   fresh: Set<Card>;
+  /** Cards the walkthrough wants you to pick; they glow until selected. */
+  pointed?: Set<Card>;
   revolution: boolean;
   onSet: (c: Card, on: boolean) => void;
   /** Swipe up on the hand; `from` is the card the swipe started on, which joins the selection. */
@@ -36,7 +38,7 @@ function cardAt(x: number, y: number): Card | null {
   return el ? Number(el.dataset.card) : null;
 }
 
-export function PlayerHand({ hand, selected, hinted, fresh, revolution, onSet, onSwipeUp, dealing }: Props) {
+export function PlayerHand({ hand, selected, hinted, fresh, pointed, revolution, onSet, onSwipeUp, dealing }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(900);
   const vh = useViewportHeight();
@@ -127,7 +129,7 @@ export function PlayerHand({ hand, selected, hinted, fresh, revolution, onSet, o
               hint={hinted.has(c)}
               fresh={fresh.has(c)}
               powerCard={isPowerRank(rankOf(c), revolution)}
-              className="hand-card"
+              className={`hand-card ${pointed?.has(c) && !isSel ? 'pointed' : ''}`}
               style={{ left: i * gap, zIndex: i }}
               initial={{ opacity: 0, y: -260, rotate: -30, scale: 0.5 }}
               animate={{ opacity: 1, y: (isSel ? -lift : 0) + bow, rotate: off * 1.6, scale: 1 }}

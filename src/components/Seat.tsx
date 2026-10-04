@@ -5,7 +5,7 @@ import { CardView } from './CardView';
 
 export type SeatPosition = 'left' | 'top' | 'right' | 'bottom';
 
-export function Avatar({ persona, size = 56, active }: { persona: Persona; size?: number; active?: boolean }) {
+export function Avatar({ persona, size = 56, active }: { persona: Pick<Persona, 'color' | 'initials'>; size?: number; active?: boolean }) {
   return (
     <div
       className={`avatar ${active ? 'active' : ''}`}

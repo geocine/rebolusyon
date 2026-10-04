@@ -1,4 +1,4 @@
-import { LayoutGroup } from 'motion/react';
+import { AnimatePresence, LayoutGroup } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { sfx, setSoundEnabled } from './audio';
 import { type Card, type SortMode, cardLabel, power, rankOf, sortHand } from './engine/cards';
@@ -35,6 +35,16 @@ import { haptic, setHapticsEnabled } from './haptics';
 import { usePhone } from './hooks';
 import { askAI } from './aiClient';
 import type { Thought } from './engine/search';
+import { LESSONS, loadTutorial, saveTutorial, textOf, tutorBotMove, type TutorialProgress } from './tutorial';
+import { Coach, Diploma, LessonClear, LessonFail, LessonIntro } from './components/Tutorial';
+
+interface TutorialState {
+  lesson: number;
+  step: number;
+  status: 'intro' | 'play' | 'clear' | 'fail' | 'grad';
+  /** Why the last play attempt was refused; some steps wait for exactly that. */
+  rejected: string | null;
+}
 
 const SEATS: { player: number; position: SeatPosition }[] = [
   { player: 1, position: 'left' },
@@ -98,6 +108,13 @@ export default function App() {
   useEffect(() => {
     gameRef.current = game;
   }, [game]);
+  const [tut, setTut] = useState<TutorialState | null>(null);
+  const [progress, setProgress] = useState<TutorialProgress>(loadTutorial);
+  const tutRef = useRef(tut);
+  useEffect(() => {
+    tutRef.current = tut;
+  }, [tut]);
+  const scriptPos = useRef([0, 0, 0, 0]);
 
   const later = useCallback((fn: () => void, ms: number) => {
     timers.current.push(window.setTimeout(fn, ms));
@@ -147,16 +164,44 @@ export default function App() {
     [later],
   );
 
-  const startMatch = () => {
+  const resetTable = () => {
     lastSeq.current = 0;
     prevTurn.current = -1;
     setResultOpen(false);
     setMatchOpen(false);
     setSelected(new Set());
+    setHinted(new Set());
     setBubbles([null, null, null, null]);
     setPeekRound(0);
+  };
+
+  const startMatch = () => {
+    resetTable();
+    setTut(null);
     setGame(createMatch(settings));
   };
+
+  const startLesson = (lesson: number, status: TutorialState['status'] = 'intro') => {
+    resetTable();
+    setTrackerOpen(false);
+    scriptPos.current = [0, 0, 0, 0];
+    setGame(LESSONS[lesson].setup(settings));
+    setTut({ lesson, step: 0, status, rejected: null });
+  };
+
+  const exitTutorial = () => {
+    setTut(null);
+    setResultOpen(false);
+    setGame(null);
+  };
+
+  const shout = useCallback(
+    (seat: number, text: string) => {
+      setBubbles((b) => b.map((t, i) => (i === seat ? text : t)));
+      later(() => setBubbles((b) => b.map((t, i) => (i === seat && t === text ? null : t))), 3600);
+    },
+    [later],
+  );
 
   /* --------------------------- event reactions --------------------------- */
 
@@ -240,6 +285,11 @@ export default function App() {
             sfx.lose();
             say(e.winner, 'win');
           }
+          const lesson = tutRef.current && LESSONS[tutRef.current.lesson];
+          if (lesson) {
+            if (lesson.bill && won) later(() => setResultOpen(true), 1300);
+            break;
+          }
           setStats((s) => {
             const next = { ...s, rounds: s.rounds + 1, roundWins: s.roundWins + (won ? 1 : 0) };
             saveStats(next);
@@ -280,10 +330,19 @@ export default function App() {
 
   /* ------------------------------ AI driver ------------------------------ */
 
-  const paused = showRules || showSettings;
+  const tutLesson = tut ? LESSONS[tut.lesson] : null;
+  const paused = showRules || showSettings || (!!tut && tut.status !== 'play');
 
   useEffect(() => {
     if (!game || paused) return;
+    if (tutLesson) {
+      if (game.phase !== 'playing' || game.turn === HUMAN || tutLesson.frozen) return;
+      const delay = PACE[game.settings.speed] * (game.trick.done ? 1.3 : 1);
+      const t = window.setTimeout(() => {
+        if (gameRef.current === game) setGame(tutorBotMove(game, game.turn, tutLesson, scriptPos.current));
+      }, delay);
+      return () => clearTimeout(t);
+    }
     if (game.phase === 'playing' && game.turn !== HUMAN) {
       const base = PACE[game.settings.speed];
       const delay = base * (game.trick.done ? 1.3 : 1) * (game.firstPlay ? 1.5 : 1) + Math.random() * base * 0.5;
@@ -314,13 +373,72 @@ export default function App() {
       }, 2200);
       return () => clearTimeout(t);
     }
-  }, [game, paused]);
+  }, [game, paused, tutLesson]);
+
+  /* ------------------------------ walkthrough ---------------------------- */
+
+  useEffect(() => {
+    if (!game || !tut || tut.status !== 'play') return;
+    const lesson = LESSONS[tut.lesson];
+    const last = game.history[game.history.length - 1];
+    if (last && last.winner !== HUMAN) {
+      setTut({ ...tut, status: 'fail' });
+      return;
+    }
+    let step = tut.step;
+    while (step < lesson.steps.length && lesson.steps[step].until?.(game, { rejected: tut.rejected })) step++;
+    if (step >= lesson.steps.length) {
+      setResultOpen(false);
+      setTut({ ...tut, step, status: 'clear' });
+      sfx.win();
+      haptic.win();
+      setProgress((p) => {
+        const next = { ...p, cleared: p.cleared.includes(lesson.id) ? p.cleared : [...p.cleared, lesson.id] };
+        saveTutorial(next);
+        return next;
+      });
+    } else if (step !== tut.step) {
+      if (tut.rejected) {
+        sfx.error();
+        haptic.error();
+        setShake((n) => n + 1);
+      }
+      setTut({ ...tut, step, rejected: null });
+      setSelected(new Set());
+    }
+  }, [game, tut]);
+
+  const tutStep = tut?.status === 'play' ? (LESSONS[tut.lesson].steps[tut.step] ?? null) : null;
+
+  useEffect(() => {
+    const g = gameRef.current;
+    if (!tutStep?.shout || !g) return;
+    const [seat, text] = tutStep.shout;
+    const t = window.setTimeout(() => shout(seat, textOf(text, g)), 350);
+    return () => clearTimeout(t);
+  }, [tutStep, shout]);
+
+  const nextStep = () => setTut((t) => t && { ...t, step: t.step + 1, rejected: null });
+
+  const graduate = () => {
+    setTut((t) => t && { ...t, status: 'grad' });
+    sfx.win();
+    setProgress((p) => {
+      const next = { ...p, graduated: true };
+      saveTutorial(next);
+      return next;
+    });
+  };
 
   /* --------------------------- human controls ---------------------------- */
 
   const myTurn = !!game && game.phase === 'playing' && game.turn === HUMAN;
   const selArr = useMemo(() => [...selected], [selected]);
   const validation = game && myTurn && selArr.length ? validatePlay(game, HUMAN, selArr) : null;
+  const rejectReason = validation && !validation.ok ? validation.reason : null;
+  useEffect(() => {
+    if (rejectReason && tutRef.current?.status === 'play') setTut((t) => t && { ...t, rejected: rejectReason });
+  }, [rejectReason]);
 
   const myOptions = useMemo(() => {
     if (!game || !myTurn) return [];
@@ -399,7 +517,8 @@ export default function App() {
     });
   };
 
-  const modalOpen = showRules || showSettings || resultOpen || matchOpen || (game?.phase === 'exchange' && game.exchange?.to === HUMAN);
+  const modalOpen =
+    showRules || showSettings || resultOpen || matchOpen || (game?.phase === 'exchange' && game.exchange?.to === HUMAN) || (!!tut && tut.status !== 'play');
 
   useEffect(() => {
     if (!game) return;
@@ -426,6 +545,10 @@ export default function App() {
 
   const onNext = () => {
     if (!game) return;
+    if (tut) {
+      nextStep();
+      return;
+    }
     setResultOpen(false);
     if (game.phase === 'roundEnd') setGame(nextRound(game));
     else if (game.phase === 'matchEnd') {
@@ -463,6 +586,8 @@ export default function App() {
           difficulty={settings.difficulty}
           onDifficulty={(d) => updateSettings({ ...settings, difficulty: d })}
           onPlay={startMatch}
+          onLearn={() => startLesson(0)}
+          graduated={progress.graduated}
           onRules={() => setShowRules(true)}
           onSettings={() => setShowSettings(true)}
         />
@@ -506,14 +631,18 @@ export default function App() {
     memoryMode && 'memory',
   ].filter(Boolean) as Mechanic[];
 
+  const pointed = tutStep?.point?.filter((c) => g.hands[HUMAN].includes(c)) ?? [];
+  const hostText = tutStep ? textOf(tutStep.say, g) : null;
+  const hostInModal = tutStep?.inModal ? hostText : null;
+
   return (
-    <div className={`game ${g.revolution ? 'rev' : ''} ${shake ? `shake-${shake % 2}` : ''} ${trackerOpen ? 'tracker-open' : ''}`}>
+    <div className={`game ${g.revolution ? 'rev' : ''} ${shake ? `shake-${shake % 2}` : ''} ${trackerOpen ? 'tracker-open' : ''} ${tut ? 'tutoring' : ''}`}>
       <header className="topbar">
-        <button className="logo-small" onClick={() => confirm('Leave this match?') && setGame(null)} title="Back to title">
+        <button className="logo-small" onClick={() => (tut ? exitTutorial() : confirm('Leave this match?') && setGame(null))} title="Back to title">
           REBOLUSYON
         </button>
-        <div className="tb-round" title={`Round ${g.round} of ${g.settings.rounds}`}>
-          <span className="tb-round-label">Round</span> <b>{g.round}</b>/{g.settings.rounds}
+        <div className="tb-round" title={`${tut ? 'Lesson' : 'Round'} ${g.round} of ${g.settings.rounds}`}>
+          <span className="tb-round-label">{tut ? 'Lesson' : 'Round'}</span> <b>{g.round}</b>/{g.settings.rounds}
           <span className="tb-pips" aria-hidden="true">
             {Array.from({ length: g.settings.rounds }, (_, i) => (
               <i key={i} className={i + 1 < g.round ? 'done' : i + 1 === g.round ? 'now' : ''} />
@@ -562,6 +691,25 @@ export default function App() {
             />
           ))}
           <TrickArea trick={g.trick} revolution={g.revolution} personas={PERSONAS} memoryMode={memoryMode} discard={discard} firstPlay={g.firstPlay} turn={g.turn} />
+          <AnimatePresence>
+            {tut && tutStep && hostText && !tutStep.inModal && (
+              <Coach
+                key={tut.lesson}
+                lesson={tut.lesson}
+                step={tut.step}
+                text={hostText}
+                cta={tutStep.until ? null : (tutStep.cta ?? 'Next')}
+                canShow={myTurn && pointed.length > 0 && pointed.some((c) => !selected.has(c))}
+                onNext={nextStep}
+                onShow={() => {
+                  sfx.select();
+                  setSelected(new Set(pointed));
+                }}
+                onRetry={() => startLesson(tut.lesson, 'play')}
+                onExit={exitTutorial}
+              />
+            )}
+          </AnimatePresence>
         </main>
 
         <section className={`me ${myTurn ? 'my-turn' : ''}`}>
@@ -580,6 +728,7 @@ export default function App() {
             hand={myHand}
             selected={selected}
             hinted={hinted}
+            pointed={myTurn ? new Set(pointed) : undefined}
             fresh={fresh}
             revolution={g.revolution}
             onSet={setCard}
@@ -620,8 +769,23 @@ export default function App() {
 
       <Banner banner={banner} />
 
-      <ExchangeModal exchange={g.phase === 'exchange' ? g.exchange : null} hand={sortHand(g.hands[HUMAN], 'rank')} personas={PERSONAS} onReturn={(c) => setGame(returnTribute(g, c))} />
-      <RoundEndModal open={resultOpen} result={lastResult} game={g} personas={PERSONAS} onNext={onNext} />
+      <ExchangeModal exchange={g.phase === 'exchange' ? g.exchange : null} hand={sortHand(g.hands[HUMAN], 'rank')} personas={PERSONAS} onReturn={(c) => setGame(returnTribute(g, c))} host={hostInModal} />
+      <RoundEndModal open={resultOpen} result={lastResult} game={g} personas={PERSONAS} onNext={onNext} host={hostInModal} nextLabel={tut ? tutStep?.cta : undefined} />
+      <AnimatePresence>
+        {tut?.status === 'intro' && (
+          <LessonIntro key={`intro-${tut.lesson}`} index={tut.lesson} cleared={progress.cleared} onStart={() => setTut({ ...tut, status: 'play' })} onPick={(i) => startLesson(i)} onExit={exitTutorial} />
+        )}
+        {tut?.status === 'clear' && (
+          <LessonClear
+            key={`clear-${tut.lesson}`}
+            index={tut.lesson}
+            onReplay={() => startLesson(tut.lesson, 'play')}
+            onNext={() => (tut.lesson + 1 < LESSONS.length ? startLesson(tut.lesson + 1) : graduate())}
+          />
+        )}
+        {tut?.status === 'fail' && lastResult && <LessonFail key="fail" winner={lastResult.winner} onRetry={() => startLesson(tut.lesson, 'play')} onExit={exitTutorial} />}
+        {tut?.status === 'grad' && <Diploma key="grad" onPlay={startMatch} onTitle={exitTutorial} />}
+      </AnimatePresence>
       <MatchEndModal
         open={matchOpen}
         game={g}

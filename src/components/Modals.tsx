@@ -10,6 +10,7 @@ import { Avatar } from './Seat';
 import { MECHANICS, Term } from '../mechanics';
 import { usePhone } from '../hooks';
 import { DIFFICULTIES } from '../difficulty';
+import { HostNote } from './Tutorial';
 
 export function Modal({ open, onClose, children, wide, className = '' }: { open: boolean; onClose?: () => void; children: ReactNode; wide?: boolean; className?: string }) {
   const phone = usePhone();
@@ -301,13 +302,14 @@ export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { 
 
 /* -------------------------------- Exchange -------------------------------- */
 
-export function ExchangeModal({ exchange, hand, personas, onReturn }: { exchange: Exchange | null; hand: Card[]; personas: Persona[]; onReturn: (c: Card) => void }) {
+export function ExchangeModal({ exchange, hand, personas, onReturn, host }: { exchange: Exchange | null; hand: Card[]; personas: Persona[]; onReturn: (c: Card) => void; host?: string | null }) {
   const [pick, setPick] = useState<Card | null>(null);
   const open = !!exchange && exchange.to === 0 && exchange.returned === null;
   return (
     <Modal open={open} wide className="exchange">
       {exchange && (
         <>
+          {host && <HostNote text={host} />}
           <h2 className="modal-title">
             <Term m="buwis" />
           </h2>
@@ -352,7 +354,23 @@ export function ExchangeModal({ exchange, hand, personas, onReturn }: { exchange
 
 /* -------------------------------- Round end ------------------------------- */
 
-export function RoundEndModal({ open, result, game, personas, onNext }: { open: boolean; result: RoundResult | null; game: GameState; personas: Persona[]; onNext: () => void }) {
+export function RoundEndModal({
+  open,
+  result,
+  game,
+  personas,
+  onNext,
+  host,
+  nextLabel,
+}: {
+  open: boolean;
+  result: RoundResult | null;
+  game: GameState;
+  personas: Persona[];
+  onNext: () => void;
+  host?: string | null;
+  nextLabel?: string;
+}) {
   const last = game.round >= game.settings.rounds;
   return (
     <Modal open={open} wide className="round-end">
@@ -407,9 +425,10 @@ export function RoundEndModal({ open, result, game, personas, onNext }: { open: 
               {tributeNote(result, personas)}
             </p>
           )}
+          {host && <HostNote text={host} />}
           <div className="modal-actions">
             <button className="btn primary" onClick={onNext} autoFocus>
-              {last ? 'Final standings' : 'Next round'}
+              {nextLabel ?? (last ? 'Final standings' : 'Next round')}
             </button>
           </div>
         </>

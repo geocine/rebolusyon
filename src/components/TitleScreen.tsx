@@ -7,6 +7,7 @@ import { DIFFICULTIES } from '../difficulty';
 import type { LifetimeStats } from '../storage';
 import { CardView } from './CardView';
 import { Avatar } from './Seat';
+import { HOST } from '../tutorial';
 
 const HERO = [makeCard(0, 0), makeCard(12, 0), makeCard(12, 1), makeCard(12, 2), makeCard(12, 3)];
 
@@ -15,11 +16,13 @@ interface Props {
   difficulty: Difficulty;
   onDifficulty: (d: Difficulty) => void;
   onPlay: () => void;
+  onLearn: () => void;
+  graduated: boolean;
   onRules: () => void;
   onSettings: () => void;
 }
 
-export function TitleScreen({ stats, difficulty, onDifficulty, onPlay, onRules, onSettings }: Props) {
+export function TitleScreen({ stats, difficulty, onDifficulty, onPlay, onLearn, graduated, onRules, onSettings }: Props) {
   const [flipped, setFlipped] = useState(false);
   useEffect(() => {
     const t = setInterval(() => setFlipped((f) => !f), 3600);
@@ -65,6 +68,13 @@ export function TitleScreen({ stats, difficulty, onDifficulty, onPlay, onRules, 
         <div className="hero-caption">{flipped ? 'Rebolusyon (Revolution): the 3♣ is king' : 'Normal order: the Twos rule'}</div>
 
         <motion.div className="ts-actions" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
+          <button className={`ts-learn ${graduated ? 'done' : ''}`} onClick={onLearn}>
+            <Avatar persona={HOST} size={34} />
+            <span>
+              <b>{graduated ? 'Replay the walkthrough' : 'New here? Learn the twists'}</b>
+              <small>{graduated ? `${HOST.name}’s Pusoy School · you graduated ✓` : `2 minutes with ${HOST.name}. You play every twist yourself.`}</small>
+            </span>
+          </button>
           <button className="btn primary huge" onClick={onPlay}>
             Play
           </button>
