@@ -1314,6 +1314,46 @@ button {
 .trick-card + .trick-card {
   margin-left: calc(var(--cw) * -0.42);
 }
+.trick-impact {
+  position: absolute;
+  width: calc(var(--cw) * 2.4);
+  aspect-ratio: 1.7;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 236, 170, 0.5);
+  box-shadow: 0 0 24px rgba(255, 236, 170, 0.25);
+  pointer-events: none;
+}
+
+/* A card in flight from a hand to the table (portaled to <body>). */
+.flyer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 55;
+  pointer-events: none;
+  perspective: 900px;
+}
+.flyer-shadow {
+  position: absolute;
+  inset: 6% 8%;
+  border-radius: calc(var(--cw) * 0.12);
+  background: rgba(0, 0, 0, 0.6);
+  filter: blur(9px);
+}
+.flyer-card {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.flyer-face {
+  position: absolute !important;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flyer-back {
+  transform: rotateY(180deg);
+}
 .trick-empty {
   display: flex;
   flex-direction: column;

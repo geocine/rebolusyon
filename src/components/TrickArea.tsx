@@ -1,9 +1,13 @@
 import { AnimatePresence, motion } from 'motion/react';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { sfx } from '../audio';
 import { type Card, RANKS, rankOf } from '../engine/cards';
 import { describeCombo, isPowerRank } from '../engine/combos';
 import type { Trick } from '../engine/game';
 import type { Persona } from '../engine/ai';
+import { hasOrigin, rotationOf, takeOrigin } from '../flight';
 import { CardView } from './CardView';
+import { type Flight, FlyingCard } from './FlyingCard';
 
 const jitter = (c: number, spread: number) => (((c * 2654435761) >>> 0) % 1000) / 1000 * spread - spread / 2;
 
@@ -26,6 +30,56 @@ export function TrickArea({ trick, revolution, personas, memoryMode, discard, fi
   const hideTrick = trick.done && memoryMode;
   const visible = hideTrick ? [] : plays.slice(-3);
   const top = visible[visible.length - 1];
+  const topKey = top?.combo?.cards.join('-') ?? '';
+
+  const [flights, setFlights] = useState<Flight[]>([]);
+  const [airborne, setAirborne] = useState<Set<Card>>(() => new Set());
+  const [impact, setImpact] = useState(0);
+  /** Cards that arrived by flight; they skip the flip-in entrance when they settle. */
+  const flown = useRef(new Set<Card>());
+  const inAir = (c: Card) => airborne.has(c) || hasOrigin(c);
+
+  useLayoutEffect(() => {
+    if (!top) flown.current.clear();
+    const cards = top?.combo?.cards.filter(hasOrigin) ?? [];
+    if (!cards.length) return;
+    for (const c of cards) flown.current.add(c);
+    const launched: Flight[] = [];
+    cards.forEach((c, i) => {
+      const from = takeOrigin(c)!;
+      const el = document.querySelector<HTMLElement>(`.trick-stage [data-card="${c}"]`);
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      launched.push({
+        card: c,
+        from,
+        to: { x: r.left + r.width / 2, y: r.top + r.height / 2, width: el.offsetWidth, rotate: rotationOf(el) },
+        delay: i * 0.075,
+        power: isPowerRank(rankOf(c), revolution),
+      });
+    });
+    setFlights((f) => [...f, ...launched]);
+    setAirborne((s) => new Set([...s, ...cards]));
+  }, [topKey]);
+
+  const onStage = new Set(visible.flatMap((p) => p.combo!.cards));
+  const stranded = flights.some((f) => !onStage.has(f.card));
+  useLayoutEffect(() => {
+    if (!stranded) return;
+    setFlights((f) => f.filter((x) => onStage.has(x.card)));
+    setAirborne((s) => new Set([...s].filter((c) => onStage.has(c))));
+  });
+
+  const land = (card: Card) => {
+    sfx.land();
+    if (flights.every((f) => f.card === card)) setImpact((n) => n + 1);
+    setFlights((f) => f.filter((x) => x.card !== card));
+    setAirborne((s) => {
+      const next = new Set(s);
+      next.delete(card);
+      return next;
+    });
+  };
 
   return (
     <div className="trick-area">
@@ -59,23 +113,44 @@ export function TrickArea({ trick, revolution, personas, memoryMode, discard, fi
               transition={{ type: 'spring', stiffness: 300, damping: 28 }}
               style={{ zIndex: 10 - depth }}
             >
-              {combo.cards.map((c, j) => (
-                <CardView
-                  key={c}
-                  card={c}
-                  layoutId={`card-${c}`}
-                  size="lg"
-                  powerCard={isPowerRank(rankOf(c), revolution)}
-                  className="trick-card"
-                  style={{ zIndex: j }}
-                  initial={{ rotateY: 90 }}
-                  animate={{ rotateY: 0 }}
-                  transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-                />
-              ))}
+              {combo.cards.map((c, j) => {
+                const flying = inAir(c);
+                return (
+                  <CardView
+                    key={flying ? `${c}-air` : c}
+                    card={c}
+                    data-card={c}
+                    layoutId={flying ? undefined : `card-${c}`}
+                    size="lg"
+                    powerCard={isPowerRank(rankOf(c), revolution)}
+                    className="trick-card"
+                    style={{ zIndex: j, visibility: flying ? 'hidden' : undefined }}
+                    initial={flying || flown.current.has(c) ? false : { rotateY: 90 }}
+                    animate={{ rotateY: 0 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 26 }}
+                  />
+                );
+              })}
             </motion.div>
           );
         })}
+        <AnimatePresence>
+          {impact > 0 && (
+            <motion.span
+              key={impact}
+              className="trick-impact"
+              initial={{ scale: 0.4, opacity: 0.7 }}
+              animate={{ scale: 1.6, opacity: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+            />
+          )}
+        </AnimatePresence>
+        {flights
+          .filter((f) => onStage.has(f.card))
+          .map((f) => (
+            <FlyingCard key={f.card} flight={f} onLand={land} />
+          ))}
 
         <AnimatePresence mode="wait">
           {!top && (

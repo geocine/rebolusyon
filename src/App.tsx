@@ -34,6 +34,7 @@ import { Icon } from './components/Icons';
 import { haptic, setHapticsEnabled } from './haptics';
 import { usePhone } from './hooks';
 import { askAI } from './aiClient';
+import { withFlight } from './flight';
 import type { Thought } from './engine/search';
 import { LESSONS, loadTutorial, saveTutorial, textOf, tutorBotMove, type TutorialProgress } from './tutorial';
 import { Coach, Diploma, LessonClear, LessonFail, LessonIntro } from './components/Tutorial';
@@ -339,7 +340,7 @@ export default function App() {
       if (game.phase !== 'playing' || game.turn === HUMAN || tutLesson.frozen) return;
       const delay = PACE[game.settings.speed] * (game.trick.done ? 1.3 : 1);
       const t = window.setTimeout(() => {
-        if (gameRef.current === game) setGame(tutorBotMove(game, game.turn, tutLesson, scriptPos.current));
+        if (gameRef.current === game) setGame(withFlight(game, tutorBotMove(game, game.turn, tutLesson, scriptPos.current)));
       }, delay);
       return () => clearTimeout(t);
     }
@@ -358,7 +359,7 @@ export default function App() {
             if (g !== game) return g;
             let combo = thought.combo;
             if (combo && !validatePlay(g, seat, combo.cards).ok) combo = decide(g, seat, PERSONAS[seat], 'normal', Math.random).combo;
-            return combo ? play(g, seat, combo.cards) : pass(g, seat);
+            return combo ? withFlight(g, play(g, seat, combo.cards)) : pass(g, seat);
           });
         }, Math.max(0, delay - (performance.now() - started)));
       });
@@ -479,7 +480,7 @@ export default function App() {
       return;
     }
     haptic.play();
-    setGame(play(game, HUMAN, cards));
+    setGame(withFlight(game, play(game, HUMAN, cards)));
     setSelected(new Set());
     setHinted(new Set());
   };

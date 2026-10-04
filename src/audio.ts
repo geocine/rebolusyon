@@ -68,6 +68,10 @@ export const sfx = {
     for (let i = 0; i < Math.min(size, 5); i++) noiseBurst(0.06, 1800 + i * 160, 1.2, 0.5, i * 0.035);
     tone(140, 0.12, { type: 'triangle', gain: 0.25, when: 0.02 });
   },
+  land() {
+    noiseBurst(0.05, 900, 1.1, 0.3);
+    tone(95, 0.08, { type: 'sine', gain: 0.18 });
+  },
   power() {
     tone(660, 0.18, { type: 'triangle', gain: 0.18 });
     tone(990, 0.3, { type: 'sine', gain: 0.14, when: 0.06 });
