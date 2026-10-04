@@ -51,6 +51,24 @@ export function Bubble({ text, position }: { text: string | null; position: Seat
   );
 }
 
+export function PassStamp({ show }: { show: boolean }) {
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.span
+          className="pass-stamp"
+          initial={{ scale: 2.4, rotate: -32, opacity: 0 }}
+          animate={{ scale: 1, rotate: -14, opacity: 1 }}
+          exit={{ scale: 0.7, opacity: 0, transition: { duration: 0.18 } }}
+          transition={{ type: 'spring', stiffness: 520, damping: 18 }}
+        >
+          PASS
+        </motion.span>
+      )}
+    </AnimatePresence>
+  );
+}
+
 interface SeatProps {
   player: number;
   persona: Persona;
@@ -67,10 +85,15 @@ export function Seat({ player, persona, cards, score, position, isTurn, passed, 
   const n = cards.length;
   const vertical = position !== 'top';
   return (
-    <div className={`seat seat-${position} ${isTurn ? 'is-turn' : ''}`} data-player={player}>
+    <div
+      className={`seat seat-${position} ${isTurn ? 'is-turn' : ''} ${passed && !isTurn ? 'has-passed' : ''}`}
+      data-player={player}
+      style={{ ['--persona' as string]: persona.color }}
+    >
       <div className="seat-id">
         <div className="seat-avatar-wrap">
           <Avatar persona={persona} active={isTurn} talking={!!bubble} />
+          <PassStamp show={passed && !isTurn} />
           <Bubble text={bubble} position={position} />
         </div>
         <div className="seat-meta">
@@ -79,14 +102,13 @@ export function Seat({ player, persona, cards, score, position, isTurn, passed, 
           <div className="seat-chips">
             <span className={`chip score ${score < 0 ? 'neg' : ''}`}>{score > 0 ? `+${score}` : score}</span>
             {isTurn && (
-              <span className="chip thinking">
+              <span className="chip thinking" title="Thinking">
                 <i />
                 <i />
                 <i />
               </span>
             )}
-            {passed && !isTurn && <span className="chip pass">PASS</span>}
-            {isLeader && !isTurn && !passed && <span className="chip lead">TOP</span>}
+            {isLeader && !isTurn && <span className="chip lead" title="Their cards are on top">ON TOP</span>}
           </div>
         </div>
       </div>

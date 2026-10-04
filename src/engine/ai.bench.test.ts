@@ -88,6 +88,15 @@ bench('AI benchmark', () => {
     }
   }, 1_800_000);
 
+  it('how beatable is each level: a rule-based player vs 3 in-game bots', () => {
+    for (const d of ['easy', 'normal', 'hard'] as const) {
+      const rng = mulberry32(31);
+      const bot: Bot = (s, p) => think(s, p, d, rng).combo;
+      const r = tournament(heuristic('hard'), bot, ROUNDS);
+      console.log(`rule-based player vs 3× ${d}: win ${(r.winRate * 100).toFixed(1)}% (fair share 25%), avg points ${r.avgPoints.toFixed(2)}`);
+    }
+  }, 3_600_000);
+
   it('heuristic (hard) vs heuristic (hard) control', () => {
     const r = tournament(heuristic('hard'), heuristic('hard'), ROUNDS);
     console.log(`heuristic vs 3× heuristic: win ${(r.winRate * 100).toFixed(1)}%, avg points ${r.avgPoints.toFixed(2)}`);

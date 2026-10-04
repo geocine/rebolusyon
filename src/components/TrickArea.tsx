@@ -15,9 +15,13 @@ interface Props {
   discard: Card[];
   firstPlay: boolean;
   turn: number;
+  playing: boolean;
 }
 
-export function TrickArea({ trick, revolution, personas, memoryMode, discard, firstPlay, turn }: Props) {
+/** Arrow angle toward each seat: you (bottom), left, top, right. */
+const SEAT_ANGLE = [180, 270, 0, 90];
+
+export function TrickArea({ trick, revolution, personas, memoryMode, discard, firstPlay, turn, playing }: Props) {
   const plays = trick.plays.filter((p) => p.combo);
   const hideTrick = trick.done && memoryMode;
   const visible = hideTrick ? [] : plays.slice(-3);
@@ -123,6 +127,21 @@ export function TrickArea({ trick, revolution, personas, memoryMode, discard, fi
           </motion.div>
         )}
       </AnimatePresence>
+
+      {playing && top && !trick.done && (
+        <div className="turn-pointer" style={{ ['--persona' as string]: personas[turn].color }} aria-live="polite">
+          <motion.svg
+            className="tp-arrow"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            animate={{ rotate: SEAT_ANGLE[turn] }}
+            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+          >
+            <path d="M12 3 20 15h-5v6H9v-6H4z" fill="currentColor" />
+          </motion.svg>
+          <span>{turn === 0 ? 'Your turn' : `${personas[turn].name}’s turn`}</span>
+        </div>
+      )}
     </div>
   );
 }

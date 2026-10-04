@@ -24,7 +24,7 @@ import { lineFor, type Moment } from './lines';
 import { type Mechanic, Term } from './mechanics';
 import { loadSettings, loadStats, saveSettings, saveStats, type LifetimeStats } from './storage';
 import { ActionBar, PlayerHand } from './components/PlayerHand';
-import { Avatar, Seat, type SeatPosition } from './components/Seat';
+import { Avatar, PassStamp, Seat, type SeatPosition } from './components/Seat';
 import { TrickArea } from './components/TrickArea';
 import { Tracker } from './components/Tracker';
 import { ExchangeModal, MatchEndModal, RoundEndModal, RulesModal, SettingsModal } from './components/Modals';
@@ -606,6 +606,7 @@ export default function App() {
   const discard = g.played.filter((c) => !visibleTrickCards.has(c));
   const leading = isLeading(g);
   const top = g.trick.top;
+  const humanPassed = g.phase === 'playing' && g.trick.passed[HUMAN] && !g.trick.done && !myTurn;
 
   let status: { tone: 'ok' | 'bad' | 'idle'; text: string };
   if (statusFlash) status = { tone: statusFlash.startsWith('Try') || statusFlash.startsWith('Hint') ? 'ok' : 'bad', text: statusFlash };
@@ -690,7 +691,7 @@ export default function App() {
               bubble={bubbles[player]}
             />
           ))}
-          <TrickArea trick={g.trick} revolution={g.revolution} personas={PERSONAS} memoryMode={memoryMode} discard={discard} firstPlay={g.firstPlay} turn={g.turn} />
+          <TrickArea trick={g.trick} revolution={g.revolution} personas={PERSONAS} memoryMode={memoryMode} discard={discard} firstPlay={g.firstPlay} turn={g.turn} playing={g.phase === 'playing'} />
           <AnimatePresence>
             {tut && tutStep && hostText && !tutStep.inModal && (
               <Coach
@@ -713,14 +714,17 @@ export default function App() {
         </main>
 
         <section className={`me ${myTurn ? 'my-turn' : ''}`}>
-          <div className="me-id">
-            <Avatar persona={PERSONAS[HUMAN]} size={52} active={myTurn} />
+          <div className={`me-id ${humanPassed ? 'has-passed' : ''}`}>
+            <div className="seat-avatar-wrap">
+              <Avatar persona={PERSONAS[HUMAN]} size={52} active={myTurn} />
+              <PassStamp show={humanPassed} />
+            </div>
             <div>
               <div className="seat-name">You</div>
               <div className="seat-chips">
                 <span className={`chip score ${g.scores[HUMAN] < 0 ? 'neg' : ''}`}>{g.scores[HUMAN] > 0 ? `+${g.scores[HUMAN]}` : g.scores[HUMAN]}</span>
-                {g.trick.passed[HUMAN] && !g.trick.done && <span className="chip pass">PASS</span>}
                 {myTurn && <span className="chip your-turn">YOUR TURN</span>}
+                {!myTurn && !!top && !g.trick.done && g.trick.topBy === HUMAN && <span className="chip lead">ON TOP</span>}
               </div>
             </div>
           </div>

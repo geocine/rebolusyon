@@ -94,6 +94,7 @@ export function TitleScreen({ stats, difficulty, onDifficulty, onPlay, onLearn, 
             ))}
           </div>
           <p className="ts-diff-desc">{DIFFICULTIES.find((d) => d.value === difficulty)?.desc}</p>
+          <p className="ts-fair">No peeking: bots only see their own hand, the cards played, and who passed. Same as you.</p>
         </motion.div>
 
         <motion.div className="roster" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}>
