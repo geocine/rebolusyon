@@ -1,0 +1,408 @@
+import { AnimatePresence, motion } from 'motion/react';
+import { type ReactNode, useState } from 'react';
+import { type Card, makeCard, rankOf } from '../engine/cards';
+import { describeCombo, isPowerRank } from '../engine/combos';
+import type { Exchange, GameState, RoundResult, Settings } from '../engine/game';
+import { pickTributePayer, standings } from '../engine/game';
+import type { Persona } from '../engine/ai';
+import { CardView } from './CardView';
+import { Avatar } from './Seat';
+
+export function Modal({ open, onClose, children, wide, className = '' }: { open: boolean; onClose?: () => void; children: ReactNode; wide?: boolean; className?: string }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div className="modal-scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+          <motion.div
+            className={`modal ${wide ? 'wide' : ''} ${className}`}
+            initial={{ y: 40, scale: 0.94, opacity: 0 }}
+            animate={{ y: 0, scale: 1, opacity: 1 }}
+            exit={{ y: 20, scale: 0.97, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            {onClose && (
+              <button className="modal-x" onClick={onClose} aria-label="Close">
+                ×
+              </button>
+            )}
+            {children}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+const mini = (cards: Card[], rev = false) => (
+  <span className="mini-row">
+    {cards.map((c) => (
+      <CardView key={c} card={c} size="sm" powerCard={isPowerRank(rankOf(c), rev)} />
+    ))}
+  </span>
+);
+
+/* ---------------------------------- Rules --------------------------------- */
+
+export function RulesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Modal open={open} onClose={onClose} wide className="rules">
+      <h2 className="modal-title">Paano Maglaro</h2>
+      <p className="lede">
+        Rebolusyon is Pusoy Dos with teeth. Shed all 13 cards first. Everyone still holding cards pays you.
+      </p>
+
+      <div className="rules-grid">
+        <section>
+          <h4>The order</h4>
+          <p>Ranks run low to high. The Two is king:</p>
+          <div className="rank-strip">3 4 5 6 7 8 9 10 J Q K A <b>2</b></div>
+          <p>Ties on rank break by suit, Filipino style:</p>
+          <div className="suit-strip">♣ &lt; ♠ &lt; <span className="r">♥</span> &lt; <span className="r">♦</span></div>
+          {mini([makeCard(0, 0), makeCard(12, 3)])}
+          <p className="small">3♣ is the weakest card in the deck. 2♦ is the strongest.</p>
+        </section>
+
+        <section>
+          <h4>Combinations</h4>
+          <ul className="combos">
+            <li><b>Single</b> · <b>Pair</b> · <b>Triple</b></li>
+            <li>
+              <b>Five-card hands</b>, weakest to strongest:
+              <ol>
+                <li>Straight <span className="small">(2s can’t be in straights)</span></li>
+                <li>Flush <span className="small">(compared by suit, then high card)</span></li>
+                <li>Full House</li>
+                <li>Four of a Kind + any kicker</li>
+                <li>Straight Flush</li>
+              </ol>
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h4>A trick</h4>
+          <p>Whoever holds <b>3♣</b> opens, and their first play has to include it.</p>
+          <p>
+            Going around, each player plays the <b>same number of cards</b>, and it has to <b>beat</b> what’s on the
+            table, or they pass. Passing doesn’t lock you out unless Strict Pass is on.
+          </p>
+          <p>Once everyone else has passed, the table is <i>malinis</i> (clean) and the last player to play leads anything.</p>
+        </section>
+
+        <section className="twist">
+          <h4>
+            <span className="tw-tag pink">TWIST</span> Rebolusyon
+          </h4>
+          <p>
+            Play <b>Four of a Kind</b> and the world flips. Within every combo type, <b>lower beats higher</b>. 3♣ becomes the
+            strongest card and 2♦ the weakest. Another Four of a Kind flips it back. The five-card ladder (Straight → Straight
+            Flush) never flips.
+          </p>
+          <p className="small">Order resets every round. A hand full of low junk can become a monster.</p>
+        </section>
+
+        <section className="twist">
+          <h4>
+            <span className="tw-tag teal">TWIST</span> Bantay
+          </h4>
+          <p>
+            If the player <b>after you</b> is down to one card, any single you play must be your <b>strongest</b>. No feeding them
+            a 4♣ to go out on.
+          </p>
+        </section>
+
+        <section className="twist">
+          <h4>
+            <span className="tw-tag gold">TWIST</span> Buwis
+          </h4>
+          <p>
+            Before each new round, the biggest loser of the last one pays tribute: their <b>best card</b> goes straight to the
+            winner, and the winner sends back <b>any card they choose</b>. Winning snowballs. So does losing.
+          </p>
+        </section>
+
+        <section className="twist">
+          <h4>
+            <span className="tw-tag ink">MODE</span> Alaala
+          </h4>
+          <p>
+            Memory mode for real players. The card tracker is hidden and cleared tricks go face-down. You get one{' '}
+            <b>Sulyap</b> (a 4-second peek) per round. Count the Twos yourself.
+          </p>
+        </section>
+
+        <section>
+          <h4>Scoring</h4>
+          <p>Each loser pays <b>1 point per card</b> left, multiplied:</p>
+          <ul className="mults">
+            <li><b>×2</b> with 10–12 cards left</li>
+            <li><b>×3</b> if you never played (13)</li>
+            <li><b>×2</b> if caught holding any Two</li>
+            <li><b>×2</b> for everyone if the winner goes out on Four of a Kind or a Straight Flush (<i>Grand Finish</i>)</li>
+          </ul>
+          <p>The winner collects it all. Highest total after the last round wins the match.</p>
+        </section>
+
+        <section>
+          <h4>Controls</h4>
+          <ul className="keys">
+            <li><kbd>Click</kbd> select cards</li>
+            <li><kbd>Enter</kbd> play</li>
+            <li><kbd>Space</kbd> pass</li>
+            <li><kbd>Tab</kbd> cycle playable combos</li>
+            <li><kbd>H</kbd> hint · <kbd>S</kbd> sort · <kbd>Esc</kbd> clear</li>
+          </ul>
+        </section>
+      </div>
+    </Modal>
+  );
+}
+
+/* -------------------------------- Settings -------------------------------- */
+
+function Toggle({ label, desc, value, onChange }: { label: string; desc: string; value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="toggle">
+      <div>
+        <div className="t-label">{label}</div>
+        <div className="t-desc">{desc}</div>
+      </div>
+      <button type="button" role="switch" aria-checked={value} className={`switch ${value ? 'on' : ''}`} onClick={() => onChange(!value)}>
+        <i />
+      </button>
+    </label>
+  );
+}
+
+function Segmented<T extends string | number>({ value, options, onChange }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void }) {
+  return (
+    <div className="segmented">
+      {options.map((o) => (
+        <button key={String(o.value)} className={o.value === value ? 'on' : ''} onClick={() => onChange(o.value)}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { open: boolean; onClose: () => void; settings: Settings; onChange: (s: Settings) => void; inMatch: boolean }) {
+  const set = <K extends keyof Settings>(k: K, v: Settings[K]) => onChange({ ...settings, [k]: v });
+  return (
+    <Modal open={open} onClose={onClose} className="settings">
+      <h2 className="modal-title">Settings</h2>
+      {inMatch && <p className="note">Rule changes take effect next match. Difficulty, speed, sound and Alaala apply right away.</p>}
+
+      <h4 className="section-label">House rules</h4>
+      <Toggle label="Rebolusyon" desc="Four of a Kind flips the card order." value={settings.revolution} onChange={(v) => set('revolution', v)} />
+      <Toggle label="Bantay" desc="Must play your strongest single when the next player has 1 card." value={settings.bantay} onChange={(v) => set('bantay', v)} />
+      <Toggle label="Buwis" desc="Biggest loser pays their best card to the winner each round." value={settings.buwis} onChange={(v) => set('buwis', v)} />
+      <Toggle label="Strict pass" desc="Once you pass, you sit out until the table clears." value={settings.strictPass} onChange={(v) => set('strictPass', v)} />
+      <Toggle label="Alaala (memory mode)" desc="Hide the tracker. One 4-second peek per round." value={settings.memoryMode} onChange={(v) => set('memoryMode', v)} />
+
+      <h4 className="section-label">Table</h4>
+      <div className="row">
+        <span>Opponents</span>
+        <Segmented
+          value={settings.difficulty}
+          options={[
+            { value: 'easy', label: 'Chill' },
+            { value: 'normal', label: 'Sharp' },
+            { value: 'hard', label: 'Hustler' },
+          ]}
+          onChange={(v) => set('difficulty', v)}
+        />
+      </div>
+      <div className="row">
+        <span>Rounds</span>
+        <Segmented value={settings.rounds} options={[3, 6, 10].map((n) => ({ value: n, label: String(n) }))} onChange={(v) => set('rounds', v)} />
+      </div>
+      <div className="row">
+        <span>Pace</span>
+        <Segmented
+          value={settings.speed}
+          options={[
+            { value: 'chill', label: 'Slow' },
+            { value: 'normal', label: 'Normal' },
+            { value: 'fast', label: 'Fast' },
+          ]}
+          onChange={(v) => set('speed', v)}
+        />
+      </div>
+      <Toggle label="Sound" desc="Synthesized table sounds." value={settings.sound} onChange={(v) => set('sound', v)} />
+    </Modal>
+  );
+}
+
+/* -------------------------------- Exchange -------------------------------- */
+
+export function ExchangeModal({ exchange, hand, personas, onReturn }: { exchange: Exchange | null; hand: Card[]; personas: Persona[]; onReturn: (c: Card) => void }) {
+  const [pick, setPick] = useState<Card | null>(null);
+  const open = !!exchange && exchange.to === 0 && exchange.returned === null;
+  return (
+    <Modal open={open} wide className="exchange">
+      {exchange && (
+        <>
+          <h2 className="modal-title">Buwis</h2>
+          <p className="lede">
+            <b style={{ color: personas[exchange.from].color }}>{personas[exchange.from].name}</b> lost the most last round and
+            pays tribute with their best card:
+          </p>
+          <div className="tribute-card">
+            <CardView card={exchange.given} size="xl" powerCard={isPowerRank(rankOf(exchange.given), false)} initial={{ rotateY: 180, scale: 0.6 }} animate={{ rotateY: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 160, damping: 16 }} />
+          </div>
+          <p>Choose one card to send back. Give them something useless.</p>
+          <div className="pick-row">
+            {hand.map((c) => (
+              <CardView
+                key={c}
+                card={c}
+                size="md"
+                selected={pick === c}
+                fresh={c === exchange.given}
+                onClick={() => setPick(c)}
+                whileHover={{ y: -8 }}
+              />
+            ))}
+          </div>
+          <div className="modal-actions">
+            <button
+              className="btn primary"
+              disabled={pick === null}
+              onClick={() => {
+                if (pick !== null) onReturn(pick);
+                setPick(null);
+              }}
+            >
+              Send it back
+            </button>
+          </div>
+        </>
+      )}
+    </Modal>
+  );
+}
+
+/* -------------------------------- Round end ------------------------------- */
+
+export function RoundEndModal({ open, result, game, personas, onNext }: { open: boolean; result: RoundResult | null; game: GameState; personas: Persona[]; onNext: () => void }) {
+  const last = game.round >= game.settings.rounds;
+  return (
+    <Modal open={open} wide className="round-end">
+      {result && (
+        <>
+          <div className="re-head">
+            <Avatar persona={personas[result.winner]} size={72} active />
+            <div>
+              <div className="eyebrow">
+                Round {result.round} of {game.settings.rounds}
+              </div>
+              <h2 className="modal-title">{result.winner === 0 ? 'Panalo ka!' : `${personas[result.winner].name} goes out`}</h2>
+              <div className="re-finish">
+                Finished with <b>{describeCombo(result.finishingCombo)}</b>
+                {result.grandFinish && <span className="flip-tag gold">GRAND FINISH ×2</span>}
+              </div>
+            </div>
+          </div>
+          <table className="re-table">
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Left in hand</th>
+                <th>Multipliers</th>
+                <th className="num">Round</th>
+                <th className="num">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[0, 1, 2, 3].map((p) => (
+                <motion.tr key={p} className={p === result.winner ? 'winner' : ''} initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + p * 0.08 }}>
+                  <td className="who">
+                    <Avatar persona={personas[p]} size={30} />
+                    {personas[p].name}
+                  </td>
+                  <td>{result.leftover[p].length ? mini(result.leftover[p]) : <span className="out">OUT</span>}</td>
+                  <td>
+                    {result.multipliers[p].map((m) => (
+                      <span key={m.label} className="mult-chip">
+                        {m.label} ×{m.factor}
+                      </span>
+                    ))}
+                  </td>
+                  <td className={`num delta ${result.deltas[p] >= 0 ? 'pos' : 'neg'}`}>{result.deltas[p] > 0 ? `+${result.deltas[p]}` : result.deltas[p]}</td>
+                  <td className="num">{game.scores[p]}</td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+          {game.settings.buwis && !last && (
+            <p className="note">
+              Buwis next round: {personas[pickTributePayer(result)].name} pays their best card to {personas[result.winner].name}.
+            </p>
+          )}
+          <div className="modal-actions">
+            <button className="btn primary" onClick={onNext} autoFocus>
+              {last ? 'Final standings' : 'Next round'}
+            </button>
+          </div>
+        </>
+      )}
+    </Modal>
+  );
+}
+
+/* -------------------------------- Match end ------------------------------- */
+
+export function MatchEndModal({ open, game, personas, onAgain, onTitle }: { open: boolean; game: GameState; personas: Persona[]; onAgain: () => void; onTitle: () => void }) {
+  const order = standings(game);
+  const youWon = order[0] === 0;
+  const podium = [order[1], order[0], order[2]];
+  return (
+    <Modal open={open} wide className="match-end">
+      <div className="eyebrow center">Tapos na ang laro</div>
+      <h2 className="modal-title center big">{youWon ? 'Hari ng Mesa!' : `${personas[order[0]].name} takes the table`}</h2>
+      <div className="podium">
+        {podium.map((p, i) => (
+          <motion.div
+            key={p}
+            className={`podium-col place-${[2, 1, 3][i]}`}
+            initial={{ y: 60, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 + [0.3, 0.6, 0][i], type: 'spring', stiffness: 200, damping: 18 }}
+          >
+            <Avatar persona={personas[p]} size={i === 1 ? 84 : 64} active={i === 1} />
+            <div className="pd-name">{personas[p].name}</div>
+            <div className="pd-score">{game.scores[p]}</div>
+            <div className="pd-block">{[2, 1, 3][i]}</div>
+          </motion.div>
+        ))}
+      </div>
+      <div className="me-fourth">
+        4th · {personas[order[3]].name} · {game.scores[order[3]]}
+      </div>
+      <div className="me-stats">
+        {[0, 1, 2, 3].map((p) => (
+          <div key={p} className="me-stat">
+            <b style={{ color: personas[p].color }}>{personas[p].name}</b>
+            <span>
+              {game.stats.roundWins[p]} round{game.stats.roundWins[p] === 1 ? '' : 's'} won
+            </span>
+            <span>{game.stats.revolutions[p]} rebolusyon</span>
+            <span>{game.stats.cardsShed[p]} cards shed</span>
+          </div>
+        ))}
+      </div>
+      <div className="modal-actions">
+        <button className="btn ghost" onClick={onTitle}>
+          Back to title
+        </button>
+        <button className="btn primary" onClick={onAgain} autoFocus>
+          Isa pa! (Rematch)
+        </button>
+      </div>
+    </Modal>
+  );
+}
