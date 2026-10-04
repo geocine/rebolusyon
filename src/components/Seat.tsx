@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import type { Card } from '../engine/cards';
 import type { Persona } from '../engine/ai';
-import { MECHANICS } from '../mechanics';
+import { MECHANICS, ordinal } from '../mechanics';
 import { CardView } from './CardView';
 import { type AvatarMood, PixelAvatar, SPRITES } from './PixelAvatar';
 
@@ -83,7 +83,17 @@ interface SeatProps {
   bounty: boolean;
   /** Alone in last place with Alsa on: their Three of a Kind flips the order. */
   underdog: boolean;
+  /** Finishing place in a played-out round; 0 while still holding cards. */
+  place: number;
   bubble: string | null;
+}
+
+export function PlaceChip({ place }: { place: number }) {
+  return (
+    <span className={`chip place place-${place}`} title={`Out of cards: finished ${ordinal(place)} this round`}>
+      {ordinal(place).toUpperCase()}
+    </span>
+  );
 }
 
 export function BountyChip() {
@@ -102,12 +112,12 @@ export function UnderdogChip() {
   );
 }
 
-export function Seat({ player, persona, cards, score, position, isTurn, passed, isLeader, bounty, underdog, bubble }: SeatProps) {
+export function Seat({ player, persona, cards, score, position, isTurn, passed, isLeader, bounty, underdog, place, bubble }: SeatProps) {
   const n = cards.length;
   const vertical = position !== 'top';
   return (
     <div
-      className={`seat seat-${position} ${isTurn ? 'is-turn' : ''} ${passed && !isTurn ? 'has-passed' : ''}`}
+      className={`seat seat-${position} ${isTurn ? 'is-turn' : ''} ${passed && !isTurn ? 'has-passed' : ''} ${place ? 'is-out' : ''}`}
       data-player={player}
       style={{ ['--persona' as string]: persona.color }}
     >
@@ -124,6 +134,7 @@ export function Seat({ player, persona, cards, score, position, isTurn, passed, 
             <span className={`chip score ${score < 0 ? 'neg' : ''}`}>{score > 0 ? `+${score}` : score}</span>
             {bounty && <BountyChip />}
             {underdog && <UnderdogChip />}
+            {place > 0 && <PlaceChip place={place} />}
             {isTurn && (
               <span className="chip thinking" title="Thinking">
                 <i />

@@ -4,6 +4,7 @@ import { beats, classify, enumerateCombos } from './combos';
 import {
   DEFAULT_SETTINGS,
   MODE_RULES,
+  PLACE_POINTS,
   type GameState,
   type RuleMode,
   type Settings,
@@ -210,6 +211,53 @@ function nextRoundAfterPlay(s: GameState): GameState {
   const d = decide(s, s.turn, personaAt(s, s.turn), 'easy', mulberry32(1));
   return d.combo ? play(s, s.turn, d.combo.cards) : pass(s, s.turn);
 }
+
+describe('Klasiko plays every round out', () => {
+  const klasiko = withMode(DEFAULT_SETTINGS, 'klasiko');
+
+  it('keeps going after the first finish, and the next seat in play leads once the table passes', () => {
+    let s = stateWith([[0], [mk(5, C), mk(9, D)], [mk(4, D), mk(6, C)], [mk(7, C), mk(8, D)]], {}, klasiko);
+    s = play(s, 0, [0]);
+    expect(s.phase).toBe('playing');
+    expect(s.finished).toEqual([0]);
+    expect(s.events.some((e) => e.kind === 'out' && e.player === 0 && e.place === 1)).toBe(true);
+    s = pass(pass(pass(s, 1), 2), 3);
+    expect(s.trick.done).toBe(true);
+    expect(s.turn).toBe(1);
+  });
+
+  it('skips finished players in turn order and for Bantay', () => {
+    const s = stateWith([[], [mk(9, C)], [mk(4, D), mk(6, C)], [mk(5, C), mk(12, D)]], { turn: 3, firstPlay: false, finished: [0] }, klasiko);
+    expect(validatePlay(s, 3, [mk(5, C)]).ok).toBe(false);
+    const after = play(s, 3, [mk(12, D)]);
+    expect(after.turn).toBe(1);
+  });
+
+  it('scores a played-out round by place, and every seat gets a place', () => {
+    const rng = mulberry32(3);
+    for (let m = 0; m < 30; m++) {
+      let s = createMatch({ ...klasiko, rounds: 1 }, 600 + m);
+      let guard = 0;
+      while (s.phase === 'playing' && guard++ < 500) {
+        expect(s.hands[s.turn].length).toBeGreaterThan(0);
+        const d = decide(s, s.turn, personaAt(s, s.turn), 'normal', rng);
+        s = d.combo ? play(s, s.turn, d.combo.cards) : pass(s, s.turn);
+      }
+      const r = s.history[0];
+      expect(r.places).not.toBeNull();
+      expect([...r.places!].sort()).toEqual([0, 1, 2, 3]);
+      expect(r.winner).toBe(r.places![0]);
+      r.places!.forEach((p, i) => expect(r.deltas[p]).toBe(PLACE_POINTS[i]));
+      expect(r.leftover.filter((h) => h.length > 0)).toHaveLength(1);
+    }
+  });
+
+  it('Rebolusyon still ends the round at the first finish', () => {
+    const s = play(stateWith([[0], [mk(5, C)], [mk(4, D)], [mk(7, C)]]), 0, [0]);
+    expect(s.phase).not.toBe('playing');
+    expect(s.history[s.history.length - 1].places).toBeNull();
+  });
+});
 
 describe('rule modes', () => {
   it('a mode overrides every rule flag, whatever was stored before', () => {

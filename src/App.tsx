@@ -15,6 +15,7 @@ import {
   isHulingHirit,
   isLeading,
   legalPlays,
+  nextInPlay,
   nextRound,
   pass,
   play,
@@ -26,10 +27,10 @@ import {
 } from './engine/game';
 import { castOf, chooseTributeReturn, decide, drawCast, personaAt } from './engine/ai';
 import { lineFor, type Moment } from './lines';
-import { Term, modeOf, termText } from './mechanics';
+import { Term, modeOf, ordinal, termText } from './mechanics';
 import { loadLastCast, loadSettings, loadStats, saveLastCast, saveSettings, saveStats, type LifetimeStats } from './storage';
 import { ActionBar, PlayerHand } from './components/PlayerHand';
-import { Avatar, BountyChip, PassStamp, Seat, type SeatPosition, UnderdogChip } from './components/Seat';
+import { Avatar, BountyChip, PassStamp, PlaceChip, Seat, type SeatPosition, UnderdogChip } from './components/Seat';
 import { TrickArea } from './components/TrickArea';
 import { Tracker } from './components/Tracker';
 import { ExchangeModal, RoundEndModal, RulesModal, SettingsModal } from './components/Modals';
@@ -302,11 +303,34 @@ export default function App() {
           sfx.lastCard();
           if (e.player === HUMAN) showBanner({ kind: 'warn', title: 'Last card!', sub: 'You are down to one card.' }, 1800);
           else {
-            const guard = g.settings.bantay && e.player === 1 ? ' Bantay (Guard): your singles must be your strongest.' : '';
+            const guard = g.settings.bantay && e.player === nextInPlay(g.hands, HUMAN) ? ' Bantay (Guard): your singles must be your strongest.' : '';
             showBanner({ kind: 'warn', title: 'Last card!', sub: `${name(e.player)} has one card left.${guard}` }, 2400);
             say(e.player, 'lastCard');
           }
           break;
+        case 'out': {
+          if (g.phase !== 'playing') break;
+          const first = e.place === 1;
+          if (e.player === HUMAN) {
+            if (first) {
+              sfx.win();
+              haptic.win();
+            } else sfx.clear();
+            showBanner({ kind: 'info', title: first ? 'You go out first!' : `You finish ${ordinal(e.place)}`, sub: 'Sit back. The others play on for the places that are left.' }, 2600);
+          } else {
+            sfx.clear();
+            showBanner(
+              {
+                kind: first ? 'warn' : 'info',
+                title: `${name(e.player)} goes out ${ordinal(e.place)}`,
+                sub: first ? 'The round keeps going. Play on for 2nd, 3rd and last.' : 'Don’t be the one left holding cards.',
+              },
+              2400,
+            );
+            say(e.player, first ? 'win' : 'lastCard', first ? 0.8 : 0);
+          }
+          break;
+        }
         case 'roundEnd': {
           const won = e.winner === HUMAN;
           if (won) {
@@ -376,7 +400,8 @@ export default function App() {
       return () => clearTimeout(t);
     }
     if (game.phase === 'playing' && game.turn !== HUMAN) {
-      const base = PACE[game.settings.speed];
+      // Once you've gone out you're only watching, so the rest of the round moves along faster.
+      const base = PACE[game.settings.speed] * (game.finished.includes(HUMAN) ? 0.6 : 1);
       const delay = base * (game.trick.done ? 1.3 : 1) * (game.firstPlay ? 1.5 : 1) + Math.random() * base * 0.5;
       const started = performance.now();
       const seat = game.turn;
@@ -662,7 +687,9 @@ export default function App() {
   else if (g.phase !== 'playing') status = { tone: 'idle', text: 'Round over' };
   else if (!myTurn) {
     const c = selArr.length ? classify(selArr) : null;
-    status = { tone: 'idle', text: c ? `${describeCombo(c)} · waiting for your turn` : `${personas[g.turn].name} is thinking…` };
+    const done = g.finished.indexOf(HUMAN);
+    if (done >= 0) status = { tone: 'ok', text: `You finished ${ordinal(done + 1)} · ${personas[g.turn].name} is thinking…` };
+    else status = { tone: 'idle', text: c ? `${describeCombo(c)} · waiting for your turn` : `${personas[g.turn].name} is thinking…` };
   } else if (!selArr.length) {
     if (g.firstPlay) status = { tone: 'idle', text: 'Your opening — must include 3♣' };
     else if (leading) status = { tone: 'idle', text: 'Your lead — play anything' };
@@ -680,7 +707,7 @@ export default function App() {
   const underdog = underdogSeat(g);
   const finalDouble = isHulingHirit(g);
   const mode = modeOf(g.settings.mode);
-  const modeTip = `${mode.name} (${mode.en}): ${mode.groups.flatMap((x) => x.terms.map(termText)).join(', ')}`;
+  const modeTip = `${mode.name} (${mode.en}): ${mode.groups.flatMap((x) => x.rules.flatMap((r) => (r.m ? [termText(r.m)] : []))).join(', ')}`;
 
   const pointed = tutStep?.point?.filter((c) => g.hands[HUMAN].includes(c)) ?? [];
   const hostText = tutStep ? textOf(tutStep.say, g) : null;
@@ -745,6 +772,7 @@ export default function App() {
               isLeader={!!top && !g.trick.done && g.trick.topBy === player}
               bounty={bounty === player}
               underdog={underdog === player}
+              place={g.finished.indexOf(player) + 1}
               bubble={bubbles[player]}
             />
           ))}
@@ -782,6 +810,7 @@ export default function App() {
                 <span className={`chip score ${g.scores[HUMAN] < 0 ? 'neg' : ''}`}>{g.scores[HUMAN] > 0 ? `+${g.scores[HUMAN]}` : g.scores[HUMAN]}</span>
                 {bounty === HUMAN && <BountyChip />}
                 {underdog === HUMAN && <UnderdogChip />}
+                {g.finished.includes(HUMAN) && <PlaceChip place={g.finished.indexOf(HUMAN) + 1} />}
                 {myTurn && <span className="chip your-turn">YOUR TURN</span>}
                 {!myTurn && !!top && !g.trick.done && g.trick.topBy === HUMAN && <span className="chip lead">ON TOP</span>}
               </div>

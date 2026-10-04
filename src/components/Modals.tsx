@@ -3,11 +3,11 @@ import { type ReactNode, useState } from 'react';
 import { type Card, makeCard, rankOf } from '../engine/cards';
 import { describeCombo, isPowerRank } from '../engine/combos';
 import type { Exchange, GameState, RoundResult, RuleMode, Settings } from '../engine/game';
-import { bountySeat, isHulingHirit, pickTributePayer, withMode } from '../engine/game';
+import { PLACE_POINTS, bountySeat, isHulingHirit, pickTributePayer, withMode } from '../engine/game';
 import type { Persona } from '../engine/ai';
 import { CardView } from './CardView';
 import { Avatar } from './Seat';
-import { MECHANICS, MODES, Term } from '../mechanics';
+import { MECHANICS, MODES, Term, ordinal } from '../mechanics';
 import { usePhone } from '../hooks';
 import { DIFFICULTIES } from '../difficulty';
 import { HostNote } from './Tutorial';
@@ -76,8 +76,10 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
     <Modal open={open} onClose={onClose} wide className="rules">
       <h2 className="modal-title">How to Play</h2>
       <p className="lede">
-        Pusoy Dos is the Filipino take on Big Two. Be the first to shed all 13 cards, and everyone still holding cards pays
-        you. Pick a mode: <b>Rebolusyon</b> plays with the house twists below, <b>Klasiko</b> plays it straight.
+        Pusoy Dos is the Filipino take on Big Two: be the first to shed all 13 cards. There are two ways to play.{' '}
+        <b>Rebolusyon</b> ends the round as soon as someone goes out, makes everyone else pay for the cards they’re
+        holding, and adds the house twists below. <b>Klasiko</b> is the straight game: every round is played out from
+        1st place to last.
       </p>
 
       <div className="rules-grid">
@@ -130,7 +132,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag pink">FLIP</span> <Term m="revolution" />
+            <span className="tw-tag pink">REBOLUSYON · FLIP</span> <Term m="revolution" />
           </h4>
           <p>
             Play <b>Four of a Kind</b> and the world flips. Within every combo type, <b>lower beats higher</b>. 3♣ becomes the
@@ -142,7 +144,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag pink">FLIP</span> <Term m="alsa" />
+            <span className="tw-tag pink">REBOLUSYON · FLIP</span> <Term m="alsa" />
           </h4>
           <p>
             Whoever is <b>alone in last place</b> wears the Underdog tag, and their <b>Three of a Kind</b> starts a Rebolusyon,
@@ -152,7 +154,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag gold">STAKES</span> <Term m="buwis" />
+            <span className="tw-tag gold">REBOLUSYON · STAKES</span> <Term m="buwis" />
           </h4>
           <p>
             Before each new round, the biggest loser of the last one pays a tax: their <b>best card</b> goes straight to the
@@ -162,7 +164,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag gold">STAKES</span> <Term m="patong" />
+            <span className="tw-tag gold">REBOLUSYON · STAKES</span> <Term m="patong" />
           </h4>
           <p>
             Whoever leads the match wears a <b>bounty</b>. If anyone else wins the round, the leader’s penalty is{' '}
@@ -172,7 +174,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag gold">STAKES</span> <Term m="hirit" />
+            <span className="tw-tag gold">REBOLUSYON · STAKES</span> <Term m="hirit" />
           </h4>
           <p>
             The <b>final round counts double</b>. Every penalty is ×2, so whoever is behind always has one big swing left.
@@ -189,15 +191,27 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
           </p>
         </section>
 
+        <section className="twist">
+          <h4>
+            <span className="tw-tag teal">KLASIKO</span> <Term m="puwesto" />
+          </h4>
+          <p>
+            Going out first doesn’t end the round. Finished players sit out while the rest keep playing for <b>2nd</b> and{' '}
+            <b>3rd</b>, until one player is left holding cards. If the player who went out was on top and everyone passes,
+            the next player still in the round leads.
+          </p>
+          <p>Each place scores: {placePointsText}. No multipliers, no twists. Every round is worth the same.</p>
+        </section>
+
         <section>
-          <h4>Scoring</h4>
+          <h4>Scoring in Rebolusyon</h4>
           <p>Each loser pays <b>1 point per card</b> left, multiplied:</p>
           <ul className="mults">
             <li><b>×2</b> with 10–12 cards left</li>
             <li><b>×3</b> if you never played (13)</li>
             <li><b>×2</b> if caught holding any Two</li>
-            <li><b>×2</b> for the match leader if they lose the round (<i>Patong</i>, Rebolusyon mode)</li>
-            <li><b>×2</b> for everyone in the final round (<i>Huling Hirit</i>, Rebolusyon mode)</li>
+            <li><b>×2</b> for the match leader if they lose the round (<i>Patong</i>)</li>
+            <li><b>×2</b> for everyone in the final round (<i>Huling Hirit</i>)</li>
             <li><b>×2</b> for everyone if the winner goes out on Four of a Kind or a Straight Flush (<i>Grand Finish</i>)</li>
           </ul>
           <p>The winner collects it all. Highest total after the last round wins the match.</p>
@@ -324,7 +338,7 @@ export function ModePicker({ value, onChange }: { value: RuleMode; onChange: (m:
                   className="mc-card"
                   style={{ zIndex: 5 - Math.abs(i - mid) }}
                   initial={false}
-                  animate={{ x: (i - mid) * (on ? 34 : 24), y: (on ? 0 : 22) + Math.abs(i - mid) * 8, rotate: (i - mid) * (on ? 14 : 8) }}
+                  animate={{ x: (i - mid) * (on ? 22 : 14), y: (on ? -6 : 8) + Math.abs(i - mid) * 7, rotate: (i - mid) * (on ? 15 : 8) }}
                   transition={{ type: 'spring', stiffness: 280, damping: 20 }}
                 />
               ))}
@@ -352,11 +366,12 @@ export function ModePicker({ value, onChange }: { value: RuleMode; onChange: (m:
                 {m.groups.map((g) => (
                   <span key={g.title} className={`mc-group tone-${g.tone} ${g.off ? 'off' : ''}`}>
                     <i>{g.title}</i>
-                    <span className="mc-pills">
-                      {g.off && <span className="mc-pill none">{g.off}</span>}
-                      {g.terms.map((t) => (
-                        <span key={t} className="mc-pill" title={`${MECHANICS[t].name} (${MECHANICS[t].en}): ${MECHANICS[t].desc}`}>
-                          {MECHANICS[t].name}
+                    <span className="mc-rules">
+                      {g.off && <span className="mc-rule none">{g.off}</span>}
+                      {g.rules.map((r) => (
+                        <span key={r.m ?? r.name} className="mc-rule">
+                          <b>{r.m ? MECHANICS[r.m].name : r.name}</b>
+                          {r.m && <span className="mc-gloss">{MECHANICS[r.m].en}</span>} {r.text}
                         </span>
                       ))}
                     </span>
@@ -500,13 +515,16 @@ export function RoundEndModal({
               <div className="eyebrow">
                 Round {result.round} of {game.settings.rounds}
               </div>
-              <h2 className="modal-title">{result.winner === 0 ? 'You win the round!' : `${personas[result.winner].name} goes out`}</h2>
+              <h2 className="modal-title">{result.winner === 0 ? 'You win the round!' : `${personas[result.winner].name} goes out${result.places ? ' first' : ''}`}</h2>
               <div className="re-finish">
                 Finished with <b>{describeCombo(result.finishingCombo)}</b>
                 {result.grandFinish && <span className="flip-tag gold">GRAND FINISH ×2</span>}
               </div>
             </div>
           </div>
+          {result.places ? (
+            <PlacesTable result={result} game={game} personas={personas} />
+          ) : (
           <table className="re-table">
             <thead>
               <tr>
@@ -538,6 +556,7 @@ export function RoundEndModal({
               ))}
             </tbody>
           </table>
+          )}
           {game.settings.buwis && !last && (
             <p className="note">
               {tributeNote(result, personas)}
@@ -553,6 +572,45 @@ export function RoundEndModal({
         </>
       )}
     </Modal>
+  );
+}
+
+const placePointsText = PLACE_POINTS.map((v, i) => `${i === 3 ? 'last' : ordinal(i + 1)} ${v > 0 ? '+' : ''}${v}`).join(', ');
+
+function PlacesTable({ result, game, personas }: { result: RoundResult; game: GameState; personas: Persona[] }) {
+  return (
+    <>
+      <table className="re-table">
+        <thead>
+          <tr>
+            <th>Place</th>
+            <th>Player</th>
+            <th>Left in hand</th>
+            <th className="num">Round</th>
+            <th className="num">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {result.places!.map((p, i) => (
+            <motion.tr key={p} className={i === 0 ? 'winner' : ''} initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.08 }}>
+              <td>
+                <span className={`chip place place-${i + 1}`}>{ordinal(i + 1).toUpperCase()}</span>
+              </td>
+              <td className="who">
+                <Avatar persona={personas[p]} size={30} />
+                {personas[p].name}
+              </td>
+              <td className="left">{result.leftover[p].length ? mini(result.leftover[p]) : <span className="out">OUT</span>}</td>
+              <td className={`num delta ${result.deltas[p] >= 0 ? 'pos' : 'neg'}`}>{result.deltas[p] > 0 ? `+${result.deltas[p]}` : result.deltas[p]}</td>
+              <td className="num total">{game.scores[p]}</td>
+            </motion.tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="note">
+        <Term m="puwesto" />: everyone plays until one player is left holding cards, then each place scores {placePointsText}.
+      </p>
+    </>
   );
 }
 

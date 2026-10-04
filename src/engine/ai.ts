@@ -1,6 +1,6 @@
 import { type Card, type Rng, RANK_TWO, newDeck, power, rankOf, rankPower, removeCards } from './cards';
 import { type Combo, FIVE_ORDER, enumerateFives } from './combos';
-import { type Cast, type Difficulty, type GameState, DEFAULT_CAST, PLAYERS, flipsOrder, isLeading, legalPlays, nextSeat } from './game';
+import { type Cast, type Difficulty, type GameState, DEFAULT_CAST, PLAYERS, flipsOrder, isLeading, legalPlays, nextInPlay } from './game';
 
 /** How a persona weighs outcomes in search. Same search, different temperament. */
 export interface Style {
@@ -329,11 +329,12 @@ export function decide(
   const memoNow = new Map<string, Plan>();
   const memoFlip = new Map<string, Plan>();
 
-  const opps = [0, 1, 2, 3].filter((p) => p !== player);
-  const danger = Math.max(...opps.map((p) => dangerOf(s.hands[p].length)));
-  const nextCards = s.hands[nextSeat(player)].length;
+  const opps = [0, 1, 2, 3].filter((p) => p !== player && s.hands[p].length > 0);
+  const danger = Math.max(0, ...opps.map((p) => dangerOf(s.hands[p].length)));
+  const next = nextInPlay(s.hands, player);
+  const nextCards = s.hands[next].length;
   const topBy = s.trick.topBy;
-  const topDanger = !leading && topBy !== player ? dangerOf(s.hands[topBy].length) : 0;
+  const topDanger = !leading && topBy !== player && s.hands[topBy].length ? dangerOf(s.hands[topBy].length) : 0;
 
   const options = legalPlays(s, player);
   const scored: { combo: Combo | null; score: number }[] = [];
@@ -356,7 +357,7 @@ export function decide(
       score -= strength * 4 * (1 - danger);
       // Leading into someone who can finish on this exact size is a gift unless we're unbeatable.
       for (const p of opps) {
-        if (s.hands[p].length === combo.cards.length && !boss) score -= 14 * (p === nextSeat(player) ? 1.3 : 1);
+        if (s.hands[p].length === combo.cards.length && !boss) score -= 14 * (p === next ? 1.3 : 1);
       }
       if (combo.type === 'single' && nextCards === 1 && !boss) score -= 20;
     } else {

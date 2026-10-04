@@ -1199,6 +1199,21 @@ button {
   color: var(--ink);
   cursor: help;
 }
+.chip.place {
+  background: var(--paper-3);
+  color: var(--ink);
+  cursor: help;
+}
+.chip.place-1 {
+  background: var(--gold);
+}
+.chip.place-2 {
+  background: var(--sage);
+}
+.seat.is-out .seat-avatar-wrap {
+  opacity: 0.6;
+  filter: saturate(0.6);
+}
 .chip.your-turn {
   background: var(--accent);
   color: var(--ink);
@@ -2048,16 +2063,17 @@ kbd {
   transform: translateX(20px);
   background: var(--ink);
 }
+.modal.settings {
+  width: min(600px, 100%);
+}
 .mode-picker {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin: 8px 0 4px;
 }
 .mode-card {
   --mc: var(--gold);
   display: flex;
-  flex-direction: column;
   padding: 0;
   overflow: hidden;
   text-align: left;
@@ -2086,9 +2102,11 @@ kbd {
 .mc-art {
   position: relative;
   display: block;
-  height: 112px;
+  flex: none;
+  width: 120px;
+  min-height: 150px;
   overflow: hidden;
-  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
   transition: filter 0.3s;
 }
 .mode-card:not(.on) .mc-art {
@@ -2111,14 +2129,15 @@ kbd {
 }
 .mc-card {
   position: absolute;
-  top: 14px;
+  top: calc(50% - 52px);
   left: calc(50% - 32px);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
 }
 .mc-stamp {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  bottom: 12px;
+  left: 50%;
+  translate: -50% 0;
   z-index: 10;
   padding: 3px 8px 2px;
   font-family: var(--display);
@@ -2133,10 +2152,12 @@ kbd {
 }
 
 .mc-body {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px 14px 14px;
+  padding: 12px 16px 14px;
 }
 .mc-head {
   display: flex;
@@ -2176,12 +2197,14 @@ kbd {
 }
 .mc-group {
   --tone: var(--gold);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 8px;
+  align-items: baseline;
 }
 .mc-group.tone-clay { --tone: var(--clay); }
 .mc-group.tone-sage { --tone: var(--sage); }
+.mc-group.tone-paper { --tone: var(--paper-2); }
 .mc-group i {
   font-family: var(--display);
   font-style: normal;
@@ -2190,36 +2213,47 @@ kbd {
   text-transform: uppercase;
   color: var(--tone);
 }
-.mc-pills {
+.mc-rules {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 4px;
 }
-.mc-pill {
-  padding: 2px 8px;
-  font-size: 11.5px;
+.mc-rule {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: rgba(243, 233, 216, 0.78);
+}
+.mc-rule b {
+  color: color-mix(in srgb, var(--tone) 55%, var(--paper));
+}
+.mc-gloss {
+  margin: 0 4px 0 5px;
+  font-size: 9.5px;
   font-weight: 700;
-  white-space: nowrap;
-  color: color-mix(in srgb, var(--tone) 45%, var(--paper));
-  background: color-mix(in srgb, var(--tone) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent);
-  border-radius: 999px;
-  cursor: help;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.5;
 }
 .mc-group.off i {
   opacity: 0.45;
 }
-.mc-pill.none {
-  font-weight: 500;
+.mc-rule.none {
   font-style: italic;
-  color: rgba(243, 233, 216, 0.45);
-  background: transparent;
-  border: 1px dashed var(--line);
-  cursor: inherit;
+  opacity: 0.55;
 }
 @media (max-width: 520px) {
-  .mode-picker {
+  .mode-card {
+    flex-direction: column;
+  }
+  .mc-art {
+    width: auto;
+    min-height: 112px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .mc-group {
     grid-template-columns: 1fr;
+    gap: 2px;
   }
 }
 .section-label {

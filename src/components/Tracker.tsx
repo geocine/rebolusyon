@@ -5,7 +5,7 @@ import { describeCombo } from '../engine/combos';
 import type { LogEntry } from '../engine/game';
 import type { Persona } from '../engine/ai';
 import { SuitIcon } from './CardView';
-import { Term } from '../mechanics';
+import { Term, ordinal } from '../mechanics';
 
 interface Props {
   played: Card[];
@@ -139,6 +139,16 @@ function Log({ log, personas }: { log: LogEntry[]; personas: Persona[] }) {
               ★ {who(e.player)} {v(e.player, 'go', 'goes')} out!
             </>
           )}
+          {e.kind === 'out' &&
+            (e.place < 4 ? (
+              <>
+                ★ {who(e.player)} {v(e.player, 'go', 'goes')} out {ordinal(e.place)}
+              </>
+            ) : (
+              <>
+                {who(e.player)} {v(e.player, 'finish', 'finishes')} last
+              </>
+            ))}
           {e.kind === 'tribute' && (
             <>
               Tribute: {who(e.exchange.from)} ⇄ {who(e.exchange.to)}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeCard as mk, mulberry32, power } from './cards';
-import { DEFAULT_SETTINGS, type GameState, type Settings, canPass, createMatch, nextRound, pass, play, returnTribute, validatePlay } from './game';
+import { DEFAULT_SETTINGS, type GameState, type Settings, canPass, createMatch, nextRound, pass, play, returnTribute, validatePlay, withMode } from './game';
 import { PERSONAS, chooseTributeReturn, decide } from './ai';
 import { sampleWorld } from './belief';
 import { rolloutMove, simFrom } from './sim';
@@ -79,10 +79,10 @@ describe('belief sampling', () => {
 });
 
 describe('rollout policy', () => {
-  const variants: Partial<Settings>[] = [{}, { strictPass: true }, { revolution: false, bantay: false }];
+  const variants: Partial<Settings>[] = [{}, { strictPass: true }, { revolution: false, bantay: false }, withMode(DEFAULT_SETTINGS, 'klasiko')];
   it('only makes moves the real engine accepts', () => {
-    for (let m = 0; m < 30; m++) {
-      let s = createMatch({ ...DEFAULT_SETTINGS, ...variants[m % 3], buwis: false }, 500 + m);
+    for (let m = 0; m < 40; m++) {
+      let s = createMatch({ ...DEFAULT_SETTINGS, ...variants[m % variants.length], buwis: false }, 500 + m);
       const rng = mulberry32(m);
       for (let i = 0; i < 500 && s.phase === 'playing'; i++) {
         const p = s.turn;
@@ -128,6 +128,24 @@ describe('search', () => {
     }
     expect(s.phase).not.toBe('playing');
     expect(estimates).toBeGreaterThan(0);
+  }, 60_000);
+
+  it('plays a Klasiko round out to the last place with legal moves', () => {
+    let s = createMatch({ ...withMode(DEFAULT_SETTINGS, 'klasiko'), rounds: 1 }, 91);
+    const rng = mulberry32(8);
+    for (let i = 0; i < 600 && s.phase === 'playing'; i++) {
+      const p = s.turn;
+      const t = think(s, p, 'hard', rng, { budgetMs: 4 });
+      if (t.combo) {
+        expect(validatePlay(s, p, t.combo.cards).ok).toBe(true);
+        s = play(s, p, t.combo.cards);
+      } else {
+        expect(canPass(s, p)).toBe(true);
+        s = pass(s, p);
+      }
+    }
+    expect(s.phase).toBe('matchEnd');
+    expect(s.history[0].places).toHaveLength(4);
   }, 60_000);
 
   it('never peeks: reshuffling the hidden cards between opponents changes nothing', () => {

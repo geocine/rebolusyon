@@ -68,10 +68,12 @@ function utilityFor(s: GameState, me: number, style: Style, difficulty: Difficul
     const lead = s.scores[HUMAN] - Math.max(...others.filter((p) => p !== HUMAN).map((p) => s.scores[p]), s.scores[me]);
     if (lead > 4) humanW = -Math.min(0.6, lead / 40);
   }
+  // Place points (±3) are far smaller than card penalties, so weigh them up to keep 2nd vs 3rd worth fighting for.
+  const unit = s.settings.playOut ? 2.5 : 10;
   return (d: number[], winner: number) => {
-    let u = d[me] / 10 + (winner === me ? style.winWeight : 0);
-    if (aim) u -= (aim * d[leader]) / 10;
-    if (humanW) u += (humanW * d[HUMAN]) / 10;
+    let u = d[me] / unit + (winner === me ? style.winWeight : 0);
+    if (aim) u -= (aim * d[leader]) / unit;
+    if (humanW) u += (humanW * d[HUMAN]) / unit;
     return u;
   };
 }

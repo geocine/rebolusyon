@@ -4,7 +4,7 @@
  */
 import { type Card, type Rng, RANK_TWO, power, rankOf, rankPower, suitOf } from './cards';
 import { type Combo, beats, classify } from './combos';
-import { type GameState, PLAYERS, isLeading, penaltyFor, roundMultipliers, underdogSeat } from './game';
+import { type GameState, PLACE_POINTS, PLAYERS, isLeading, penaltyFor, roundMultipliers, underdogSeat } from './game';
 
 export interface Sim {
   hands: Card[][];
@@ -18,6 +18,11 @@ export interface Sim {
   revolutionRule: boolean;
   bantay: boolean;
   strict: boolean;
+  /** Keep going after the first finish; score by place. */
+  playOut: boolean;
+  finished: number[];
+  over: boolean;
+  /** First seat to go out. */
   winner: number;
   grand: boolean;
   /** Patong and Huling Hirit penalty factor per seat. */
@@ -41,7 +46,10 @@ export function simFrom(s: GameState, hands: Card[][]): Sim {
     revolutionRule: s.settings.revolution,
     bantay: s.settings.bantay,
     strict: s.settings.strictPass,
-    winner: -1,
+    playOut: s.settings.playOut,
+    finished: s.finished.slice(),
+    over: false,
+    winner: s.finished.length ? s.finished[0] : -1,
     grand: false,
     stakes: [0, 1, 2, 3].map((p) => roundMultipliers(s, p).reduce((a, m) => a * m.factor, 1)),
     underdog: underdogSeat(s),
@@ -52,12 +60,22 @@ export function simFrom(s: GameState, hands: Card[][]): Sim {
 function nextActive(sim: Sim, from: number): number {
   for (let i = 1; i <= PLAYERS; i++) {
     const p = (from + i) % PLAYERS;
-    if (!sim.strict || !sim.passed[p]) return p;
+    if (sim.hands[p].length && (!sim.strict || !sim.passed[p])) return p;
   }
   return from;
 }
 
-const othersPassed = (sim: Sim, player: number) => sim.passed.every((x, p) => p === player || x);
+function nextInPlay(sim: Sim, from: number): number {
+  for (let i = 1; i < PLAYERS; i++) {
+    const p = (from + i) % PLAYERS;
+    if (sim.hands[p].length) return p;
+  }
+  return from;
+}
+
+const othersPassed = (sim: Sim, player: number) => sim.passed.every((x, p) => p === player || x || !sim.hands[p].length);
+const contenders = (sim: Sim) => sim.hands.reduce((n, h, p) => n + (p !== sim.topBy && h.length ? 1 : 0), 0);
+const clearLeader = (sim: Sim) => (sim.hands[sim.topBy].length ? sim.topBy : nextInPlay(sim, sim.topBy));
 
 export function simPlay(sim: Sim, combo: Combo): void {
   const p = sim.turn;
@@ -78,13 +96,25 @@ export function simPlay(sim: Sim, combo: Combo): void {
   sim.topBy = p;
   sim.passes = 0;
   if (sim.hands[p].length === 0) {
-    sim.winner = p;
-    sim.grand = combo.type === 'quads' || combo.type === 'straightflush';
-    return;
+    if (sim.winner < 0) {
+      sim.winner = p;
+      sim.grand = combo.type === 'quads' || combo.type === 'straightflush';
+    }
+    if (!sim.playOut) {
+      sim.over = true;
+      return;
+    }
+    sim.finished.push(p);
+    const left = sim.hands.findIndex((h) => h.length > 0);
+    if (sim.finished.length === PLAYERS - 1) {
+      sim.finished.push(left);
+      sim.over = true;
+      return;
+    }
   }
   if (sim.strict && othersPassed(sim, p)) {
     sim.top = null;
-    sim.turn = p;
+    sim.turn = clearLeader(sim);
   } else sim.turn = nextActive(sim, p);
 }
 
@@ -92,10 +122,10 @@ export function simPass(sim: Sim): void {
   const p = sim.turn;
   sim.passed[p] = true;
   sim.passes++;
-  const done = sim.strict ? othersPassed(sim, sim.topBy) : sim.passes >= PLAYERS - 1;
+  const done = sim.strict ? othersPassed(sim, sim.topBy) : sim.passes >= contenders(sim);
   if (done) {
     sim.top = null;
-    sim.turn = sim.topBy;
+    sim.turn = clearLeader(sim);
   } else sim.turn = nextActive(sim, p);
 }
 
@@ -222,9 +252,9 @@ export function rolloutMove(sim: Sim, rng: Rng): Combo | null {
   const p = sim.turn;
   const hand = sim.hands[p];
   const plan = planOf(sim, p);
-  const next = (p + 1) % PLAYERS;
+  const next = nextInPlay(sim, p);
   const guard = sim.bantay && sim.hands[next].length === 1;
-  const minOpp = Math.min(...sim.hands.map((h, q) => (q === p ? 99 : h.length)));
+  const minOpp = Math.min(...sim.hands.map((h, q) => (q === p || !h.length ? 99 : h.length)));
 
   if (sim.top === null) {
     if (plan.length === 1) {
@@ -268,7 +298,8 @@ export function rolloutMove(sim: Sim, rng: Rng): Combo | null {
     if (u.cards.length !== size || !beats(u, top, sim.rev)) continue;
     if (!pick || strengthOf(u, sim.rev) < strengthOf(pick, sim.rev)) pick = u;
   }
-  const urgent = sim.hands[sim.topBy].length <= 3 || minOpp <= 2 || hand.length <= 4;
+  const topLeft = sim.hands[sim.topBy].length;
+  const urgent = (topLeft > 0 && topLeft <= 3) || minOpp <= 2 || hand.length <= 4;
 
   if (pick) {
     // Sit on boss cards early unless someone is about to go out.
@@ -303,7 +334,7 @@ export function rolloutMove(sim: Sim, rng: Rng): Combo | null {
 
 /** Play the round out. Returns score deltas for every seat. */
 export function playout(sim: Sim, rng: Rng, maxSteps = 400): number[] {
-  for (let step = 0; step < maxSteps && sim.winner < 0; step++) {
+  for (let step = 0; step < maxSteps && !sim.over; step++) {
     const move = rolloutMove(sim, rng);
     if (move) simPlay(sim, move);
     else if (sim.top === null) simPlay(sim, single(sim.hands[sim.turn][0]));
@@ -313,6 +344,13 @@ export function playout(sim: Sim, rng: Rng, maxSteps = 400): number[] {
 }
 
 export function deltasOf(sim: Sim): number[] {
+  if (sim.playOut) {
+    // Unfinished playouts rank whoever is left by hand size, the usual tiebreak in practice.
+    const rest = [0, 1, 2, 3].filter((p) => !sim.finished.includes(p)).sort((a, b) => sim.hands[a].length - sim.hands[b].length);
+    const d = [0, 0, 0, 0];
+    [...sim.finished, ...rest].forEach((p, i) => (d[p] = PLACE_POINTS[i]));
+    return d;
+  }
   if (sim.winner < 0) {
     // Ran out of steps: score it by hand size, which is what usually decides it.
     return sim.hands.map((h) => -h.length);

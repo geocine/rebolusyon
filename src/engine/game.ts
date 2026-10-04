@@ -37,6 +37,8 @@ export interface Settings {
   alsa: boolean;
   /** Once you pass, you're out until the trick clears. */
   strictPass: boolean;
+  /** After someone goes out, the rest keep playing for 2nd, 3rd and last; places score `PLACE_POINTS`. */
+  playOut: boolean;
   /** Alaala mode: no card tracker; cleared tricks go face-down. Pure memory. */
   memoryMode: boolean;
   difficulty: Difficulty;
@@ -48,12 +50,15 @@ export interface Settings {
   autoPass: boolean;
 }
 
-type ModeRules = Pick<Settings, 'revolution' | 'alsa' | 'bantay' | 'buwis' | 'patong' | 'hirit' | 'strictPass'>;
+type ModeRules = Pick<Settings, 'revolution' | 'alsa' | 'bantay' | 'buwis' | 'patong' | 'hirit' | 'strictPass' | 'playOut'>;
 
 export const MODE_RULES: Record<RuleMode, ModeRules> = {
-  rebolusyon: { revolution: true, alsa: true, bantay: true, buwis: true, patong: true, hirit: true, strictPass: false },
-  klasiko: { revolution: false, alsa: false, bantay: true, buwis: false, patong: false, hirit: false, strictPass: false },
+  rebolusyon: { revolution: true, alsa: true, bantay: true, buwis: true, patong: true, hirit: true, strictPass: false, playOut: false },
+  klasiko: { revolution: false, alsa: false, bantay: true, buwis: false, patong: false, hirit: false, strictPass: false, playOut: true },
 };
+
+/** Points for finishing 1st, 2nd, 3rd and last when a round is played out. */
+export const PLACE_POINTS = [3, 1, -1, -3] as const;
 
 export function withMode(s: Settings, mode: RuleMode = s.mode): Settings {
   const m = mode in MODE_RULES ? mode : 'rebolusyon';
@@ -69,6 +74,7 @@ export const DEFAULT_SETTINGS: Settings = {
   hirit: true,
   alsa: true,
   strictPass: false,
+  playOut: false,
   memoryMode: false,
   difficulty: 'normal',
   rounds: 6,
@@ -118,6 +124,8 @@ export interface RoundResult {
   penalties: number[];
   deltas: number[];
   grandFinish: boolean;
+  /** Seats in finishing order when the round was played out; null when it ended at the first finish. */
+  places: number[] | null;
 }
 
 export type GameEvent =
@@ -126,6 +134,8 @@ export type GameEvent =
   | { kind: 'pass'; player: number }
   | { kind: 'clear'; leader: number }
   | { kind: 'lastCard'; player: number }
+  /** Played-out rounds only: `player` shed their last card and finished in `place` (1-based). */
+  | { kind: 'out'; player: number; place: number }
   | { kind: 'roundEnd'; winner: number }
   | { kind: 'tribute'; exchange: Exchange };
 
@@ -135,6 +145,7 @@ export type LogEntry =
   | { seq: number; kind: 'clear'; player: number }
   | { seq: number; kind: 'round'; round: number }
   | { seq: number; kind: 'win'; player: number }
+  | { seq: number; kind: 'out'; player: number; place: number }
   | { seq: number; kind: 'tribute'; exchange: Exchange };
 
 export interface MatchStats {
@@ -177,6 +188,10 @@ export interface GameState {
   played: Card[];
   /** Public deductions about hidden hands this round. */
   facts: Fact[];
+  /** Seats that have shed every card this round, in finishing order (played-out rounds). */
+  finished: number[];
+  /** The combo the first finisher went out on. */
+  finishCombo: Combo | null;
   scores: number[];
   history: RoundResult[];
   exchange: Exchange | null;
@@ -200,6 +215,15 @@ const emptyTrick = (leader: number): Trick => ({
 });
 
 export const nextSeat = (p: number) => (p + 1) % PLAYERS;
+
+/** Next seat that still holds cards. Finished players sit out the rest of a played-out round. */
+export function nextInPlay(hands: Card[][], p: number): number {
+  for (let i = 1; i < PLAYERS; i++) {
+    const q = (p + i) % PLAYERS;
+    if (hands[q].length) return q;
+  }
+  return p;
+}
 
 export const isLeading = (s: GameState) => !s.trick.top || s.trick.done;
 
@@ -248,6 +272,8 @@ function dealRound(base: GameState, round: number): GameState {
     firstPlay: true,
     played: [],
     facts,
+    finished: [],
+    finishCombo: null,
     exchange,
     events: [{ kind: 'deal' }],
     eventSeq: base.eventSeq + 1,
@@ -285,6 +311,8 @@ export function createMatch(settings: Settings, seed = Math.floor(Math.random() 
     firstPlay: true,
     played: [],
     facts: [],
+    finished: [],
+    finishCombo: null,
     scores: [0, 0, 0, 0],
     history: [],
     exchange: null,
@@ -359,7 +387,7 @@ export function validatePlay(s: GameState, player: number, cards: Card[]): Valid
   }
 
   if (s.settings.bantay && combo.type === 'single') {
-    const next = s.hands[nextSeat(player)];
+    const next = s.hands[nextInPlay(s.hands, player)];
     if (next.length === 1 && combo.cards[0] !== strongestCard(s.hands[player], s.revolution)) {
       return { ok: false, reason: 'Bantay (Guard): next player has 1 card, so play your strongest single' };
     }
@@ -379,13 +407,19 @@ export function legalPlays(s: GameState, player: number): Combo[] {
   return enumerateCombos(s.hands[player], size).filter((c) => validatePlay(s, player, c.cards).ok);
 }
 
-function nextActive(trick: Trick, from: number, strict: boolean): number {
+function nextActive(trick: Trick, hands: Card[][], from: number, strict: boolean): number {
   for (let i = 1; i <= PLAYERS; i++) {
     const p = (from + i) % PLAYERS;
-    if (!strict || !trick.passed[p]) return p;
+    if (hands[p].length && (!strict || !trick.passed[p])) return p;
   }
   return from;
 }
+
+/** Who still has to answer the top play before the trick clears. */
+const contenders = (hands: Card[][], topBy: number) => [0, 1, 2, 3].filter((p) => p !== topBy && hands[p].length > 0);
+
+/** Leads after a clear: whoever is on top, or the next seat in play if they already went out. */
+const clearLeader = (hands: Card[][], topBy: number) => (hands[topBy].length ? topBy : nextInPlay(hands, topBy));
 
 /** With Alsa on, the sole last-place player of the match can start a Rebolusyon with Three of a Kind. */
 export function underdogSeat(s: GameState): number {
@@ -399,8 +433,8 @@ export function flipsOrder(s: GameState, player: number, combo: Combo): boolean 
   return combo.type === 'quads' || (combo.type === 'triple' && player === underdogSeat(s));
 }
 
-function othersAllPassed(trick: Trick, player: number): boolean {
-  return trick.passed.every((pass, p) => p === player || pass);
+function othersAllPassed(trick: Trick, hands: Card[][], player: number): boolean {
+  return contenders(hands, player).every((p) => trick.passed[p]);
 }
 
 export function play(s: GameState, player: number, cards: Card[]): GameState {
@@ -432,7 +466,7 @@ export function play(s: GameState, player: number, cards: Card[]): GameState {
     cardsShed: s.stats.cardsShed.map((n, p) => (p === player ? n + combo.cards.length : n)),
   };
 
-  const guarded = s.settings.bantay && combo.type === 'single' && s.hands[nextSeat(player)].length === 1;
+  const guarded = s.settings.bantay && combo.type === 'single' && s.hands[nextInPlay(s.hands, player)].length === 1;
   const facts: Fact[] = guarded
     ? [...s.facts, { kind: 'maxSingle', player, card: combo.cards[0], rev: s.revolution }]
     : s.facts;
@@ -450,16 +484,22 @@ export function play(s: GameState, player: number, cards: Card[]): GameState {
     log: pushLog(s, [{ kind: 'play', player, combo, flipped }]),
   };
 
-  if (hands[player].length === 0) return endRound({ ...next, events, eventSeq: s.eventSeq + 1 }, player, combo);
+  if (hands[player].length === 0) {
+    if (!s.settings.playOut) return endRound({ ...next, events, eventSeq: s.eventSeq + 1 }, player, combo);
+    const finished = [...s.finished, player];
+    events.push({ kind: 'out', player, place: finished.length });
+    next = { ...next, finished, finishCombo: s.finishCombo ?? combo, log: pushLog(next, [{ kind: 'out', player, place: finished.length }]) };
+    const left = [0, 1, 2, 3].filter((p) => hands[p].length > 0);
+    if (left.length === 1) return endPlayedOut({ ...next, finished: [...finished, left[0]], events, eventSeq: s.eventSeq + 1 });
+  } else if (hands[player].length === 1) events.push({ kind: 'lastCard', player });
 
-  if (hands[player].length === 1) events.push({ kind: 'lastCard', player });
-
-  if (strict && othersAllPassed(trick, player)) {
-    next = { ...next, trick: { ...trick, done: true }, turn: player };
-    events.push({ kind: 'clear', leader: player });
-    next.log = pushLog(next, [{ kind: 'clear', player }]);
+  if (strict && othersAllPassed(trick, hands, player)) {
+    const leader = clearLeader(hands, player);
+    next = { ...next, trick: { ...trick, done: true }, turn: leader };
+    events.push({ kind: 'clear', leader });
+    next.log = pushLog(next, [{ kind: 'clear', player: leader }]);
   } else {
-    next.turn = nextActive(trick, player, strict);
+    next.turn = nextActive(trick, hands, player, strict);
   }
   return { ...next, events, eventSeq: s.eventSeq + 1 };
 }
@@ -483,15 +523,15 @@ export function pass(s: GameState, player: number): GameState {
   const events: GameEvent[] = [{ kind: 'pass', player }];
   let log = pushLog(s, [{ kind: 'pass', player }]);
 
-  const done = strict ? othersAllPassed(trick, trick.topBy) : trick.passesSinceTop >= PLAYERS - 1;
+  const done = strict ? othersAllPassed(trick, s.hands, trick.topBy) : trick.passesSinceTop >= contenders(s.hands, trick.topBy).length;
   let turn: number;
   if (done) {
     trick.done = true;
-    turn = trick.topBy;
+    turn = clearLeader(s.hands, trick.topBy);
     events.push({ kind: 'clear', leader: turn });
     log = pushLog({ ...s, log }, [{ kind: 'clear', player: turn }]);
   } else {
-    turn = nextActive(trick, player, strict);
+    turn = nextActive(trick, s.hands, player, strict);
   }
   return { ...s, trick, turn, facts, events, log, eventSeq: s.eventSeq + 1 };
 }
@@ -551,7 +591,7 @@ function endRound(s: GameState, winner: number, finishingCombo: Combo): GameStat
   }
   const total = penalties.reduce((a, b) => a + b, 0);
   const deltas = penalties.map((pen, p) => (p === winner ? total : -pen));
-  const result: RoundResult = {
+  return closeRound(s, {
     round: s.round,
     winner,
     finishingCombo,
@@ -561,8 +601,32 @@ function endRound(s: GameState, winner: number, finishingCombo: Combo): GameStat
     penalties,
     deltas,
     grandFinish,
-  };
-  const scores = s.scores.map((sc, p) => sc + deltas[p]);
+    places: null,
+  });
+}
+
+/** A played-out round: everyone scores by finishing place. */
+function endPlayedOut(s: GameState): GameState {
+  const deltas = [0, 0, 0, 0];
+  s.finished.forEach((p, i) => (deltas[p] = PLACE_POINTS[i]));
+  return closeRound(s, {
+    round: s.round,
+    winner: s.finished[0],
+    finishingCombo: s.finishCombo!,
+    cardsLeft: s.hands.map((h) => h.length),
+    leftover: s.hands.map((h) => h.slice()),
+    multipliers: [[], [], [], []],
+    penalties: deltas.map((d) => Math.max(0, -d)),
+    deltas,
+    grandFinish: false,
+    places: s.finished,
+  });
+}
+
+function closeRound(s: GameState, result: RoundResult): GameState {
+  const { winner, places } = result;
+  const closing: NewLogEntry = places ? { kind: 'out', player: places[3], place: 4 } : { kind: 'win', player: winner };
+  const scores = s.scores.map((sc, p) => sc + result.deltas[p]);
   const stats = { ...s.stats, roundWins: s.stats.roundWins.map((n, p) => (p === winner ? n + 1 : n)) };
   return {
     ...s,
@@ -571,7 +635,7 @@ function endRound(s: GameState, winner: number, finishingCombo: Combo): GameStat
     history: [...s.history, result],
     stats,
     events: [...s.events, { kind: 'roundEnd', winner }],
-    log: pushLog(s, [{ kind: 'win', player: winner }]),
+    log: pushLog(s, [closing]),
   };
 }
 
