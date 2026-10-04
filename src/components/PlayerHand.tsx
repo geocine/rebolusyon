@@ -174,7 +174,7 @@ function PassCountdown({ ms }: { ms: number }) {
       <span className="pass-count" aria-label={`Passing in ${left} seconds`}>
         {left}
       </span>
-      <span className="pass-drain" style={{ animationDuration: `${ms}ms` }} aria-hidden="true" />
+      <span className="pass-ring" style={{ animationDuration: `${ms}ms` }} aria-hidden="true" />
     </>
   );
 }
@@ -209,7 +209,7 @@ export function ActionBar(p: ActionProps) {
         {p.status.text}
       </motion.div>
       <div className="ab-group ab-main">
-        <button className={`btn pass-btn ${p.mustPass ? 'must' : ''}`} onClick={p.onPass} disabled={!p.canPass} title="Pass (Space)">
+        <button className={`btn pass-btn ${p.mustPass ? 'must' : ''} ${p.autoPassMs !== null ? 'counting' : ''}`} onClick={p.onPass} disabled={!p.canPass} title="Pass (Space)">
           Pass
           {p.autoPassMs !== null && <PassCountdown ms={p.autoPassMs} />}
         </button>

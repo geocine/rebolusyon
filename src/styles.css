@@ -196,8 +196,8 @@ button {
   padding: 16px 54px;
 }
 .pass-btn {
+  --pass-r: 999px;
   position: relative;
-  overflow: hidden;
   font-family: var(--display);
   font-weight: 400;
   letter-spacing: 0.06em;
@@ -213,33 +213,49 @@ button {
   0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent), 0 6px 18px rgba(0, 0, 0, 0.35); }
   50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 0%, transparent), 0 6px 22px color-mix(in srgb, var(--accent) 40%, transparent); }
 }
+.pass-btn.counting:not(:disabled) {
+  animation: none;
+  box-shadow: 0 6px 22px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+/* Bungee's numerals sit off-centre in a circle; the body face centres cleanly. */
 .pass-count {
-  display: inline-grid;
+  display: grid;
   place-items: center;
-  min-width: 1.5em;
-  height: 1.5em;
-  margin-left: 0.5em;
-  border-radius: 999px;
+  width: 22px;
+  height: 22px;
+  margin-left: 2px;
+  border-radius: 50%;
   background: var(--ink);
   color: var(--accent);
-  font-size: 0.8em;
+  font-family: var(--body);
+  font-weight: 800;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
-  vertical-align: 0.08em;
+  letter-spacing: 0;
 }
-.pass-drain {
+@property --pass-left {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 100%;
+}
+/* Countdown ring traced around the button's outline, emptying clockwise from the top. */
+.pass-ring {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 4px;
-  background: var(--ink);
-  opacity: 0.55;
-  transform-origin: left;
-  animation: pass-drain linear forwards;
+  inset: -8px;
+  border-radius: calc(var(--pass-r) + 8px);
+  padding: 3px;
+  background: conic-gradient(var(--paper) var(--pass-left), rgba(246, 239, 225, 0.14) 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  filter: drop-shadow(0 0 3px rgba(246, 239, 225, 0.45));
+  pointer-events: none;
+  animation: pass-ring linear forwards;
 }
-@keyframes pass-drain {
-  from { transform: scaleX(1); }
-  to { transform: scaleX(0); }
+@keyframes pass-ring {
+  from { --pass-left: 100%; }
+  to { --pass-left: 0%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pass-btn.must:not(:disabled) {
@@ -2622,6 +2638,9 @@ kbd {
     border-radius: 16px;
     font-size: 16px;
   }
+  .pass-btn {
+    --pass-r: 16px;
+  }
   .me.my-turn .play-btn:not(:disabled) {
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent), 0 8px 24px color-mix(in srgb, var(--accent) 35%, transparent);
   }
@@ -3009,6 +3028,9 @@ kbd {
     padding: 0 16px;
     border-radius: 14px;
     font-size: 15px;
+  }
+  .pass-btn {
+    --pass-r: 14px;
   }
   .hand {
     height: calc(var(--cw) * 1.4 + 46px);
