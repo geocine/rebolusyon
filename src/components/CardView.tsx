@@ -1,6 +1,7 @@
 import { motion, type HTMLMotionProps } from 'motion/react';
 import { memo } from 'react';
 import { type Card, RANKS, isRedSuit, rankOf, suitOf } from '../engine/cards';
+import { CourtArt } from './CourtArt';
 
 export function SuitIcon({ suit, className }: { suit: number; className?: string }) {
   return (
@@ -70,7 +71,7 @@ function Face({ card, size }: { card: Card; size: CardSize }) {
           <SuitIcon suit={suit} className="pip-suit" />
         ) : COURT[rank] ? (
           <div className="court">
-            <span className="court-letter">{rank}</span>
+            <CourtArt rank={rank as 'J' | 'Q' | 'K'} />
             <SuitIcon suit={suit} className="court-suit" />
           </div>
         ) : rank === 'A' ? (

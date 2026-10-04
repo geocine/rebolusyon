@@ -198,7 +198,7 @@ interface Run {
 }
 
 /** Merges horizontal runs of the same colour so each sprite is a few dozen rects, not 256. */
-function runs(rows: readonly string[], palette: Record<string, string>): Run[] {
+export function runs(rows: readonly string[], palette: Record<string, string>): Run[] {
   const out: Run[] = [];
   rows.forEach((row, y) => {
     let x = 0;
