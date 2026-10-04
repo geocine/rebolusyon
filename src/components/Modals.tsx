@@ -171,6 +171,16 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
+            <span className="tw-tag teal">COMEBACK</span> <Term m="alsa" />
+          </h4>
+          <p>
+            Whoever is <b>alone in last place</b> wears the Underdog tag, and their <b>Three of a Kind</b> starts a Rebolusyon,
+            just like Four of a Kind does for everyone else. Sitting on low junk? Rise up.
+          </p>
+        </section>
+
+        <section className="twist">
+          <h4>
             <span className="tw-tag ink">MODE</span> <Term m="memory" />
           </h4>
           <p>
@@ -297,6 +307,7 @@ export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { 
       <Toggle label={<Term m="buwis" />} desc={MECHANICS.buwis.desc} value={settings.buwis} onChange={(v) => set('buwis', v)} />
       <Toggle label={<Term m="patong" />} desc={MECHANICS.patong.desc} value={settings.patong} onChange={(v) => set('patong', v)} />
       <Toggle label={<Term m="hirit" />} desc={MECHANICS.hirit.desc} value={settings.hirit} onChange={(v) => set('hirit', v)} />
+      <Toggle label={<Term m="alsa" />} desc={MECHANICS.alsa.desc} value={settings.alsa} onChange={(v) => set('alsa', v)} />
       <Toggle label="Strict pass" desc="Once you pass, you sit out until the table clears." value={settings.strictPass} onChange={(v) => set('strictPass', v)} />
       <Toggle label={<Term m="memory" />} desc="Hide the card tracker. One 4-second peek per round." value={settings.memoryMode} onChange={(v) => set('memoryMode', v)} />
 

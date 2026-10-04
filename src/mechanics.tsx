@@ -5,6 +5,7 @@ export const MECHANICS = {
   buwis: { name: 'Buwis', en: 'Tribute', desc: 'The biggest loser gives their best card to the last winner.' },
   patong: { name: 'Patong', en: 'Bounty', desc: 'The match leader pays double if they lose a round.' },
   hirit: { name: 'Huling Hirit', en: 'Last Hurrah', desc: 'The final round counts double.' },
+  alsa: { name: 'Alsa', en: 'Uprising', desc: 'The player in last place can start a Rebolusyon with Three of a Kind.' },
   memory: { name: 'Alaala', en: 'Memory', desc: 'No card tracker. Count cards in your head.' },
   peek: { name: 'Sulyap', en: 'Peek', desc: 'A 4-second look at the tracker, once per round.' },
 } as const;

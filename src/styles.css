@@ -1155,6 +1155,11 @@ button {
   color: var(--paper);
   cursor: help;
 }
+.chip.underdog {
+  background: var(--sage);
+  color: var(--ink);
+  cursor: help;
+}
 .chip.your-turn {
   background: var(--accent);
   color: var(--ink);

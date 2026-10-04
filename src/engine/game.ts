@@ -29,6 +29,8 @@ export interface Settings {
   patong: boolean;
   /** The final round's penalties are doubled. */
   hirit: boolean;
+  /** The match's last-place player can start a Rebolusyon with Three of a Kind. */
+  alsa: boolean;
   /** Once you pass, you're out until the trick clears. */
   strictPass: boolean;
   /** Alaala mode: no card tracker; cleared tricks go face-down. Pure memory. */
@@ -48,6 +50,7 @@ export const DEFAULT_SETTINGS: Settings = {
   buwis: true,
   patong: true,
   hirit: true,
+  alsa: true,
   strictPass: false,
   memoryMode: false,
   difficulty: 'normal',
@@ -360,6 +363,18 @@ function nextActive(trick: Trick, from: number, strict: boolean): number {
   return from;
 }
 
+/** With Alsa on, the sole last-place player of the match can start a Rebolusyon with Three of a Kind. */
+export function underdogSeat(s: GameState): number {
+  if (!s.settings.revolution || !s.settings.alsa) return -1;
+  const low = Math.min(...s.scores);
+  return low < 0 && s.scores.filter((v) => v === low).length === 1 ? s.scores.indexOf(low) : -1;
+}
+
+export function flipsOrder(s: GameState, player: number, combo: Combo): boolean {
+  if (!s.settings.revolution) return false;
+  return combo.type === 'quads' || (combo.type === 'triple' && player === underdogSeat(s));
+}
+
 function othersAllPassed(trick: Trick, player: number): boolean {
   return trick.passed.every((pass, p) => p === player || pass);
 }
@@ -370,7 +385,7 @@ export function play(s: GameState, player: number, cards: Card[]): GameState {
   const combo = v.combo;
   const strict = s.settings.strictPass;
 
-  const flipped = s.settings.revolution && combo.type === 'quads';
+  const flipped = flipsOrder(s, player, combo);
   const revolution = flipped ? !s.revolution : s.revolution;
 
   const hands = s.hands.slice();

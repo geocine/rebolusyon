@@ -11,6 +11,7 @@ import {
   bountySeat,
   canPass,
   createMatch,
+  flipsOrder,
   isHulingHirit,
   isLeading,
   legalPlays,
@@ -19,6 +20,7 @@ import {
   play,
   returnTribute,
   standings,
+  underdogSeat,
   validatePlay,
 } from './engine/game';
 import { PERSONAS, chooseTributeReturn, decide } from './engine/ai';
@@ -26,7 +28,7 @@ import { lineFor, type Moment } from './lines';
 import { type Mechanic, Term } from './mechanics';
 import { loadSettings, loadStats, saveSettings, saveStats, type LifetimeStats } from './storage';
 import { ActionBar, PlayerHand } from './components/PlayerHand';
-import { Avatar, BountyChip, PassStamp, Seat, type SeatPosition } from './components/Seat';
+import { Avatar, BountyChip, PassStamp, Seat, type SeatPosition, UnderdogChip } from './components/Seat';
 import { TrickArea } from './components/TrickArea';
 import { Tracker } from './components/Tracker';
 import { ExchangeModal, RoundEndModal, RulesModal, SettingsModal } from './components/Modals';
@@ -251,7 +253,15 @@ export default function App() {
             haptic.revolution();
             setShake((n) => n + 1);
             if (g.revolution) {
-              showBanner({ kind: 'rev', title: 'REBOLUSYON!', sub: `${name(e.player)} flipped the table. Lower beats higher. 3♣ is king.` }, 2600);
+              const uprising = e.combo.type === 'triple';
+              showBanner(
+                {
+                  kind: 'rev',
+                  title: uprising ? 'ALSA! REBOLUSYON!' : 'REBOLUSYON!',
+                  sub: `${uprising ? `The underdog rises. ${name(e.player)}` : name(e.player)} flipped the table. Lower beats higher. 3♣ is king.`,
+                },
+                2600,
+              );
               say(e.player, 'revolution');
             } else {
               showBanner({ kind: 'unrev', title: 'RESTORED!', sub: `${name(e.player)} flipped it back. The Twos rule again.` }, 2400);
@@ -645,12 +655,15 @@ export default function App() {
     else if (!myOptions.length)
       status = { tone: 'bad', text: `Nothing beats ${describeCombo(top!)} — ${autoPassing ? 'passing for you' : 'pass'}` };
     else status = { tone: 'idle', text: `Beat ${describeCombo(top!)} or pass` };
-  } else if (validation?.ok)
-    status = { tone: 'ok', text: phone ? `${describeCombo(validation.combo)} · swipe up to play` : describeCombo(validation.combo) };
+  }   else if (validation?.ok) {
+    const label = describeCombo(validation.combo) + (flipsOrder(g, HUMAN, validation.combo) ? ' · flips the order!' : '');
+    status = { tone: 'ok', text: phone ? `${label} · swipe up to play` : label };
+  }
   else status = { tone: 'bad', text: validation?.reason ?? '' };
 
   const lastResult = g.history[g.history.length - 1] ?? null;
   const bounty = bountySeat(g);
+  const underdog = underdogSeat(g);
   const finalDouble = isHulingHirit(g);
   const flags = [
     g.settings.revolution && 'revolution',
@@ -718,6 +731,7 @@ export default function App() {
               passed={g.trick.passed[player] && !g.trick.done}
               isLeader={!!top && !g.trick.done && g.trick.topBy === player}
               bounty={bounty === player}
+              underdog={underdog === player}
               bubble={bubbles[player]}
             />
           ))}
@@ -754,6 +768,7 @@ export default function App() {
               <div className="seat-chips">
                 <span className={`chip score ${g.scores[HUMAN] < 0 ? 'neg' : ''}`}>{g.scores[HUMAN] > 0 ? `+${g.scores[HUMAN]}` : g.scores[HUMAN]}</span>
                 {bounty === HUMAN && <BountyChip />}
+                {underdog === HUMAN && <UnderdogChip />}
                 {myTurn && <span className="chip your-turn">YOUR TURN</span>}
                 {!myTurn && !!top && !g.trick.done && g.trick.topBy === HUMAN && <span className="chip lead">ON TOP</span>}
               </div>

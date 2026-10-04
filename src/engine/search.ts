@@ -6,7 +6,7 @@
  */
 import { type Rng, mulberry32 } from './cards';
 import type { Combo } from './combos';
-import { type Difficulty, type GameState, HUMAN, isLeading } from './game';
+import { type Difficulty, type GameState, HUMAN, flipsOrder, isLeading } from './game';
 import { type Persona, PERSONAS, decide } from './ai';
 import { sampleWorld } from './belief';
 import { playout, simFrom, simPass, simPlay } from './sim';
@@ -121,7 +121,7 @@ export function think(
 
   const utility = utilityFor(s, me, style, difficulty);
   const stats = cands.map((combo) => ({ combo, sum: 0, win: 0, points: 0, n: 0 }));
-  const flipBonus = (c: Combo | null) => (c && s.settings.revolution && c.type === 'quads' ? 0.15 * persona.revLove : 0);
+  const flipBonus = (c: Combo | null) => (c && flipsOrder(s, me, c) ? 0.15 * persona.revLove : 0);
 
   const belief = { memory: Math.min(1, persona.memory * level.memoryScale), inference: level.inference * style.inference };
   const budget = (opts.budgetMs ?? level.budgetMs) * style.patience;

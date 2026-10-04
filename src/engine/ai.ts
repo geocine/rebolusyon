@@ -1,6 +1,6 @@
 import { type Card, type Rng, RANK_TWO, newDeck, power, rankOf, rankPower, removeCards } from './cards';
 import { type Combo, FIVE_ORDER, enumerateFives } from './combos';
-import { type Difficulty, type GameState, PLAYERS, isLeading, legalPlays, nextSeat } from './game';
+import { type Difficulty, type GameState, PLAYERS, flipsOrder, isLeading, legalPlays, nextSeat } from './game';
 
 export interface Persona {
   name: string;
@@ -237,7 +237,7 @@ export function decide(
       scored.push({ combo, score: 1e6 });
       continue;
     }
-    const flips = s.settings.revolution && combo.type === 'quads';
+    const flips = flipsOrder(s, player, combo);
     const t = flips ? tFlip : tNow;
     const plan = bestPlan(after, t, flips ? memoFlip : memoNow);
     const strength = unitStrength(combo, rev);

@@ -81,6 +81,8 @@ interface SeatProps {
   isLeader: boolean;
   /** Carries the Patong: leads the match, pays double if they lose this round. */
   bounty: boolean;
+  /** Alone in last place with Alsa on: their Three of a Kind flips the order. */
+  underdog: boolean;
   bubble: string | null;
 }
 
@@ -92,7 +94,15 @@ export function BountyChip() {
   );
 }
 
-export function Seat({ player, persona, cards, score, position, isTurn, passed, isLeader, bounty, bubble }: SeatProps) {
+export function UnderdogChip() {
+  return (
+    <span className="chip underdog" title={`${MECHANICS.alsa.name} (${MECHANICS.alsa.en}): ${MECHANICS.alsa.desc}`}>
+      UNDERDOG
+    </span>
+  );
+}
+
+export function Seat({ player, persona, cards, score, position, isTurn, passed, isLeader, bounty, underdog, bubble }: SeatProps) {
   const n = cards.length;
   const vertical = position !== 'top';
   return (
@@ -113,6 +123,7 @@ export function Seat({ player, persona, cards, score, position, isTurn, passed, 
           <div className="seat-chips">
             <span className={`chip score ${score < 0 ? 'neg' : ''}`}>{score > 0 ? `+${score}` : score}</span>
             {bounty && <BountyChip />}
+            {underdog && <UnderdogChip />}
             {isTurn && (
               <span className="chip thinking" title="Thinking">
                 <i />

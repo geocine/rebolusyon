@@ -137,6 +137,17 @@ describe('turn flow', () => {
     expect(s.events.some((e) => e.kind === 'play' && e.flipped)).toBe(true);
   });
 
+  it('Alsa lets only the sole last-place player flip with Three of a Kind', () => {
+    const trips = [mk(4, C), mk(4, S), mk(4, H)];
+    const hands = () => [[...trips, mk(9, C)], [mk(6, C), mk(6, D)], [mk(7, C), mk(7, D)], [mk(8, C), mk(8, D)]];
+    const flipsWith = (scores: number[], rules: Partial<Settings> = {}) =>
+      play(stateWith(hands(), { firstPlay: false, scores }, rules), 0, trips).revolution;
+    expect(flipsWith([-12, 6, 3, 3])).toBe(true);
+    expect(flipsWith([-12, -12, 12, 12])).toBe(false);
+    expect(flipsWith([5, -12, 4, 3])).toBe(false);
+    expect(flipsWith([-12, 6, 3, 3], { alsa: false })).toBe(false);
+  });
+
   it('ends the round and scores penalties when a hand empties', () => {
     let s = stateWith([[0], [mk(6, C), mk(12, D)], [mk(7, C)], [mk(8, C)]]);
     s = play(s, 0, [0]);
@@ -209,7 +220,7 @@ describe('AI self-play', () => {
     { strictPass: true },
     { revolution: false, bantay: false, buwis: false },
     { memoryMode: true },
-    { patong: false, hirit: false },
+    { patong: false, hirit: false, alsa: false },
   ];
 
   it('plays hundreds of full matches with only legal moves', () => {

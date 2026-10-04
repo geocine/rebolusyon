@@ -4,7 +4,7 @@
  */
 import { type Card, type Rng, RANK_TWO, power, rankOf, rankPower, suitOf } from './cards';
 import { type Combo, beats, classify } from './combos';
-import { type GameState, PLAYERS, isLeading, penaltyFor, roundMultipliers } from './game';
+import { type GameState, PLAYERS, isLeading, penaltyFor, roundMultipliers, underdogSeat } from './game';
 
 export interface Sim {
   hands: Card[][];
@@ -22,6 +22,8 @@ export interface Sim {
   grand: boolean;
   /** Patong and Huling Hirit penalty factor per seat. */
   stakes: number[];
+  /** Alsa: this seat's Three of a Kind also flips the order (-1 when nobody qualifies). */
+  underdog: number;
   /** Cached shedding plans per player; dropped whenever they stop matching the hand. */
   plans: (Combo[] | null)[];
 }
@@ -42,6 +44,7 @@ export function simFrom(s: GameState, hands: Card[][]): Sim {
     winner: -1,
     grand: false,
     stakes: [0, 1, 2, 3].map((p) => roundMultipliers(s, p).reduce((a, m) => a * m.factor, 1)),
+    underdog: underdogSeat(s),
     plans: [null, null, null, null],
   };
 }
@@ -66,7 +69,7 @@ export function simPlay(sim: Sim, combo: Combo): void {
     if (i >= 0) plan.splice(i, 1);
     else sim.plans[p] = null;
   }
-  if (sim.revolutionRule && combo.type === 'quads') {
+  if (sim.revolutionRule && (combo.type === 'quads' || (combo.type === 'triple' && p === sim.underdog))) {
     sim.rev = !sim.rev;
     sim.plans = [null, null, null, null];
   }
