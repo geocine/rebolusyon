@@ -338,14 +338,6 @@ button {
     repeating-linear-gradient(45deg, transparent 0 4px, color-mix(in srgb, currentColor 10%, transparent) 4px 5px),
     repeating-linear-gradient(-45deg, transparent 0 4px, color-mix(in srgb, currentColor 10%, transparent) 4px 5px);
 }
-.court::after {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border: 1px solid currentColor;
-  border-radius: 3px;
-  opacity: 0.4;
-}
 .court {
   overflow: hidden;
 }
@@ -807,21 +799,13 @@ button {
   background:
     radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--persona) 24%, transparent), transparent 58%),
     var(--ink-2);
-  border: 1px solid color-mix(in srgb, var(--persona) 30%, transparent);
-  transition: transform 0.25s, box-shadow 0.25s;
-}
-.roster-card::after {
-  /* embroidered patch stitching */
-  content: '';
-  position: absolute;
-  inset: 5px;
-  border-radius: 11px;
-  border: 1.5px dashed color-mix(in srgb, var(--persona) 32%, transparent);
-  pointer-events: none;
+  border: 2px solid color-mix(in srgb, var(--persona) 55%, transparent);
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--persona) 30%, #000);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 .roster-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4), 0 0 0 1px color-mix(in srgb, var(--persona) 50%, transparent);
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 color-mix(in srgb, var(--persona) 45%, #000);
 }
 .rc-name {
   font-family: var(--display);
@@ -2844,21 +2828,13 @@ kbd {
   background:
     radial-gradient(circle at 0% 50%, color-mix(in srgb, var(--host) 34%, transparent), transparent 62%),
     var(--ink-2);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--host) 45%, transparent), 0 10px 26px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--host) 65%, transparent), 5px 5px 0 2px color-mix(in srgb, var(--host) 32%, #000);
   transition: transform 0.2s, box-shadow 0.2s;
   animation: learn-bob 3.2s ease-in-out infinite;
 }
-.ts-learn::after {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border-radius: 14px;
-  border: 1.5px dashed color-mix(in srgb, var(--host) 40%, transparent);
-  pointer-events: none;
-}
 .ts-learn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 0 1px var(--host), 0 14px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 2px var(--host), 7px 7px 0 2px color-mix(in srgb, var(--host) 45%, #000);
 }
 .ts-learn b {
   display: block;
@@ -2878,9 +2854,6 @@ kbd {
   animation: none;
   background: transparent;
   box-shadow: 0 0 0 1px var(--line);
-}
-.ts-learn.done::after {
-  display: none;
 }
 @keyframes learn-bob {
   0%, 100% { transform: translateY(0); }
@@ -2915,16 +2888,8 @@ kbd {
   background:
     radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--host) 26%, transparent), transparent 60%),
     rgba(18, 16, 30, 0.94);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--host) 45%, transparent), 0 18px 40px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--host) 65%, transparent), 5px 5px 0 2px color-mix(in srgb, var(--host) 30%, #000), 0 18px 40px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(6px);
-}
-.coach::after {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  border-radius: 15px;
-  border: 1.5px dashed color-mix(in srgb, var(--host) 30%, transparent);
-  pointer-events: none;
 }
 .coach-host {
   padding: 6px 0 0 4px;
@@ -3055,15 +3020,7 @@ kbd {
   background:
     radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--host) 22%, transparent), transparent 65%),
     var(--ink-2);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--host) 45%, transparent), 0 30px 80px rgba(0, 0, 0, 0.6);
-}
-.tut-card::after {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  border-radius: 19px;
-  border: 1.5px dashed color-mix(in srgb, var(--host) 28%, transparent);
-  pointer-events: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--host) 65%, transparent), 6px 6px 0 2px color-mix(in srgb, var(--host) 30%, #000), 0 30px 80px rgba(0, 0, 0, 0.6);
 }
 .tut-card .modal-x {
   z-index: 1;
@@ -3456,10 +3413,6 @@ kbd {
     bottom: 4px;
     padding: 8px 12px;
     border-radius: 14px;
-  }
-  .coach::after {
-    inset: 4px;
-    border-radius: 10px;
   }
   .coach-host {
     display: none;
