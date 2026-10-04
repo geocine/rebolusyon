@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, type PanInfo, motion, useDragControls } from 'motion/react';
 import { type ReactNode, useState } from 'react';
 import { type Card, makeCard, rankOf } from '../engine/cards';
 import { describeCombo, isPowerRank } from '../engine/combos';
@@ -8,22 +8,44 @@ import type { Persona } from '../engine/ai';
 import { CardView } from './CardView';
 import { Avatar } from './Seat';
 import { MECHANICS, Term } from '../mechanics';
+import { usePhone } from '../hooks';
 
 export function Modal({ open, onClose, children, wide, className = '' }: { open: boolean; onClose?: () => void; children: ReactNode; wide?: boolean; className?: string }) {
+  const phone = usePhone();
+  const drag = useDragControls();
+  const motionProps = phone
+    ? {
+        initial: { y: '100%' },
+        animate: { y: 0 },
+        exit: { y: '100%' },
+        transition: { type: 'spring' as const, stiffness: 380, damping: 38 },
+        drag: onClose ? ('y' as const) : false,
+        dragListener: false,
+        dragControls: drag,
+        dragConstraints: { top: 0, bottom: 0 },
+        dragElastic: { top: 0, bottom: 0.7 },
+        onDragEnd: (_: unknown, info: PanInfo) => {
+          if (info.offset.y > 110 || info.velocity.y > 600) onClose?.();
+        },
+      }
+    : {
+        initial: { y: 40, scale: 0.94, opacity: 0 },
+        animate: { y: 0, scale: 1, opacity: 1 },
+        exit: { y: 20, scale: 0.97, opacity: 0 },
+        transition: { type: 'spring' as const, stiffness: 320, damping: 28 },
+      };
   return (
     <AnimatePresence>
       {open && (
-        <motion.div className="modal-scrim" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+        <motion.div className={`modal-scrim ${phone ? 'as-sheet' : ''}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
           <motion.div
             className={`modal ${wide ? 'wide' : ''} ${className}`}
-            initial={{ y: 40, scale: 0.94, opacity: 0 }}
-            animate={{ y: 0, scale: 1, opacity: 1 }}
-            exit={{ y: 20, scale: 0.97, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+            {...motionProps}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
           >
+            {phone && <div className="sheet-grabber" onPointerDown={(e) => onClose && drag.start(e)} />}
             {onClose && (
               <button className="modal-x" onClick={onClose} aria-label="Close">
                 ×
@@ -223,7 +245,7 @@ export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { 
   return (
     <Modal open={open} onClose={onClose} className="settings">
       <h2 className="modal-title">Settings</h2>
-      {inMatch && <p className="note">Rule changes take effect next match. Opponent difficulty, pace, sound and memory mode apply right away.</p>}
+      {inMatch && <p className="note">Rule changes take effect next match. Opponent difficulty, pace, sound, vibration and memory mode apply right away.</p>}
 
       <h4 className="section-label">House rules</h4>
       <Toggle label={<Term m="revolution" />} desc={MECHANICS.revolution.desc} value={settings.revolution} onChange={(v) => set('revolution', v)} />
@@ -262,6 +284,7 @@ export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { 
         />
       </div>
       <Toggle label="Sound" desc="Synthesized table sounds." value={settings.sound} onChange={(v) => set('sound', v)} />
+      <Toggle label="Vibration" desc="Haptic taps on supported phones." value={settings.haptics} onChange={(v) => set('haptics', v)} />
     </Modal>
   );
 }
@@ -355,8 +378,8 @@ export function RoundEndModal({ open, result, game, personas, onNext }: { open: 
                     <Avatar persona={personas[p]} size={30} />
                     {personas[p].name}
                   </td>
-                  <td>{result.leftover[p].length ? mini(result.leftover[p]) : <span className="out">OUT</span>}</td>
-                  <td>
+                  <td className="left">{result.leftover[p].length ? mini(result.leftover[p]) : <span className="out">OUT</span>}</td>
+                  <td className="mults">
                     {result.multipliers[p].map((m) => (
                       <span key={m.label} className="mult-chip">
                         {m.label} ×{m.factor}
@@ -364,7 +387,7 @@ export function RoundEndModal({ open, result, game, personas, onNext }: { open: 
                     ))}
                   </td>
                   <td className={`num delta ${result.deltas[p] >= 0 ? 'pos' : 'neg'}`}>{result.deltas[p] > 0 ? `+${result.deltas[p]}` : result.deltas[p]}</td>
-                  <td className="num">{game.scores[p]}</td>
+                  <td className="num total">{game.scores[p]}</td>
                 </motion.tr>
               ))}
             </tbody>

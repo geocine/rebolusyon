@@ -30,6 +30,9 @@ import { Tracker } from './components/Tracker';
 import { ExchangeModal, MatchEndModal, RoundEndModal, RulesModal, SettingsModal } from './components/Modals';
 import { Banner, type BannerData } from './components/Banner';
 import { TitleScreen } from './components/TitleScreen';
+import { Icon } from './components/Icons';
+import { haptic, setHapticsEnabled } from './haptics';
+import { usePhone } from './hooks';
 
 const SEATS: { player: number; position: SeatPosition }[] = [
   { player: 1, position: 'left' },
@@ -40,7 +43,7 @@ const SEATS: { player: number; position: SeatPosition }[] = [
 const PACE = { chill: 1400, normal: 900, fast: 420 } as const;
 
 /** Settings that may change mid-match without altering the rules being played. */
-const LIVE_KEYS = ['difficulty', 'speed', 'sound', 'memoryMode'] as const;
+const LIVE_KEYS = ['difficulty', 'speed', 'sound', 'haptics', 'memoryMode'] as const;
 
 function comboWeight(c: Combo, rev: boolean) {
   return c.cards.length * 100 + Math.max(...c.cards.map((x) => power(x, rev)));
@@ -78,6 +81,9 @@ export default function App() {
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   useEffect(() => setSoundEnabled(settings.sound), [settings.sound]);
+  useEffect(() => setHapticsEnabled(settings.haptics), [settings.haptics]);
+
+  const phone = usePhone();
 
   useEffect(() => {
     const narrow = window.matchMedia('(max-width: 1100px)');
@@ -156,6 +162,7 @@ export default function App() {
           if (hasPower) sfx.power();
           if (e.flipped) {
             sfx.revolution();
+            haptic.revolution();
             setShake((n) => n + 1);
             if (g.revolution) {
               showBanner({ kind: 'rev', title: 'REBOLUSYON!', sub: `${name(e.player)} flipped the table. Lower beats higher. 3♣ is king.` }, 2600);
@@ -190,6 +197,7 @@ export default function App() {
           const won = e.winner === HUMAN;
           if (won) {
             sfx.win();
+            haptic.win();
             say(1 + Math.floor(Math.random() * 3), 'humanWin');
           } else {
             sfx.lose();
@@ -226,7 +234,10 @@ export default function App() {
     if (!game || game.eventSeq === lastSeq.current) return;
     lastSeq.current = game.eventSeq;
     for (const e of game.events) handleEvent(e, game);
-    if (game.phase === 'playing' && game.turn === HUMAN && prevTurn.current !== HUMAN) sfx.turn();
+    if (game.phase === 'playing' && game.turn === HUMAN && prevTurn.current !== HUMAN) {
+      sfx.turn();
+      haptic.turn();
+    }
     prevTurn.current = game.phase === 'playing' ? game.turn : -1;
   }, [game, handleEvent]);
 
@@ -271,13 +282,14 @@ export default function App() {
     cycleIdx.current = -1;
   }, [game?.eventSeq]);
 
-  const toggleCard = (c: Card) => {
+  const setCard = (c: Card, on: boolean) => {
     sfx.select();
+    haptic.tap();
     setHinted(new Set());
     setSelected((s) => {
       const n = new Set(s);
-      if (n.has(c)) n.delete(c);
-      else n.add(c);
+      if (on) n.add(c);
+      else n.delete(c);
       return n;
     });
   };
@@ -287,15 +299,20 @@ export default function App() {
     later(() => setStatusFlash((m) => (m === msg ? null : m)), 1800);
   };
 
-  const doPlay = () => {
+  const doPlay = (extra: Card | null = null) => {
     if (!game || !myTurn) return;
-    const v = validatePlay(game, HUMAN, selArr);
+    const cards = extra === null || selected.has(extra) ? selArr : [...selArr, extra];
+    if (!cards.length) return;
+    const v = validatePlay(game, HUMAN, cards);
     if (!v.ok) {
       sfx.error();
+      haptic.error();
+      if (extra !== null) setSelected(new Set(cards));
       flash(v.reason);
       return;
     }
-    setGame(play(game, HUMAN, selArr));
+    haptic.play();
+    setGame(play(game, HUMAN, cards));
     setSelected(new Set());
     setHinted(new Set());
   };
@@ -423,7 +440,8 @@ export default function App() {
     else if (leading) status = { tone: 'idle', text: 'Your lead — play anything' };
     else if (!myOptions.length) status = { tone: 'bad', text: `Nothing beats ${describeCombo(top!)} — pass` };
     else status = { tone: 'idle', text: `Beat ${describeCombo(top!)} or pass` };
-  } else if (validation?.ok) status = { tone: 'ok', text: describeCombo(validation.combo) };
+  } else if (validation?.ok)
+    status = { tone: 'ok', text: phone ? `${describeCombo(validation.combo)} · swipe up to play` : describeCombo(validation.combo) };
   else status = { tone: 'bad', text: validation?.reason ?? '' };
 
   const lastResult = g.history[g.history.length - 1] ?? null;
@@ -440,8 +458,13 @@ export default function App() {
         <button className="logo-small" onClick={() => confirm('Leave this match?') && setGame(null)} title="Back to title">
           REBOLUSYON
         </button>
-        <div className="tb-round">
-          Round <b>{g.round}</b>/{g.settings.rounds}
+        <div className="tb-round" title={`Round ${g.round} of ${g.settings.rounds}`}>
+          <span className="tb-round-label">Round</span> <b>{g.round}</b>/{g.settings.rounds}
+          <span className="tb-pips" aria-hidden="true">
+            {Array.from({ length: g.settings.rounds }, (_, i) => (
+              <i key={i} className={i + 1 < g.round ? 'done' : i + 1 === g.round ? 'now' : ''} />
+            ))}
+          </span>
         </div>
         <div className="tb-flags">
           {flags.map((f) => (
@@ -452,11 +475,17 @@ export default function App() {
           {g.settings.strictPass && <span className="flag">Strict pass</span>}
         </div>
         <div className="tb-actions">
-          <button className="btn ghost small" onClick={() => setShowRules(true)}>
-            Rules
+          <button className={`btn ghost small icon-btn ${trackerOpen ? 'on' : ''}`} onClick={() => setTrackerOpen((o) => !o)} title="Card tracker">
+            <Icon name="grid" size={16} />
+            <span className="btn-label">Tracker</span>
           </button>
-          <button className="btn ghost small" onClick={() => setShowSettings(true)}>
-            Settings
+          <button className="btn ghost small icon-btn" onClick={() => setShowRules(true)} title="How to play">
+            <Icon name="help" size={16} />
+            <span className="btn-label">Rules</span>
+          </button>
+          <button className="btn ghost small icon-btn" onClick={() => setShowSettings(true)} title="Settings">
+            <Icon name="gear" size={16} />
+            <span className="btn-label">Settings</span>
           </button>
         </div>
       </header>
@@ -493,13 +522,22 @@ export default function App() {
               </div>
             </div>
           </div>
-          <PlayerHand hand={myHand} selected={selected} hinted={hinted} fresh={fresh} revolution={g.revolution} onToggle={toggleCard} dealing={dealing} />
+          <PlayerHand
+            hand={myHand}
+            selected={selected}
+            hinted={hinted}
+            fresh={fresh}
+            revolution={g.revolution}
+            onSet={setCard}
+            onSwipeUp={(from) => doPlay(from)}
+            dealing={dealing}
+          />
           <ActionBar
             isTurn={myTurn}
             canPass={canPass(g, HUMAN)}
             canPlay={!!validation?.ok}
             status={status}
-            onPlay={doPlay}
+            onPlay={() => doPlay()}
             onPass={doPass}
             onClear={() => setSelected(new Set())}
             onHint={doHint}
@@ -523,6 +561,7 @@ export default function App() {
         revolution={g.revolution}
         open={trackerOpen}
         onToggle={() => setTrackerOpen((o) => !o)}
+        phone={phone}
       />
 
       <Banner banner={banner} />

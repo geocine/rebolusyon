@@ -33,6 +33,7 @@ export interface Settings {
   rounds: number;
   speed: Speed;
   sound: boolean;
+  haptics: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -45,6 +46,7 @@ export const DEFAULT_SETTINGS: Settings = {
   rounds: 6,
   speed: 'normal',
   sound: true,
+  haptics: true,
 };
 
 export interface TrickPlay {

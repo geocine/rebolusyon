@@ -19,9 +19,11 @@ interface Props {
   revolution: boolean;
   open: boolean;
   onToggle: () => void;
+  /** Render as a bottom drawer. */
+  phone: boolean;
 }
 
-export function Tracker({ played, myHand, memoryMode, peeking, peekAvailable, onPeek, log, personas, revolution, open, onToggle }: Props) {
+export function Tracker({ played, myHand, memoryMode, peeking, peekAvailable, onPeek, log, personas, revolution, open, onToggle, phone }: Props) {
   const playedSet = new Set(played);
   const mine = new Set(myHand);
   const showGrid = !memoryMode || peeking;
@@ -32,11 +34,18 @@ export function Tracker({ played, myHand, memoryMode, peeking, peekAvailable, on
   }).length;
 
   return (
-    <aside className={`tracker ${open ? 'open' : ''}`}>
+    <>
+    <AnimatePresence>
+      {phone && open && (
+        <motion.div className="tracker-scrim" onClick={onToggle} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+      )}
+    </AnimatePresence>
+    <aside className={`tracker ${open ? 'open' : ''} ${phone ? 'as-sheet' : ''}`}>
       <button className="tracker-tab" onClick={onToggle} aria-expanded={open}>
         <span>TRACKER</span>
       </button>
       <div className="tracker-body">
+        {phone && <button className="sheet-grabber" onClick={onToggle} aria-label="Close tracker" />}
         <header className="tracker-head">
           <h3>{memoryMode ? <Term m="memory" /> : 'Card Tracker'}</h3>
           <p>{memoryMode ? 'Memory mode is on. Trust your head.' : 'Every card that has been played this round.'}</p>
@@ -80,6 +89,7 @@ export function Tracker({ played, myHand, memoryMode, peeking, peekAvailable, on
         <Log log={log} personas={personas} />
       </div>
     </aside>
+    </>
   );
 }
 

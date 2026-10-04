@@ -1,0 +1,14 @@
+{
+  "name": "Rebolusyon — a Pusoy Dos game",
+  "short_name": "Rebolusyon",
+  "description": "The Filipino take on Big Two, with a few house twists.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0f101a",
+  "theme_color": "#0f101a",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
