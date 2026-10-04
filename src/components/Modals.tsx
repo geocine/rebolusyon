@@ -3,7 +3,7 @@ import { type ReactNode, useState } from 'react';
 import { type Card, makeCard, rankOf } from '../engine/cards';
 import { describeCombo, isPowerRank } from '../engine/combos';
 import type { Exchange, GameState, RoundResult, Settings } from '../engine/game';
-import { pickTributePayer, standings } from '../engine/game';
+import { pickTributePayer } from '../engine/game';
 import type { Persona } from '../engine/ai';
 import { CardView } from './CardView';
 import { Avatar } from './Seat';
@@ -454,59 +454,4 @@ function tributeNote(r: RoundResult, personas: Persona[]) {
   return payer === 0
     ? `Buwis (Tribute) next round: you give your best card to ${to}.`
     : `Buwis (Tribute) next round: ${personas[payer].name} gives their best card to ${to}.`;
-}
-
-/* -------------------------------- Match end ------------------------------- */
-
-export function MatchEndModal({ open, game, personas, onAgain, onTitle }: { open: boolean; game: GameState; personas: Persona[]; onAgain: () => void; onTitle: () => void }) {
-  const order = standings(game);
-  const youWon = order[0] === 0;
-  const podium = [order[1], order[0], order[2]];
-  return (
-    <Modal open={open} wide className="match-end">
-      <div className="eyebrow center">Match over</div>
-      <h2 className="modal-title center big">{youWon ? 'You rule the table!' : `${personas[order[0]].name} takes the table`}</h2>
-      <div className="podium">
-        {podium.map((p, i) => (
-          <motion.div
-            key={p}
-            className={`podium-col place-${[2, 1, 3][i]}`}
-            initial={{ y: 60, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2 + [0.3, 0.6, 0][i], type: 'spring', stiffness: 200, damping: 18 }}
-          >
-            <Avatar persona={personas[p]} size={i === 1 ? 84 : 64} active={i === 1} mood={i === 1 ? 'happy' : undefined} />
-            <div className="pd-name">{personas[p].name}</div>
-            <div className="pd-score">{game.scores[p]}</div>
-            <div className="pd-block">{[2, 1, 3][i]}</div>
-          </motion.div>
-        ))}
-      </div>
-      <div className="me-fourth">
-        4th · {personas[order[3]].name} · {game.scores[order[3]]}
-      </div>
-      <div className="me-stats">
-        {[0, 1, 2, 3].map((p) => (
-          <div key={p} className="me-stat">
-            <b style={{ color: personas[p].color }}>{personas[p].name}</b>
-            <span>
-              {game.stats.roundWins[p]} round{game.stats.roundWins[p] === 1 ? '' : 's'} won
-            </span>
-            <span>
-              {game.stats.revolutions[p]} revolution{game.stats.revolutions[p] === 1 ? '' : 's'}
-            </span>
-            <span>{game.stats.cardsShed[p]} cards shed</span>
-          </div>
-        ))}
-      </div>
-      <div className="modal-actions">
-        <button className="btn ghost" onClick={onTitle}>
-          Back to title
-        </button>
-        <button className="btn primary" onClick={onAgain} autoFocus>
-          Rematch
-        </button>
-      </div>
-    </Modal>
-  );
 }
