@@ -1,7 +1,8 @@
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { makeCard } from '../engine/cards';
-import type { Difficulty } from '../engine/game';
+import type { Difficulty, RuleMode } from '../engine/game';
+import { MODES, modeOf } from '../mechanics';
 import { PERSONAS } from '../engine/ai';
 import { DIFFICULTIES } from '../difficulty';
 import type { LifetimeStats } from '../storage';
@@ -13,6 +14,8 @@ const HERO = [makeCard(0, 0), makeCard(12, 0), makeCard(12, 1), makeCard(12, 2),
 
 interface Props {
   stats: LifetimeStats;
+  mode: RuleMode;
+  onMode: (m: RuleMode) => void;
   difficulty: Difficulty;
   onDifficulty: (d: Difficulty) => void;
   onPlay: () => void;
@@ -22,7 +25,7 @@ interface Props {
   onSettings: () => void;
 }
 
-export function TitleScreen({ stats, difficulty, onDifficulty, onPlay, onLearn, graduated, onRules, onSettings }: Props) {
+export function TitleScreen({ stats, mode, onMode, difficulty, onDifficulty, onPlay, onLearn, graduated, onRules, onSettings }: Props) {
   const [flipped, setFlipped] = useState(false);
   useEffect(() => {
     const t = setInterval(() => setFlipped((f) => !f), 3600);
@@ -83,9 +86,19 @@ export function TitleScreen({ stats, difficulty, onDifficulty, onPlay, onLearn, 
               How to play
             </button>
             <button className="btn ghost" onClick={onSettings}>
-              House rules
+              Settings
             </button>
           </div>
+          <span className="ts-pick-label">Rules</span>
+          <div className="segmented ts-diff ts-mode" role="radiogroup" aria-label="Rules">
+            {MODES.map((m) => (
+              <button key={m.value} role="radio" aria-checked={mode === m.value} className={mode === m.value ? 'on' : ''} onClick={() => onMode(m.value)} title={`${m.name} (${m.en})`}>
+                {m.name}
+              </button>
+            ))}
+          </div>
+          <p className="ts-diff-desc">{modeOf(mode).tagline}</p>
+          <span className="ts-pick-label">Opponents</span>
           <div className="segmented ts-diff">
             {DIFFICULTIES.map(({ value, label }) => (
               <button key={value} className={difficulty === value ? 'on' : ''} onClick={() => onDifficulty(value)}>

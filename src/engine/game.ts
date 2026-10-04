@@ -18,7 +18,11 @@ export const HUMAN = 0;
 export type Difficulty = 'easy' | 'normal' | 'hard' | 'rival';
 export type Speed = 'chill' | 'normal' | 'fast';
 
+/** Rule sets a player picks from; the individual rule flags below always follow the mode. */
+export type RuleMode = 'rebolusyon' | 'klasiko';
+
 export interface Settings {
+  mode: RuleMode;
   /** Four of a Kind flips the order of every comparison within a combo type. */
   revolution: boolean;
   /** If the next player has one card left, a single you play must be your strongest. */
@@ -44,7 +48,20 @@ export interface Settings {
   autoPass: boolean;
 }
 
+type ModeRules = Pick<Settings, 'revolution' | 'alsa' | 'bantay' | 'buwis' | 'patong' | 'hirit' | 'strictPass'>;
+
+export const MODE_RULES: Record<RuleMode, ModeRules> = {
+  rebolusyon: { revolution: true, alsa: true, bantay: true, buwis: true, patong: true, hirit: true, strictPass: false },
+  klasiko: { revolution: false, alsa: false, bantay: true, buwis: false, patong: false, hirit: false, strictPass: false },
+};
+
+export function withMode(s: Settings, mode: RuleMode = s.mode): Settings {
+  const m = mode in MODE_RULES ? mode : 'rebolusyon';
+  return { ...s, mode: m, ...MODE_RULES[m] };
+}
+
 export const DEFAULT_SETTINGS: Settings = {
+  mode: 'rebolusyon',
   revolution: true,
   bantay: true,
   buwis: true,

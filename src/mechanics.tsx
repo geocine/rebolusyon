@@ -1,3 +1,5 @@
+import type { RuleMode } from './engine/game';
+
 /** Filipino names for the variant's mechanics, always shown alongside their English meaning. */
 export const MECHANICS = {
   revolution: { name: 'Rebolusyon', en: 'Revolution', desc: 'Four of a Kind flips the card order.' },
@@ -24,3 +26,35 @@ export function Term({ m, gloss = true, english = false }: { m: Mechanic; gloss?
 }
 
 export const termText = (m: Mechanic) => `${MECHANICS[m].name} (${MECHANICS[m].en})`;
+
+export interface RuleGroup {
+  title: string;
+  terms: Mechanic[];
+  text: string;
+}
+
+const GUARD: RuleGroup = { title: 'Guard', terms: ['bantay'], text: 'No feeding a player on their last card.' };
+
+/** The two ways to play. Each bundles rules that only make sense together. */
+export const MODES: { value: RuleMode; name: string; en: string; tagline: string; groups: RuleGroup[] }[] = [
+  {
+    value: 'rebolusyon',
+    name: 'Rebolusyon',
+    en: 'House rules',
+    tagline: 'The full fiesta. Flips, stakes, and comebacks to the last hand.',
+    groups: [
+      { title: 'Flip', terms: ['revolution', 'alsa'], text: 'Four of a Kind turns the order upside down. Last place can do it with three.' },
+      { title: 'Stakes', terms: ['buwis', 'patong', 'hirit'], text: 'Losers pay tribute, the leader wears a bounty, the final round counts double.' },
+      GUARD,
+    ],
+  },
+  {
+    value: 'klasiko',
+    name: 'Klasiko',
+    en: 'Classic',
+    tagline: 'Straight Pusoy Dos. Twos rule, no twists, every round counts the same.',
+    groups: [GUARD],
+  },
+];
+
+export const modeOf = (m: RuleMode) => MODES.find((x) => x.value === m) ?? MODES[0];

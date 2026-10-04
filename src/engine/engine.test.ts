@@ -3,7 +3,9 @@ import { makeCard as mk, mulberry32, THREE_OF_CLUBS } from './cards';
 import { beats, classify, enumerateCombos } from './combos';
 import {
   DEFAULT_SETTINGS,
+  MODE_RULES,
   type GameState,
+  type RuleMode,
   type Settings,
   canPass,
   createMatch,
@@ -14,6 +16,7 @@ import {
   play,
   returnTribute,
   validatePlay,
+  withMode,
 } from './game';
 import { PERSONAS, chooseTributeReturn, decide } from './ai';
 
@@ -164,6 +167,27 @@ describe('scoring', () => {
     const thirteen = Array.from({ length: 13 }, (_, i) => mk(i, C));
     expect(penaltyFor(thirteen, false).penalty).toBe(13 * 3 * 2);
     expect(penaltyFor([mk(1, C), mk(2, C)], true).penalty).toBe(4);
+  });
+});
+
+describe('rule modes', () => {
+  it('a mode overrides every rule flag, whatever was stored before', () => {
+    const scrambled = { ...DEFAULT_SETTINGS, revolution: false, bantay: false, buwis: false, patong: false, hirit: true, alsa: true, strictPass: true };
+    for (const mode of Object.keys(MODE_RULES) as RuleMode[]) {
+      const s = withMode(scrambled, mode);
+      expect(s.mode).toBe(mode);
+      expect(s).toMatchObject(MODE_RULES[mode]);
+    }
+  });
+
+  it('an unknown stored mode falls back to Rebolusyon', () => {
+    const s = withMode({ ...DEFAULT_SETTINGS, mode: 'bogus' as RuleMode, patong: false });
+    expect(s.mode).toBe('rebolusyon');
+    expect(s.patong).toBe(true);
+  });
+
+  it('the default settings match the Rebolusyon mode', () => {
+    expect(withMode(DEFAULT_SETTINGS)).toEqual(DEFAULT_SETTINGS);
   });
 });
 

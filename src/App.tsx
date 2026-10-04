@@ -22,10 +22,11 @@ import {
   standings,
   underdogSeat,
   validatePlay,
+  withMode,
 } from './engine/game';
 import { PERSONAS, chooseTributeReturn, decide } from './engine/ai';
 import { lineFor, type Moment } from './lines';
-import { type Mechanic, Term } from './mechanics';
+import { Term, modeOf, termText } from './mechanics';
 import { loadSettings, loadStats, saveSettings, saveStats, type LifetimeStats } from './storage';
 import { ActionBar, PlayerHand } from './components/PlayerHand';
 import { Avatar, BountyChip, PassStamp, Seat, type SeatPosition, UnderdogChip } from './components/Seat';
@@ -617,6 +618,8 @@ export default function App() {
       <>
         <TitleScreen
           stats={stats}
+          mode={settings.mode}
+          onMode={(m) => updateSettings(withMode(settings, m))}
           difficulty={settings.difficulty}
           onDifficulty={(d) => updateSettings({ ...settings, difficulty: d })}
           onPlay={startMatch}
@@ -665,14 +668,8 @@ export default function App() {
   const bounty = bountySeat(g);
   const underdog = underdogSeat(g);
   const finalDouble = isHulingHirit(g);
-  const flags = [
-    g.settings.revolution && 'revolution',
-    g.settings.bantay && 'bantay',
-    g.settings.buwis && 'buwis',
-    g.settings.patong && 'patong',
-    finalDouble && 'hirit',
-    memoryMode && 'memory',
-  ].filter(Boolean) as Mechanic[];
+  const mode = modeOf(g.settings.mode);
+  const modeTip = `${mode.name} (${mode.en}): ${mode.groups.map((x) => x.terms.map((t) => termText(t)).join(', ')).join(', ')}`;
 
   const pointed = tutStep?.point?.filter((c) => g.hands[HUMAN].includes(c)) ?? [];
   const hostText = tutStep ? textOf(tutStep.say, g) : null;
@@ -693,12 +690,17 @@ export default function App() {
           </span>
         </div>
         <div className="tb-flags">
-          {flags.map((f) => (
-            <span key={f} className={`flag ${f === 'hirit' ? 'hot' : ''}`}>
-              {f === 'hirit' ? 'Final round ×2' : <Term m={f} english />}
+          {!tut && (
+            <span className="flag" title={modeTip}>
+              {mode.name}
             </span>
-          ))}
-          {g.settings.strictPass && <span className="flag">Strict pass</span>}
+          )}
+          {finalDouble && <span className="flag hot">Final round ×2</span>}
+          {memoryMode && (
+            <span className="flag">
+              <Term m="memory" english />
+            </span>
+          )}
         </div>
         <div className="tb-actions">
           <button className={`btn ghost small icon-btn ${trackerOpen ? 'on' : ''}`} onClick={() => setTrackerOpen((o) => !o)} title="Card tracker">

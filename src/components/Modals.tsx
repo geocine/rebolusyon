@@ -2,12 +2,12 @@ import { AnimatePresence, type PanInfo, motion, useDragControls } from 'motion/r
 import { type ReactNode, useState } from 'react';
 import { type Card, makeCard, rankOf } from '../engine/cards';
 import { describeCombo, isPowerRank } from '../engine/combos';
-import type { Exchange, GameState, RoundResult, Settings } from '../engine/game';
-import { bountySeat, isHulingHirit, pickTributePayer } from '../engine/game';
+import type { Exchange, GameState, RoundResult, RuleMode, Settings } from '../engine/game';
+import { bountySeat, isHulingHirit, pickTributePayer, withMode } from '../engine/game';
 import type { Persona } from '../engine/ai';
 import { CardView } from './CardView';
 import { Avatar } from './Seat';
-import { MECHANICS, Term } from '../mechanics';
+import { MECHANICS, MODES, Term } from '../mechanics';
 import { usePhone } from '../hooks';
 import { DIFFICULTIES } from '../difficulty';
 import { HostNote } from './Tutorial';
@@ -76,8 +76,8 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
     <Modal open={open} onClose={onClose} wide className="rules">
       <h2 className="modal-title">How to Play</h2>
       <p className="lede">
-        Pusoy Dos is the Filipino take on Big Two. This version adds a few house twists. Be the first to shed all 13 cards,
-        and everyone still holding cards pays you.
+        Pusoy Dos is the Filipino take on Big Two. Be the first to shed all 13 cards, and everyone still holding cards pays
+        you. Pick a mode: <b>Rebolusyon</b> plays with the house twists below, <b>Klasiko</b> plays it straight.
       </p>
 
       <div className="rules-grid">
@@ -113,14 +113,24 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
           <p>Whoever holds <b>3♣</b> opens, and their first play has to include it.</p>
           <p>
             Going around, each player plays the <b>same number of cards</b>, and it has to <b>beat</b> what’s on the
-            table, or they pass. Passing doesn’t lock you out unless Strict Pass is on.
+            table, or they pass. Passing doesn’t lock you out: you can play again when it comes back around.
           </p>
           <p>Once everyone else has passed, the table clears and the last player to play leads anything.</p>
         </section>
 
         <section className="twist">
           <h4>
-            <span className="tw-tag pink">TWIST</span> <Term m="revolution" />
+            <span className="tw-tag teal">BOTH MODES</span> <Term m="bantay" />
+          </h4>
+          <p>
+            If the player <b>after you</b> is down to one card, any single you play must be your <b>strongest</b>. No feeding them
+            a 4♣ to go out on.
+          </p>
+        </section>
+
+        <section className="twist">
+          <h4>
+            <span className="tw-tag pink">FLIP</span> <Term m="revolution" />
           </h4>
           <p>
             Play <b>Four of a Kind</b> and the world flips. Within every combo type, <b>lower beats higher</b>. 3♣ becomes the
@@ -132,46 +142,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag teal">TWIST</span> <Term m="bantay" />
-          </h4>
-          <p>
-            If the player <b>after you</b> is down to one card, any single you play must be your <b>strongest</b>. No feeding them
-            a 4♣ to go out on.
-          </p>
-        </section>
-
-        <section className="twist">
-          <h4>
-            <span className="tw-tag gold">TWIST</span> <Term m="buwis" />
-          </h4>
-          <p>
-            Before each new round, the biggest loser of the last one pays a tax: their <b>best card</b> goes straight to the
-            winner, and the winner sends back <b>any card they choose</b>. Winning snowballs. So does losing.
-          </p>
-        </section>
-
-        <section className="twist">
-          <h4>
-            <span className="tw-tag pink">COMEBACK</span> <Term m="patong" />
-          </h4>
-          <p>
-            Whoever leads the match wears a <b>bounty</b>. If anyone else wins the round, the leader’s penalty is{' '}
-            <b>doubled</b> and the winner collects it. Leads are earned, never safe.
-          </p>
-        </section>
-
-        <section className="twist">
-          <h4>
-            <span className="tw-tag gold">COMEBACK</span> <Term m="hirit" />
-          </h4>
-          <p>
-            The <b>final round counts double</b>. Every penalty is ×2, so whoever is behind always has one big swing left.
-          </p>
-        </section>
-
-        <section className="twist">
-          <h4>
-            <span className="tw-tag teal">COMEBACK</span> <Term m="alsa" />
+            <span className="tw-tag pink">FLIP</span> <Term m="alsa" />
           </h4>
           <p>
             Whoever is <b>alone in last place</b> wears the Underdog tag, and their <b>Three of a Kind</b> starts a Rebolusyon,
@@ -181,7 +152,36 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag ink">MODE</span> <Term m="memory" />
+            <span className="tw-tag gold">STAKES</span> <Term m="buwis" />
+          </h4>
+          <p>
+            Before each new round, the biggest loser of the last one pays a tax: their <b>best card</b> goes straight to the
+            winner, and the winner sends back <b>any card they choose</b>. Winning snowballs, so the next two rules push back.
+          </p>
+        </section>
+
+        <section className="twist">
+          <h4>
+            <span className="tw-tag gold">STAKES</span> <Term m="patong" />
+          </h4>
+          <p>
+            Whoever leads the match wears a <b>bounty</b>. If anyone else wins the round, the leader’s penalty is{' '}
+            <b>doubled</b> and the winner collects it. Leads are earned, never safe.
+          </p>
+        </section>
+
+        <section className="twist">
+          <h4>
+            <span className="tw-tag gold">STAKES</span> <Term m="hirit" />
+          </h4>
+          <p>
+            The <b>final round counts double</b>. Every penalty is ×2, so whoever is behind always has one big swing left.
+          </p>
+        </section>
+
+        <section className="twist">
+          <h4>
+            <span className="tw-tag ink">CHALLENGE</span> <Term m="memory" />
           </h4>
           <p>
             Memory mode for real players. The card tracker is hidden and cleared tricks go face-down. You get one{' '}
@@ -196,8 +196,8 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             <li><b>×2</b> with 10–12 cards left</li>
             <li><b>×3</b> if you never played (13)</li>
             <li><b>×2</b> if caught holding any Two</li>
-            <li><b>×2</b> for the match leader if they lose the round (<i>Patong</i>)</li>
-            <li><b>×2</b> for everyone in the final round (<i>Huling Hirit</i>)</li>
+            <li><b>×2</b> for the match leader if they lose the round (<i>Patong</i>, Rebolusyon mode)</li>
+            <li><b>×2</b> for everyone in the final round (<i>Huling Hirit</i>, Rebolusyon mode)</li>
             <li><b>×2</b> for everyone if the winner goes out on Four of a Kind or a Straight Flush (<i>Grand Finish</i>)</li>
           </ul>
           <p>The winner collects it all. Highest total after the last round wins the match.</p>
@@ -294,21 +294,41 @@ function Segmented<T extends string | number>({ value, options, onChange }: { va
   );
 }
 
+export function ModePicker({ value, onChange }: { value: RuleMode; onChange: (m: RuleMode) => void }) {
+  return (
+    <div className="mode-picker" role="radiogroup" aria-label="Mode">
+      {MODES.map((m) => (
+        <button key={m.value} type="button" role="radio" aria-checked={value === m.value} className={`mode-card ${value === m.value ? 'on' : ''}`} onClick={() => onChange(m.value)}>
+          <span className="mc-head">
+            <b>{m.name}</b>
+            <span className="mc-en">{m.en}</span>
+          </span>
+          <span className="mc-tag">{m.tagline}</span>
+          <span className="mc-groups">
+            {m.groups.map((g) => (
+              <span key={g.title} className="mc-group">
+                <i>{g.title}</i>
+                {g.terms.map((t) => MECHANICS[t].name).join(' · ')}
+              </span>
+            ))}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { open: boolean; onClose: () => void; settings: Settings; onChange: (s: Settings) => void; inMatch: boolean }) {
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => onChange({ ...settings, [k]: v });
   return (
     <Modal open={open} onClose={onClose} className="settings">
       <h2 className="modal-title">Settings</h2>
-      {inMatch && <p className="note">Rule changes take effect next match. Opponent difficulty, pace, sound, vibration and memory mode apply right away.</p>}
+      {inMatch && <p className="note">A new mode takes effect next match. Opponent difficulty, pace, sound, vibration and memory mode apply right away.</p>}
 
-      <h4 className="section-label">House rules</h4>
-      <Toggle label={<Term m="revolution" />} desc={MECHANICS.revolution.desc} value={settings.revolution} onChange={(v) => set('revolution', v)} />
-      <Toggle label={<Term m="bantay" />} desc={MECHANICS.bantay.desc} value={settings.bantay} onChange={(v) => set('bantay', v)} />
-      <Toggle label={<Term m="buwis" />} desc={MECHANICS.buwis.desc} value={settings.buwis} onChange={(v) => set('buwis', v)} />
-      <Toggle label={<Term m="patong" />} desc={MECHANICS.patong.desc} value={settings.patong} onChange={(v) => set('patong', v)} />
-      <Toggle label={<Term m="hirit" />} desc={MECHANICS.hirit.desc} value={settings.hirit} onChange={(v) => set('hirit', v)} />
-      <Toggle label={<Term m="alsa" />} desc={MECHANICS.alsa.desc} value={settings.alsa} onChange={(v) => set('alsa', v)} />
-      <Toggle label="Strict pass" desc="Once you pass, you sit out until the table clears." value={settings.strictPass} onChange={(v) => set('strictPass', v)} />
+      <h4 className="section-label">Mode</h4>
+      <ModePicker value={settings.mode} onChange={(m) => onChange(withMode(settings, m))} />
+
+      <h4 className="section-label">Challenge</h4>
       <Toggle label={<Term m="memory" />} desc="Hide the card tracker. One 4-second peek per round." value={settings.memoryMode} onChange={(v) => set('memoryMode', v)} />
 
       <h4 className="section-label">Table</h4>

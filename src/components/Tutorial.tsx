@@ -314,7 +314,9 @@ export function Diploma({ onPlay, onTitle }: { onPlay: () => void; onTitle: () =
             ))}
           </div>
           <p className="dp-extra">
-            Want it harder? <b>House rules</b> has Strict pass and <Term m="memory" />: no tracker, count the cards yourself.
+            Real matches in <b>Rebolusyon</b> mode raise the stakes: the leader carries a <Term m="patong" /> and the final round
+            counts double, so no lead is safe. Want it harder? Turn on <Term m="memory" /> in Settings: no tracker, count the cards
+            yourself.
           </p>
           <div className="tut-actions">
             <button className="btn ghost" onClick={onTitle}>
