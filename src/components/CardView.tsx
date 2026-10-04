@@ -125,7 +125,10 @@ export const CardView = memo(function CardView({
           <span className="back-mark">2</span>
         </div>
       ) : (
-        <Face card={card} size={size} />
+        <>
+          <Face card={card} size={size} />
+          {powerCard && <span className="power-tab" aria-hidden="true" />}
+        </>
       )}
     </motion.div>
   );

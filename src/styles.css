@@ -4,7 +4,6 @@
    ===================================================================== */
 
 :root {
-  color-scheme: dark;
   --ink: #0f101a;
   --ink-2: #171927;
   --ink-3: #22253a;
@@ -31,6 +30,36 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* Scrollbars: a slim gold pill on a clear track. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 45%, transparent) padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--gold) 75%, transparent);
+}
+::-webkit-scrollbar-button {
+  display: none;
+}
+.diploma::-webkit-scrollbar-thumb {
+  background-color: rgba(120, 80, 0, 0.35);
+}
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--gold) 45%, transparent) transparent;
+  }
 }
 
 html,
@@ -388,13 +417,35 @@ button {
   -webkit-text-stroke: 0.5px rgba(80, 40, 0, 0.6);
 }
 
-/* Power rank: gold foil */
-.card.power {
-  border-color: #c58c06;
-  box-shadow:
-    0 0 0 2px var(--gold),
-    0 0 18px rgba(244, 180, 26, 0.45),
-    0 8px 18px rgba(0, 0, 0, 0.35);
+/* Power rank: a gilded face and a foil corner. No outer ring; that means "selected". */
+.card.face.power {
+  background:
+    radial-gradient(120% 90% at 30% 10%, #fffbea 0%, transparent 60%),
+    linear-gradient(160deg, #f9edc7 0%, #e8d08f 100%);
+  border-color: rgba(150, 100, 0, 0.45);
+}
+.power-tab {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: calc(var(--w) * 0.3);
+  height: calc(var(--w) * 0.3);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  background: linear-gradient(225deg, #fff1b8 0%, var(--gold) 45%, #b97f00 100%);
+  z-index: 3;
+}
+.power-tab::after {
+  content: '★';
+  position: absolute;
+  top: 6%;
+  right: 8%;
+  font-size: calc(var(--w) * 0.11);
+  line-height: 1;
+  color: #6b4300;
+}
+.card-xs .power-tab::after,
+.card-sm .power-tab::after {
+  content: none;
 }
 .card.power::after {
   content: '';
@@ -1479,7 +1530,6 @@ button {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  scrollbar-width: thin;
 }
 .log li {
   opacity: 0.85;
