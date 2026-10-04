@@ -96,6 +96,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [resultOpen, setResultOpen] = useState(false);
   const [matchOpen, setMatchOpen] = useState(false);
+  const [nextCast, setNextCast] = useState(() => drawCast(Math.random, loadLastCast()));
   const [selected, setSelected] = useState<Set<Card>>(new Set());
   const [hinted, setHinted] = useState<Set<Card>>(new Set());
   const [fresh, setFresh] = useState<Set<Card>>(new Set());
@@ -189,9 +190,9 @@ export default function App() {
   const startMatch = () => {
     resetTable();
     setTut(null);
-    const cast = drawCast(Math.random, loadLastCast());
-    saveLastCast(cast);
-    setGame(createMatch(settings, undefined, cast));
+    saveLastCast(nextCast);
+    setGame(createMatch(settings, undefined, nextCast));
+    setNextCast(drawCast(Math.random, nextCast));
   };
 
   const startLesson = (lesson: number, status: TutorialState['status'] = 'intro') => {
@@ -653,6 +654,7 @@ export default function App() {
       <>
         <TitleScreen
           stats={stats}
+          cast={nextCast}
           mode={settings.mode}
           onMode={(m) => updateSettings(withMode(settings, m))}
           difficulty={settings.difficulty}

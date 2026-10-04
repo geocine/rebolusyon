@@ -1,9 +1,9 @@
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { makeCard } from '../engine/cards';
-import type { Difficulty, RuleMode } from '../engine/game';
+import type { Cast, Difficulty, RuleMode } from '../engine/game';
 import { MODES, modeOf } from '../mechanics';
-import { REGULARS } from '../engine/ai';
+import { castOf } from '../engine/ai';
 import { DIFFICULTIES } from '../difficulty';
 import type { LifetimeStats } from '../storage';
 import { CardView } from './CardView';
@@ -14,6 +14,7 @@ const HERO = [makeCard(0, 0), makeCard(12, 0), makeCard(12, 1), makeCard(12, 2),
 
 interface Props {
   stats: LifetimeStats;
+  cast: Cast;
   mode: RuleMode;
   onMode: (m: RuleMode) => void;
   difficulty: Difficulty;
@@ -25,7 +26,7 @@ interface Props {
   onSettings: () => void;
 }
 
-export function TitleScreen({ stats, mode, onMode, difficulty, onDifficulty, onPlay, onLearn, graduated, onRules, onSettings }: Props) {
+export function TitleScreen({ stats, cast, mode, onMode, difficulty, onDifficulty, onPlay, onLearn, graduated, onRules, onSettings }: Props) {
   const [flipped, setFlipped] = useState(false);
   useEffect(() => {
     const t = setInterval(() => setFlipped((f) => !f), 3600);
@@ -111,11 +112,10 @@ export function TitleScreen({ stats, mode, onMode, difficulty, onDifficulty, onP
         </motion.div>
 
         <motion.div className="roster-head" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.95 }}>
-          <h3>The regulars</h3>
-          <p>Three of them sit down each match, in random seats. Learn their habits.</p>
+          <h3>Tonight’s table</h3>
         </motion.div>
         <motion.div className="roster" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}>
-          {REGULARS.map((p) => (
+          {castOf({ cast }).slice(1).map((p) => (
             <div key={p.name} className="roster-card" style={{ ['--persona' as string]: p.color }}>
               <Avatar persona={p} size={48} />
               <div>

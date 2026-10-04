@@ -930,7 +930,7 @@ button {
   width: 100%;
 }
 .roster > .roster-card {
-  flex: 0 1 calc((100% - 3 * 14px) / 4);
+  flex: 0 1 calc((100% - 2 * 14px) / 3);
   min-width: 220px;
 }
 .roster-card {

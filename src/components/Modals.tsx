@@ -243,9 +243,8 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             on cheap singles, lead pairs or five-card hands when someone is short on cards, and watch the card counts.
           </p>
           <p className="small">
-            Seven regulars take turns at your table, three per match, in random seats. Each has a temperament: Lola
-            hoards her Twos, Ate Joy hunts the leader, Bea dumps cards fast, Mika and Mang Caloy read your passes.
-            Hover a name at the table to see their habit. When a bot says it likes its chances, it’s reading its
+            A different three sit down each match, in random seats, and each has a temperament: some hoard their Twos,
+            some hunt the leader, some read your passes. Hover a name at the table to see their habit. When a bot says it likes its chances, it’s reading its
             own estimate. The Hint button uses the same brain and shows your odds.
           </p>
         </section>
