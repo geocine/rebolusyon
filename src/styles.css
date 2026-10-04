@@ -592,13 +592,29 @@ button {
   width: 100%;
 }
 .roster-card {
+  position: relative;
   display: flex;
   gap: 14px;
-  padding: 16px;
+  padding: 18px;
   border-radius: 16px;
-  background: linear-gradient(160deg, rgba(246, 239, 225, 0.06), rgba(246, 239, 225, 0.02));
-  border: 1px solid var(--line);
-  border-top: 3px solid var(--persona);
+  background:
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--persona) 24%, transparent), transparent 58%),
+    var(--ink-2);
+  border: 1px solid color-mix(in srgb, var(--persona) 30%, transparent);
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.roster-card::after {
+  /* embroidered patch stitching */
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 11px;
+  border: 1.5px dashed color-mix(in srgb, var(--persona) 32%, transparent);
+  pointer-events: none;
+}
+.roster-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4), 0 0 0 1px color-mix(in srgb, var(--persona) 50%, transparent);
 }
 .rc-name {
   font-family: var(--display);
@@ -1418,12 +1434,23 @@ button {
   opacity: 0.9;
 }
 .note {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   font-size: 13px;
-  opacity: 0.7;
-  padding: 8px 12px;
-  border-left: 3px solid var(--gold);
-  background: rgba(244, 180, 26, 0.06);
-  border-radius: 4px;
+  line-height: 1.45;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1.5px dashed rgba(244, 180, 26, 0.35);
+  background: rgba(244, 180, 26, 0.05);
+  color: color-mix(in srgb, var(--paper) 82%, transparent);
+}
+.note::before {
+  content: '◆';
+  flex: none;
+  font-size: 10px;
+  color: var(--gold);
+  transform: translateY(-1px);
 }
 .eyebrow {
   font-size: 11px;
