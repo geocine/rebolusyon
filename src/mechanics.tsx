@@ -9,13 +9,13 @@ export const MECHANICS = {
 
 export type Mechanic = keyof typeof MECHANICS;
 
-/** "Bantay · Guard" with a tooltip explaining the rule. */
-export function Term({ m, gloss = true }: { m: Mechanic; gloss?: boolean }) {
+/** "Bantay · Guard" with a tooltip explaining the rule; `english` shows only "Guard". */
+export function Term({ m, gloss = true, english = false }: { m: Mechanic; gloss?: boolean; english?: boolean }) {
   const t = MECHANICS[m];
   return (
     <span className="term" title={`${t.name} (${t.en}): ${t.desc}`}>
-      {t.name}
-      {gloss && <span className="term-en">{t.en}</span>}
+      {english ? t.en : t.name}
+      {gloss && !english && <span className="term-en">{t.en}</span>}
     </span>
   );
 }

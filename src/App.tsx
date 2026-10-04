@@ -671,7 +671,7 @@ export default function App() {
         <div className="tb-flags">
           {flags.map((f) => (
             <span key={f} className="flag">
-              <Term m={f} />
+              <Term m={f} english />
             </span>
           ))}
           {g.settings.strictPass && <span className="flag">Strict pass</span>}
