@@ -7,6 +7,7 @@ import { pickTributePayer, standings } from '../engine/game';
 import type { Persona } from '../engine/ai';
 import { CardView } from './CardView';
 import { Avatar } from './Seat';
+import { MECHANICS, Term } from '../mechanics';
 
 export function Modal({ open, onClose, children, wide, className = '' }: { open: boolean; onClose?: () => void; children: ReactNode; wide?: boolean; className?: string }) {
   return (
@@ -49,9 +50,10 @@ const mini = (cards: Card[], rev = false) => (
 export function RulesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Modal open={open} onClose={onClose} wide className="rules">
-      <h2 className="modal-title">Paano Maglaro</h2>
+      <h2 className="modal-title">How to Play</h2>
       <p className="lede">
-        Rebolusyon is Pusoy Dos with teeth. Shed all 13 cards first. Everyone still holding cards pays you.
+        Pusoy Dos is the Filipino take on Big Two. This version adds a few house twists. Be the first to shed all 13 cards,
+        and everyone still holding cards pays you.
       </p>
 
       <div className="rules-grid">
@@ -89,12 +91,12 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             Going around, each player plays the <b>same number of cards</b>, and it has to <b>beat</b> what’s on the
             table, or they pass. Passing doesn’t lock you out unless Strict Pass is on.
           </p>
-          <p>Once everyone else has passed, the table is <i>malinis</i> (clean) and the last player to play leads anything.</p>
+          <p>Once everyone else has passed, the table clears and the last player to play leads anything.</p>
         </section>
 
         <section className="twist">
           <h4>
-            <span className="tw-tag pink">TWIST</span> Rebolusyon
+            <span className="tw-tag pink">TWIST</span> <Term m="revolution" />
           </h4>
           <p>
             Play <b>Four of a Kind</b> and the world flips. Within every combo type, <b>lower beats higher</b>. 3♣ becomes the
@@ -106,7 +108,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag teal">TWIST</span> Bantay
+            <span className="tw-tag teal">TWIST</span> <Term m="bantay" />
           </h4>
           <p>
             If the player <b>after you</b> is down to one card, any single you play must be your <b>strongest</b>. No feeding them
@@ -116,21 +118,21 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag gold">TWIST</span> Buwis
+            <span className="tw-tag gold">TWIST</span> <Term m="buwis" />
           </h4>
           <p>
-            Before each new round, the biggest loser of the last one pays tribute: their <b>best card</b> goes straight to the
+            Before each new round, the biggest loser of the last one pays a tax: their <b>best card</b> goes straight to the
             winner, and the winner sends back <b>any card they choose</b>. Winning snowballs. So does losing.
           </p>
         </section>
 
         <section className="twist">
           <h4>
-            <span className="tw-tag ink">MODE</span> Alaala
+            <span className="tw-tag ink">MODE</span> <Term m="memory" />
           </h4>
           <p>
             Memory mode for real players. The card tracker is hidden and cleared tricks go face-down. You get one{' '}
-            <b>Sulyap</b> (a 4-second peek) per round. Count the Twos yourself.
+            <b>Sulyap</b> (peek) per round: a 4-second look at the tracker. Count the Twos yourself.
           </p>
         </section>
 
@@ -156,6 +158,33 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             <li><kbd>H</kbd> hint · <kbd>S</kbd> sort · <kbd>Esc</kbd> clear</li>
           </ul>
         </section>
+
+        <section className="glossary">
+          <h4>Table talk</h4>
+          <p className="small">Filipino words you’ll hear around the table.</p>
+          <dl>
+            <dt>Dos</dt>
+            <dd>two, the top card (hence Pusoy <i>Dos</i>)</dd>
+            <dt>Pass muna</dt>
+            <dd>“I’ll pass for now”</dd>
+            <dt>Pare</dt>
+            <dd>buddy, mate</dd>
+            <dt>Lola / Kuya</dt>
+            <dd>grandma / big brother</dd>
+            <dt>Anak · Apo · Iho</dt>
+            <dd>child · grandchild · son (said with affection; <i>mga</i> makes it plural)</dd>
+            <dt>Sorry na lang</dt>
+            <dd>“too bad for you”</dd>
+            <dt>Taho</dt>
+            <dd>sweet tofu snack sold on the street</dd>
+            <dt>Panalo</dt>
+            <dd>win!</dd>
+            <dt>Grabe · Hay naku · Ay</dt>
+            <dd>wow · oh, dear · oh!</dd>
+            <dt>Swerte</dt>
+            <dd>lucky</dd>
+          </dl>
+        </section>
       </div>
     </Modal>
   );
@@ -163,7 +192,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
 /* -------------------------------- Settings -------------------------------- */
 
-function Toggle({ label, desc, value, onChange }: { label: string; desc: string; value: boolean; onChange: (v: boolean) => void }) {
+function Toggle({ label, desc, value, onChange }: { label: ReactNode; desc: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
     <label className="toggle">
       <div>
@@ -194,14 +223,14 @@ export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { 
   return (
     <Modal open={open} onClose={onClose} className="settings">
       <h2 className="modal-title">Settings</h2>
-      {inMatch && <p className="note">Rule changes take effect next match. Difficulty, speed, sound and Alaala apply right away.</p>}
+      {inMatch && <p className="note">Rule changes take effect next match. Opponent difficulty, pace, sound and memory mode apply right away.</p>}
 
       <h4 className="section-label">House rules</h4>
-      <Toggle label="Rebolusyon" desc="Four of a Kind flips the card order." value={settings.revolution} onChange={(v) => set('revolution', v)} />
-      <Toggle label="Bantay" desc="Must play your strongest single when the next player has 1 card." value={settings.bantay} onChange={(v) => set('bantay', v)} />
-      <Toggle label="Buwis" desc="Biggest loser pays their best card to the winner each round." value={settings.buwis} onChange={(v) => set('buwis', v)} />
+      <Toggle label={<Term m="revolution" />} desc={MECHANICS.revolution.desc} value={settings.revolution} onChange={(v) => set('revolution', v)} />
+      <Toggle label={<Term m="bantay" />} desc={MECHANICS.bantay.desc} value={settings.bantay} onChange={(v) => set('bantay', v)} />
+      <Toggle label={<Term m="buwis" />} desc={MECHANICS.buwis.desc} value={settings.buwis} onChange={(v) => set('buwis', v)} />
       <Toggle label="Strict pass" desc="Once you pass, you sit out until the table clears." value={settings.strictPass} onChange={(v) => set('strictPass', v)} />
-      <Toggle label="Alaala (memory mode)" desc="Hide the tracker. One 4-second peek per round." value={settings.memoryMode} onChange={(v) => set('memoryMode', v)} />
+      <Toggle label={<Term m="memory" />} desc="Hide the card tracker. One 4-second peek per round." value={settings.memoryMode} onChange={(v) => set('memoryMode', v)} />
 
       <h4 className="section-label">Table</h4>
       <div className="row">
@@ -246,10 +275,12 @@ export function ExchangeModal({ exchange, hand, personas, onReturn }: { exchange
     <Modal open={open} wide className="exchange">
       {exchange && (
         <>
-          <h2 className="modal-title">Buwis</h2>
+          <h2 className="modal-title">
+            <Term m="buwis" />
+          </h2>
           <p className="lede">
             <b style={{ color: personas[exchange.from].color }}>{personas[exchange.from].name}</b> lost the most last round and
-            pays tribute with their best card:
+            pays you tribute with their best card:
           </p>
           <div className="tribute-card">
             <CardView card={exchange.given} size="xl" powerCard={isPowerRank(rankOf(exchange.given), false)} initial={{ rotateY: 180, scale: 0.6 }} animate={{ rotateY: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 160, damping: 16 }} />
@@ -300,7 +331,7 @@ export function RoundEndModal({ open, result, game, personas, onNext }: { open: 
               <div className="eyebrow">
                 Round {result.round} of {game.settings.rounds}
               </div>
-              <h2 className="modal-title">{result.winner === 0 ? 'Panalo ka!' : `${personas[result.winner].name} goes out`}</h2>
+              <h2 className="modal-title">{result.winner === 0 ? 'You win the round!' : `${personas[result.winner].name} goes out`}</h2>
               <div className="re-finish">
                 Finished with <b>{describeCombo(result.finishingCombo)}</b>
                 {result.grandFinish && <span className="flip-tag gold">GRAND FINISH ×2</span>}
@@ -340,7 +371,7 @@ export function RoundEndModal({ open, result, game, personas, onNext }: { open: 
           </table>
           {game.settings.buwis && !last && (
             <p className="note">
-              Buwis next round: {personas[pickTributePayer(result)].name} pays their best card to {personas[result.winner].name}.
+              {tributeNote(result, personas)}
             </p>
           )}
           <div className="modal-actions">
@@ -354,6 +385,14 @@ export function RoundEndModal({ open, result, game, personas, onNext }: { open: 
   );
 }
 
+function tributeNote(r: RoundResult, personas: Persona[]) {
+  const payer = pickTributePayer(r);
+  const to = r.winner === 0 ? 'you' : personas[r.winner].name;
+  return payer === 0
+    ? `Buwis (Tribute) next round: you give your best card to ${to}.`
+    : `Buwis (Tribute) next round: ${personas[payer].name} gives their best card to ${to}.`;
+}
+
 /* -------------------------------- Match end ------------------------------- */
 
 export function MatchEndModal({ open, game, personas, onAgain, onTitle }: { open: boolean; game: GameState; personas: Persona[]; onAgain: () => void; onTitle: () => void }) {
@@ -362,8 +401,8 @@ export function MatchEndModal({ open, game, personas, onAgain, onTitle }: { open
   const podium = [order[1], order[0], order[2]];
   return (
     <Modal open={open} wide className="match-end">
-      <div className="eyebrow center">Tapos na ang laro</div>
-      <h2 className="modal-title center big">{youWon ? 'Hari ng Mesa!' : `${personas[order[0]].name} takes the table`}</h2>
+      <div className="eyebrow center">Match over</div>
+      <h2 className="modal-title center big">{youWon ? 'You rule the table!' : `${personas[order[0]].name} takes the table`}</h2>
       <div className="podium">
         {podium.map((p, i) => (
           <motion.div
@@ -390,7 +429,9 @@ export function MatchEndModal({ open, game, personas, onAgain, onTitle }: { open
             <span>
               {game.stats.roundWins[p]} round{game.stats.roundWins[p] === 1 ? '' : 's'} won
             </span>
-            <span>{game.stats.revolutions[p]} rebolusyon</span>
+            <span>
+              {game.stats.revolutions[p]} revolution{game.stats.revolutions[p] === 1 ? '' : 's'}
+            </span>
             <span>{game.stats.cardsShed[p]} cards shed</span>
           </div>
         ))}
@@ -400,7 +441,7 @@ export function MatchEndModal({ open, game, personas, onAgain, onTitle }: { open
           Back to title
         </button>
         <button className="btn primary" onClick={onAgain} autoFocus>
-          Isa pa! (Rematch)
+          Rematch
         </button>
       </div>
     </Modal>

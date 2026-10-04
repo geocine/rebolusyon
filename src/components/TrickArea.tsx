@@ -85,12 +85,12 @@ export function TrickArea({ trick, revolution, personas, memoryMode, discard, fi
               {firstPlay ? (
                 <>
                   <span className="big">3♣</span>
-                  <span>{personas[turn].name} opens the round</span>
+                  <span>{turn === 0 ? 'You open the round' : `${personas[turn].name} opens the round`}</span>
                 </>
               ) : (
                 <>
-                  <span className="big">Malinis</span>
-                  <span>{personas[turn].name} leads anything</span>
+                  <span className="big">Clear table</span>
+                  <span>{turn === 0 ? 'You lead anything' : `${personas[turn].name} leads anything`}</span>
                 </>
               )}
             </motion.div>
@@ -109,7 +109,8 @@ export function TrickArea({ trick, revolution, personas, memoryMode, discard, fi
           >
             {trick.done ? (
               <>
-                <b style={{ color: personas[trick.topBy].color }}>{personas[trick.topBy].name}</b> takes it — lead anything
+                <b style={{ color: personas[trick.topBy].color }}>{personas[trick.topBy].name}</b>
+                {trick.topBy === 0 ? ' take it. Lead anything' : ' takes it and leads next'}
               </>
             ) : (
               <>
@@ -130,7 +131,7 @@ function OrderMeter({ revolution }: { revolution: boolean }) {
   const ranks = revolution ? [...RANKS].reverse() : [...RANKS];
   return (
     <div className={`order-meter ${revolution ? 'rev' : ''}`} title="Card order: weakest → strongest">
-      <span className="om-label">{revolution ? 'BALIKTAD' : 'ORDER'}</span>
+      <span className="om-label">{revolution ? 'REVERSED' : 'ORDER'}</span>
       <div className="om-ranks">
         {ranks.map((r, i) => (
           <motion.span key={r} layout className={`om-rank ${i === ranks.length - 1 ? 'king' : ''}`} transition={{ type: 'spring', stiffness: 200, damping: 22 }}>

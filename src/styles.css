@@ -140,6 +140,48 @@ button {
   opacity: 1;
 }
 
+/* ---------------------- mechanic names + English gloss ----------------- */
+
+.term {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45em;
+  cursor: help;
+}
+.term-en {
+  font-family: var(--body);
+  font-style: normal;
+  font-weight: 600;
+  font-size: 0.62em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+.flag .term-en {
+  font-size: 1em;
+  opacity: 0.55;
+}
+.modal-title .term-en {
+  font-size: 0.45em;
+}
+
+.glossary dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 8px 0 0;
+}
+.glossary dt {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 700;
+  color: var(--gold-2);
+}
+.glossary dd {
+  margin: 0;
+  opacity: 0.85;
+}
+
 /* -------------------------------- cards -------------------------------- */
 
 .card {

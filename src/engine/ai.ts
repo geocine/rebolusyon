@@ -20,7 +20,7 @@ export interface Persona {
 
 export const PERSONAS: Persona[] = [
   {
-    name: 'Ikaw',
+    name: 'You',
     title: 'The Challenger',
     color: '#f6efe1',
     initials: 'YOU',
@@ -39,7 +39,7 @@ export const PERSONAS: Persona[] = [
     memory: 0.95,
     revLove: 0.15,
     chaos: 0.3,
-    blurb: 'Sits on her Twos like heirlooms. Remembers every card since 1974.',
+    blurb: 'Everyone’s lola (grandma). Sits on her Twos like heirlooms and remembers every card since 1974.',
   },
   {
     name: 'Kuya Jun',
@@ -50,7 +50,7 @@ export const PERSONAS: Persona[] = [
     memory: 0.55,
     revLove: 1,
     chaos: 0.9,
-    blurb: 'Plays loud, plays fast, flips the table the moment he gets four of anything.',
+    blurb: 'Every friend group’s kuya (big brother). Plays loud, plays fast, and flips the table the moment he gets four of anything.',
   },
   {
     name: 'Mika',

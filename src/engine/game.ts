@@ -287,14 +287,14 @@ export function validatePlay(s: GameState, player: number, cards: Card[]): Valid
     if (top.cards.length !== combo.cards.length)
       return { ok: false, reason: `Must play ${top.cards.length} card${top.cards.length > 1 ? 's' : ''}` };
     if (!beats(combo, top, s.revolution)) {
-      return { ok: false, reason: s.revolution ? 'Too strong — Rebolusyon is on, lower wins!' : 'Not strong enough' };
+      return { ok: false, reason: s.revolution ? 'Too strong. Rebolusyon is on, so lower cards win' : 'Not strong enough' };
     }
   }
 
   if (s.settings.bantay && combo.type === 'single') {
     const next = s.hands[nextSeat(player)];
     if (next.length === 1 && combo.cards[0] !== strongestCard(s.hands[player], s.revolution)) {
-      return { ok: false, reason: 'Bantay! Next player has 1 card — play your strongest single' };
+      return { ok: false, reason: 'Bantay (Guard): next player has 1 card, so play your strongest single' };
     }
   }
 

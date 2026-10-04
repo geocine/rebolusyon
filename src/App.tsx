@@ -21,6 +21,7 @@ import {
 } from './engine/game';
 import { PERSONAS, chooseTributeReturn, decide } from './engine/ai';
 import { lineFor, type Moment } from './lines';
+import { type Mechanic, Term } from './mechanics';
 import { loadSettings, loadStats, saveSettings, saveStats, type LifetimeStats } from './storage';
 import { ActionBar, PlayerHand } from './components/PlayerHand';
 import { Avatar, Seat, type SeatPosition } from './components/Seat';
@@ -145,7 +146,7 @@ export default function App() {
               ex.from === HUMAN
                 ? `You pay ${cardLabel(ex.given)} to ${name(ex.to)}`
                 : `${name(ex.from)} pays ${ex.to === HUMAN ? 'you' : name(ex.to)} their best card`;
-            showBanner({ kind: 'info', title: 'Buwis', sub }, 2600);
+            showBanner({ kind: 'info', title: 'Buwis · Tribute', sub }, 2600);
           }
           break;
         }
@@ -160,7 +161,7 @@ export default function App() {
               showBanner({ kind: 'rev', title: 'REBOLUSYON!', sub: `${name(e.player)} flipped the table. Lower beats higher. 3♣ is king.` }, 2600);
               say(e.player, 'revolution');
             } else {
-              showBanner({ kind: 'unrev', title: 'BALIK!', sub: `${name(e.player)} restored the order. The Twos rule again.` }, 2400);
+              showBanner({ kind: 'unrev', title: 'RESTORED!', sub: `${name(e.player)} flipped it back. The Twos rule again.` }, 2400);
               say(e.player, 'unrevolution');
             }
           } else if (hasPower) say(e.player, 'two', 0.6);
@@ -173,14 +174,15 @@ export default function App() {
           break;
         case 'clear':
           sfx.clear();
-          if (e.leader === HUMAN) showBanner({ kind: 'info', title: 'Malinis!', sub: 'Everyone passed. Your lead.' }, 1600);
+          if (e.leader === HUMAN) showBanner({ kind: 'info', title: 'Table clear', sub: 'Everyone passed. Your lead.' }, 1600);
           else say(e.leader, 'lead', 0.3);
           break;
         case 'lastCard':
           sfx.lastCard();
-          if (e.player === HUMAN) showBanner({ kind: 'warn', title: 'Huling baraha!', sub: 'You are on your last card.' }, 1800);
+          if (e.player === HUMAN) showBanner({ kind: 'warn', title: 'Last card!', sub: 'You are down to one card.' }, 1800);
           else {
-            showBanner({ kind: 'warn', title: 'Huling baraha!', sub: `${name(e.player)} has one card left.${g.settings.bantay ? ' Bantay is on.' : ''}` }, 2200);
+            const guard = g.settings.bantay && e.player === 1 ? ' Bantay (Guard): your singles must be your strongest.' : '';
+            showBanner({ kind: 'warn', title: 'Last card!', sub: `${name(e.player)} has one card left.${guard}` }, 2400);
             say(e.player, 'lastCard');
           }
           break;
@@ -206,7 +208,7 @@ export default function App() {
           if (ex.from === HUMAN && ex.returned !== null) {
             setFresh(new Set([ex.returned]));
             later(() => setFresh(new Set()), 3500);
-            showBanner({ kind: 'info', title: 'Buwis', sub: `${name(ex.to)} sent back ${cardLabel(ex.returned)}` }, 2400);
+            showBanner({ kind: 'info', title: 'Buwis · Tribute', sub: `${name(ex.to)} sent back ${cardLabel(ex.returned)}` }, 2400);
           } else if (ex.to === HUMAN) {
             setFresh(new Set([ex.given]));
             later(() => setFresh(new Set()), 3500);
@@ -411,7 +413,7 @@ export default function App() {
 
   let status: { tone: 'ok' | 'bad' | 'idle'; text: string };
   if (statusFlash) status = { tone: statusFlash.startsWith('Try') || statusFlash.startsWith('Hint') ? 'ok' : 'bad', text: statusFlash };
-  else if (g.phase === 'exchange') status = { tone: 'idle', text: 'Buwis in progress…' };
+  else if (g.phase === 'exchange') status = { tone: 'idle', text: 'Tribute exchange in progress…' };
   else if (g.phase !== 'playing') status = { tone: 'idle', text: 'Round over' };
   else if (!myTurn) {
     const c = selArr.length ? classify(selArr) : null;
@@ -426,12 +428,11 @@ export default function App() {
 
   const lastResult = g.history[g.history.length - 1] ?? null;
   const flags = [
-    g.settings.revolution && 'Rebolusyon',
-    g.settings.bantay && 'Bantay',
-    g.settings.buwis && 'Buwis',
-    g.settings.strictPass && 'Strict',
-    memoryMode && 'Alaala',
-  ].filter(Boolean) as string[];
+    g.settings.revolution && 'revolution',
+    g.settings.bantay && 'bantay',
+    g.settings.buwis && 'buwis',
+    memoryMode && 'memory',
+  ].filter(Boolean) as Mechanic[];
 
   return (
     <div className={`game ${g.revolution ? 'rev' : ''} ${shake ? `shake-${shake % 2}` : ''} ${trackerOpen ? 'tracker-open' : ''}`}>
@@ -445,9 +446,10 @@ export default function App() {
         <div className="tb-flags">
           {flags.map((f) => (
             <span key={f} className="flag">
-              {f}
+              <Term m={f} />
             </span>
           ))}
+          {g.settings.strictPass && <span className="flag">Strict pass</span>}
         </div>
         <div className="tb-actions">
           <button className="btn ghost small" onClick={() => setShowRules(true)}>
@@ -483,7 +485,7 @@ export default function App() {
           <div className="me-id">
             <Avatar persona={PERSONAS[HUMAN]} size={52} active={myTurn} />
             <div>
-              <div className="seat-name">Ikaw</div>
+              <div className="seat-name">You</div>
               <div className="seat-chips">
                 <span className={`chip score ${g.scores[HUMAN] < 0 ? 'neg' : ''}`}>{g.scores[HUMAN] > 0 ? `+${g.scores[HUMAN]}` : g.scores[HUMAN]}</span>
                 {g.trick.passed[HUMAN] && !g.trick.done && <span className="chip pass">PASS</span>}

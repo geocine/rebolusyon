@@ -31,7 +31,7 @@ export function TitleScreen({ stats, difficulty, onDifficulty, onPlay, onRules, 
       <div className="ts-sunburst" aria-hidden="true" />
       <div className="ts-inner">
         <motion.div className="ts-eyebrow" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          Isang laro ng Pusoy Dos
+          A Pusoy Dos game
         </motion.div>
         <motion.h1
           className="logo"
@@ -42,7 +42,7 @@ export function TitleScreen({ stats, difficulty, onDifficulty, onPlay, onRules, 
           REBOLUSYON
         </motion.h1>
         <motion.p className="ts-tag" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
-          Para sa mahahabang gabi ng Pusoy Dos. Shed your cards. Guard the last one. Flip the order.
+          The Filipino take on Big Two, with a few house twists. Shed your cards. Guard the last one. Flip the order.
         </motion.p>
 
         <div className="hero-fan">
@@ -61,11 +61,11 @@ export function TitleScreen({ stats, difficulty, onDifficulty, onPlay, onRules, 
             />
           ))}
         </div>
-        <div className="hero-caption">{flipped ? 'Rebolusyon: the 3♣ is king' : 'Normal order: the Twos rule'}</div>
+        <div className="hero-caption">{flipped ? 'Rebolusyon (Revolution): the 3♣ is king' : 'Normal order: the Twos rule'}</div>
 
         <motion.div className="ts-actions" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
           <button className="btn primary huge" onClick={onPlay}>
-            Maglaro
+            Play
           </button>
           <div className="ts-secondary">
             <button className="btn ghost" onClick={onRules}>
@@ -115,7 +115,7 @@ export function TitleScreen({ stats, difficulty, onDifficulty, onPlay, onRules, 
               <b>{stats.roundWins}</b>/{stats.rounds} rounds
             </span>
             <span>
-              <b>{stats.revolutions}</b> rebolusyon
+              <b>{stats.revolutions}</b> revolutions
             </span>
             {stats.bestMatchScore !== null && (
               <span>

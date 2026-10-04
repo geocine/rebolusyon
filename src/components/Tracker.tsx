@@ -5,6 +5,7 @@ import { describeCombo } from '../engine/combos';
 import type { LogEntry } from '../engine/game';
 import type { Persona } from '../engine/ai';
 import { SuitIcon } from './CardView';
+import { Term } from '../mechanics';
 
 interface Props {
   played: Card[];
@@ -33,12 +34,12 @@ export function Tracker({ played, myHand, memoryMode, peeking, peekAvailable, on
   return (
     <aside className={`tracker ${open ? 'open' : ''}`}>
       <button className="tracker-tab" onClick={onToggle} aria-expanded={open}>
-        <span>ALAALA</span>
+        <span>TRACKER</span>
       </button>
       <div className="tracker-body">
         <header className="tracker-head">
-          <h3>Alaala</h3>
-          <p>{memoryMode ? 'Memory mode. Trust your head.' : 'Every card that has hit the mat.'}</p>
+          <h3>{memoryMode ? <Term m="memory" /> : 'Card Tracker'}</h3>
+          <p>{memoryMode ? 'Memory mode is on. Trust your head.' : 'Every card that has been played this round.'}</p>
         </header>
 
         <div className={`grid-wrap ${showGrid ? '' : 'veiled'}`}>
@@ -58,7 +59,7 @@ export function Tracker({ played, myHand, memoryMode, peeking, peekAvailable, on
               <motion.div className="veil" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <span className="veil-eye">◉</span>
                 <button className="btn small" disabled={!peekAvailable} onClick={onPeek}>
-                  {peekAvailable ? 'Sulyap — peek once (4s)' : 'Sulyap used this round'}
+                  {peekAvailable ? 'Sulyap (Peek): look for 4s' : 'Peek used this round'}
                 </button>
               </motion.div>
             )}
@@ -101,6 +102,7 @@ function Log({ log, personas }: { log: LogEntry[]; personas: Persona[] }) {
     ref.current?.scrollTo({ top: ref.current.scrollHeight, behavior: 'smooth' });
   }, [log.length]);
   const who = (p: number) => <b style={{ color: personas[p].color }}>{personas[p].name}</b>;
+  const v = (p: number, you: string, them: string) => (p === 0 ? you : them);
   return (
     <ol className="log" ref={ref}>
       {log.map((e) => (
@@ -112,12 +114,24 @@ function Log({ log, personas }: { log: LogEntry[]; personas: Persona[] }) {
               {e.flipped && <span className="flip-tag">REBOLUSYON</span>}
             </>
           )}
-          {e.kind === 'pass' && <>{who(e.player)} passes</>}
-          {e.kind === 'clear' && <>All passed. {who(e.player)} leads.</>}
-          {e.kind === 'win' && <>★ {who(e.player)} goes out!</>}
+          {e.kind === 'pass' && (
+            <>
+              {who(e.player)} {v(e.player, 'pass', 'passes')}
+            </>
+          )}
+          {e.kind === 'clear' && (
+            <>
+              All passed. {who(e.player)} {v(e.player, 'lead', 'leads')}.
+            </>
+          )}
+          {e.kind === 'win' && (
+            <>
+              ★ {who(e.player)} {v(e.player, 'go', 'goes')} out!
+            </>
+          )}
           {e.kind === 'tribute' && (
             <>
-              Buwis: {who(e.exchange.from)} ⇄ {who(e.exchange.to)}
+              Tribute: {who(e.exchange.from)} ⇄ {who(e.exchange.to)}
             </>
           )}
         </li>
