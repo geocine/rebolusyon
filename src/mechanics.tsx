@@ -1,3 +1,4 @@
+import { type Card, makeCard } from './engine/cards';
 import type { RuleMode } from './engine/game';
 
 /** Filipino names for the variant's mechanics, always shown alongside their English meaning. */
@@ -29,22 +30,38 @@ export const termText = (m: Mechanic) => `${MECHANICS[m].name} (${MECHANICS[m].e
 
 export interface RuleGroup {
   title: string;
+  tone: 'clay' | 'gold' | 'sage';
   terms: Mechanic[];
   text: string;
+  /** Shown instead of rule chips when a mode leaves this group out. */
+  off?: string;
 }
 
-const GUARD: RuleGroup = { title: 'Guard', terms: ['bantay'], text: 'No feeding a player on their last card.' };
+export interface ModeInfo {
+  value: RuleMode;
+  name: string;
+  en: string;
+  tagline: string;
+  /** A little fanned hand that sums the mode up; `crown` is the card that rules it. */
+  hero: Card[];
+  crown: Card;
+  groups: RuleGroup[];
+}
+
+const GUARD: RuleGroup = { title: 'Guard', tone: 'sage', terms: ['bantay'], text: 'No feeding a player on their last card.' };
 
 /** The two ways to play. Each bundles rules that only make sense together. */
-export const MODES: { value: RuleMode; name: string; en: string; tagline: string; groups: RuleGroup[] }[] = [
+export const MODES: ModeInfo[] = [
   {
     value: 'rebolusyon',
     name: 'Rebolusyon',
     en: 'House rules',
     tagline: 'The full fiesta. Flips, stakes, and comebacks to the last hand.',
+    hero: [makeCard(12, 1), makeCard(0, 0), makeCard(12, 3)],
+    crown: makeCard(0, 0),
     groups: [
-      { title: 'Flip', terms: ['revolution', 'alsa'], text: 'Four of a Kind turns the order upside down. Last place can do it with three.' },
-      { title: 'Stakes', terms: ['buwis', 'patong', 'hirit'], text: 'Losers pay tribute, the leader wears a bounty, the final round counts double.' },
+      { title: 'Flip', tone: 'clay', terms: ['revolution', 'alsa'], text: 'Four of a Kind turns the order upside down. Last place can do it with three.' },
+      { title: 'Stakes', tone: 'gold', terms: ['buwis', 'patong', 'hirit'], text: 'Losers pay tribute, the leader wears a bounty, the final round counts double.' },
       GUARD,
     ],
   },
@@ -53,7 +70,13 @@ export const MODES: { value: RuleMode; name: string; en: string; tagline: string
     name: 'Klasiko',
     en: 'Classic',
     tagline: 'Straight Pusoy Dos. Twos rule, no twists, every round counts the same.',
-    groups: [GUARD],
+    hero: [makeCard(11, 1), makeCard(12, 3), makeCard(10, 2)],
+    crown: makeCard(12, 3),
+    groups: [
+      { title: 'Flip', tone: 'clay', terms: [], text: 'The order never changes.', off: 'Off · the Twos always rule' },
+      { title: 'Stakes', tone: 'gold', terms: [], text: 'Every round pays the same.', off: 'Off · every round pays the same' },
+      GUARD,
+    ],
   },
 ];
 

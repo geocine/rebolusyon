@@ -2016,61 +2016,167 @@ kbd {
   margin: 8px 0 4px;
 }
 .mode-card {
+  --mc: var(--gold);
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
+  padding: 0;
+  overflow: hidden;
   text-align: left;
   color: inherit;
   font: inherit;
-  background: rgba(0, 0, 0, 0.22);
+  background: var(--ink-2);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 14px;
   cursor: pointer;
-  opacity: 0.72;
-  transition: border-color 0.2s, background 0.2s, opacity 0.2s;
+  transition: border-color 0.25s, box-shadow 0.25s;
 }
-.mode-card:hover {
-  opacity: 1;
+.mode-klasiko {
+  --mc: var(--sage);
 }
 .mode-card.on {
-  opacity: 1;
-  border-color: var(--gold);
-  background: rgba(212, 162, 76, 0.12);
+  border-color: var(--mc);
+  box-shadow:
+    0 0 0 1px var(--mc),
+    0 10px 30px -10px color-mix(in srgb, var(--mc) 55%, transparent);
+}
+.mode-card:focus-visible {
+  outline: 2px solid var(--paper);
+  outline-offset: 2px;
+}
+
+.mc-art {
+  position: relative;
+  display: block;
+  height: 112px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  transition: filter 0.3s;
+}
+.mode-card:not(.on) .mc-art {
+  filter: saturate(0.5) brightness(0.8);
+}
+.mode-card:not(.on):hover .mc-art {
+  filter: none;
+}
+.mode-rebolusyon .mc-art {
+  background:
+    radial-gradient(ellipse 80% 90% at 50% 100%, rgba(207, 106, 63, 0.55), transparent 70%),
+    repeating-conic-gradient(from 0deg at 50% 110%, rgba(235, 200, 120, 0.12) 0 7deg, transparent 7deg 16deg),
+    #3a1810;
+}
+.mode-klasiko .mc-art {
+  background:
+    radial-gradient(ellipse 80% 90% at 50% 100%, rgba(147, 179, 140, 0.35), transparent 70%),
+    repeating-linear-gradient(45deg, rgba(243, 233, 216, 0.035) 0 2px, transparent 2px 9px),
+    var(--mat-c);
+}
+.mc-card {
+  position: absolute;
+  top: 14px;
+  left: calc(50% - 32px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+}
+.mc-stamp {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  padding: 3px 8px 2px;
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--mc);
+  border: 2px solid var(--ink);
+  border-radius: 5px;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.mc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 14px;
+}
+.mc-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 8px;
 }
 .mc-head b {
-  font-size: 16px;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 19px;
+  letter-spacing: 0.02em;
+  color: var(--mc);
+}
+.mode-card:not(.on) .mc-head b {
+  color: var(--paper);
 }
 .mc-en {
-  margin-left: 6px;
-  font-size: 11px;
+  font-size: 10.5px;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  opacity: 0.6;
+  letter-spacing: 0.16em;
+  opacity: 0.55;
 }
 .mc-tag {
-  font-size: 12.5px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 13px;
   line-height: 1.4;
-  opacity: 0.75;
+  opacity: 0.8;
 }
 .mc-groups {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  margin-top: 2px;
-  font-size: 12px;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
 }
 .mc-group {
-  display: grid;
-  grid-template-columns: 56px 1fr;
-  align-items: baseline;
+  --tone: var(--gold);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
+.mc-group.tone-clay { --tone: var(--clay); }
+.mc-group.tone-sage { --tone: var(--sage); }
 .mc-group i {
+  font-family: var(--display);
   font-style: normal;
-  font-size: 10px;
-  text-transform: uppercase;
+  font-size: 9.5px;
   letter-spacing: 0.14em;
-  color: var(--gold-2);
+  text-transform: uppercase;
+  color: var(--tone);
+}
+.mc-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.mc-pill {
+  padding: 2px 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--tone) 45%, var(--paper));
+  background: color-mix(in srgb, var(--tone) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent);
+  border-radius: 999px;
+  cursor: help;
+}
+.mc-group.off i {
+  opacity: 0.45;
+}
+.mc-pill.none {
+  font-weight: 500;
+  font-style: italic;
+  color: rgba(243, 233, 216, 0.45);
+  background: transparent;
+  border: 1px dashed var(--line);
+  cursor: inherit;
 }
 @media (max-width: 520px) {
   .mode-picker {

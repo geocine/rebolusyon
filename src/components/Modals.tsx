@@ -297,23 +297,73 @@ function Segmented<T extends string | number>({ value, options, onChange }: { va
 export function ModePicker({ value, onChange }: { value: RuleMode; onChange: (m: RuleMode) => void }) {
   return (
     <div className="mode-picker" role="radiogroup" aria-label="Mode">
-      {MODES.map((m) => (
-        <button key={m.value} type="button" role="radio" aria-checked={value === m.value} className={`mode-card ${value === m.value ? 'on' : ''}`} onClick={() => onChange(m.value)}>
-          <span className="mc-head">
-            <b>{m.name}</b>
-            <span className="mc-en">{m.en}</span>
-          </span>
-          <span className="mc-tag">{m.tagline}</span>
-          <span className="mc-groups">
-            {m.groups.map((g) => (
-              <span key={g.title} className="mc-group">
-                <i>{g.title}</i>
-                {g.terms.map((t) => MECHANICS[t].name).join(' · ')}
+      {MODES.map((m) => {
+        const on = value === m.value;
+        const mid = (m.hero.length - 1) / 2;
+        return (
+          <motion.button
+            key={m.value}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            className={`mode-card mode-${m.value} ${on ? 'on' : ''}`}
+            onClick={() => onChange(m.value)}
+            whileHover={{ y: -3 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <span className="mc-art" aria-hidden="true">
+              {m.hero.map((c, i) => (
+                <CardView
+                  key={c}
+                  card={c}
+                  size="md"
+                  powerCard={c === m.crown}
+                  className="mc-card"
+                  style={{ zIndex: 5 - Math.abs(i - mid) }}
+                  initial={false}
+                  animate={{ x: (i - mid) * (on ? 34 : 24), y: (on ? 0 : 22) + Math.abs(i - mid) * 8, rotate: (i - mid) * (on ? 14 : 8) }}
+                  transition={{ type: 'spring', stiffness: 280, damping: 20 }}
+                />
+              ))}
+              <AnimatePresence>
+                {on && (
+                  <motion.span
+                    className="mc-stamp"
+                    initial={{ scale: 1.8, opacity: 0, rotate: -24 }}
+                    animate={{ scale: 1, opacity: 1, rotate: -9 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ type: 'spring', stiffness: 420, damping: 18 }}
+                  >
+                    Playing
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </span>
+            <span className="mc-body">
+              <span className="mc-head">
+                <b>{m.name}</b>
+                <span className="mc-en">{m.en}</span>
               </span>
-            ))}
-          </span>
-        </button>
-      ))}
+              <span className="mc-tag">{m.tagline}</span>
+              <span className="mc-groups">
+                {m.groups.map((g) => (
+                  <span key={g.title} className={`mc-group tone-${g.tone} ${g.off ? 'off' : ''}`}>
+                    <i>{g.title}</i>
+                    <span className="mc-pills">
+                      {g.off && <span className="mc-pill none">{g.off}</span>}
+                      {g.terms.map((t) => (
+                        <span key={t} className="mc-pill" title={`${MECHANICS[t].name} (${MECHANICS[t].en}): ${MECHANICS[t].desc}`}>
+                          {MECHANICS[t].name}
+                        </span>
+                      ))}
+                    </span>
+                  </span>
+                ))}
+              </span>
+            </span>
+          </motion.button>
+        );
+      })}
     </div>
   );
 }

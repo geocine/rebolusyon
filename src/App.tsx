@@ -669,7 +669,7 @@ export default function App() {
   const underdog = underdogSeat(g);
   const finalDouble = isHulingHirit(g);
   const mode = modeOf(g.settings.mode);
-  const modeTip = `${mode.name} (${mode.en}): ${mode.groups.map((x) => x.terms.map((t) => termText(t)).join(', ')).join(', ')}`;
+  const modeTip = `${mode.name} (${mode.en}): ${mode.groups.flatMap((x) => x.terms.map(termText)).join(', ')}`;
 
   const pointed = tutStep?.point?.filter((c) => g.hands[HUMAN].includes(c)) ?? [];
   const hostText = tutStep ? textOf(tutStep.say, g) : null;
