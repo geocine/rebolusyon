@@ -55,6 +55,19 @@
 .diploma::-webkit-scrollbar-thumb {
   background-color: rgba(120, 80, 0, 0.35);
 }
+/* Keep the track off rounded corners: margin = the container's radius. */
+.modal::-webkit-scrollbar-track {
+  margin-block: 22px;
+}
+.tut-card::-webkit-scrollbar-track {
+  margin-block: 24px;
+}
+.diploma::-webkit-scrollbar-track {
+  margin-block: 18px;
+}
+.tracker.as-sheet .tracker-body::-webkit-scrollbar-track {
+  margin-top: 24px;
+}
 @supports not selector(::-webkit-scrollbar) {
   * {
     scrollbar-width: thin;
