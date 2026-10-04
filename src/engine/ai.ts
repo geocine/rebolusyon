@@ -66,7 +66,7 @@ export const PERSONAS: Persona[] = [
 ];
 
 const DIFFICULTY = {
-  easy: { memoryScale: 0.35, noise: 7, lookahead: false },
+  easy: { memoryScale: 0.25, noise: 9, lookahead: false },
   normal: { memoryScale: 0.75, noise: 2.5, lookahead: true },
   hard: { memoryScale: 1, noise: 0.6, lookahead: true },
   rival: { memoryScale: 1, noise: 0.6, lookahead: true },

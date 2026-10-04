@@ -37,6 +37,8 @@ export const STYLES: Style[] = [
 ];
 
 interface Level {
+  /** Share of moves played on Chill instincts instead of searching. */
+  slop: number;
   budgetMs: number;
   maxWorlds: number;
   candidates: number;
@@ -46,10 +48,18 @@ interface Level {
 }
 
 const LEVELS: Record<Exclude<Difficulty, 'easy'>, Level> = {
-  normal: { budgetMs: 70, maxWorlds: 60, candidates: 4, memoryScale: 0.75, inference: 0.5, temperature: 0.12 },
-  hard: { budgetMs: 220, maxWorlds: 260, candidates: 6, memoryScale: 1, inference: 1, temperature: 0.05 },
-  rival: { budgetMs: 220, maxWorlds: 260, candidates: 6, memoryScale: 1, inference: 1, temperature: 0.05 },
+  normal: { slop: 0.15, budgetMs: 50, maxWorlds: 30, candidates: 3, memoryScale: 0.6, inference: 0.3, temperature: 0.3 },
+  hard: { slop: 0, budgetMs: 300, maxWorlds: 360, candidates: 6, memoryScale: 1, inference: 1, temperature: 0.03 },
+  rival: { slop: 0, budgetMs: 300, maxWorlds: 360, candidates: 6, memoryScale: 1, inference: 1, temperature: 0.03 },
 };
+
+/** Rival plays at full strength unless the human trails; then it gets sloppier in proportion to the gap. */
+function levelFor(s: GameState, me: number, difficulty: Exclude<Difficulty, 'easy'>): Level {
+  const level = LEVELS[difficulty];
+  if (difficulty !== 'rival' || me === HUMAN) return level;
+  const gap = Math.max(...s.scores) - s.scores[HUMAN];
+  return { ...level, slop: 0.85 * Math.min(1, Math.max(0, (gap - 4) / 36)) };
+}
 
 export interface CandidateStat {
   combo: Combo | null;
@@ -77,12 +87,11 @@ function utilityFor(s: GameState, me: number, style: Style, difficulty: Difficul
   const leader = others.reduce((a, b) => (s.scores[b] > s.scores[a] ? b : a));
   const aim = s.scores[leader] > s.scores[me] && s.scores[leader] > 0 ? style.leaderAim : 0;
 
-  // Rival mode (after Minibal+): keep the human in the match without throwing rounds.
+  // Rival: when the human leads, every bot also plays against the human's points.
   let humanW = 0;
   if (difficulty === 'rival' && me !== HUMAN) {
-    const gap = Math.max(...s.scores) - s.scores[HUMAN];
-    if (gap > 12) humanW = Math.min(0.9, gap / 50);
-    else if (s.scores[HUMAN] - Math.max(...others.map((p) => s.scores[p])) > 12) humanW = -0.4;
+    const lead = s.scores[HUMAN] - Math.max(...others.filter((p) => p !== HUMAN).map((p) => s.scores[p]), s.scores[me]);
+    if (lead > 4) humanW = -Math.min(0.6, lead / 40);
   }
   return (d: number[], winner: number) => {
     let u = d[me] / 10 + (winner === me ? style.winWeight : 0);
@@ -105,7 +114,11 @@ export function think(
     return { combo: heuristic.combo, winProb: null, points: null, candidates: [], worlds: 0 };
   }
 
-  const level = LEVELS[difficulty];
+  const level = levelFor(s, me, difficulty);
+  if (me !== HUMAN && level.slop > 0 && rng() < level.slop) {
+    const instinct = decide(s, me, persona, 'easy', rng);
+    return { combo: instinct.combo, winProb: null, points: null, candidates: [], worlds: 0 };
+  }
   const style = opts.style ?? STYLES[me];
   const hand = s.hands[me];
 
