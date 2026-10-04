@@ -25,6 +25,8 @@ export interface Settings {
   bantay: boolean;
   /** Between rounds, the biggest loser hands their best card to the winner, who returns one. */
   buwis: boolean;
+  /** Last round's winner pays double if someone else wins this round. */
+  bagsak: boolean;
   /** Once you pass, you're out until the trick clears. */
   strictPass: boolean;
   /** Alaala mode: no card tracker; cleared tricks go face-down. Pure memory. */
@@ -42,6 +44,7 @@ export const DEFAULT_SETTINGS: Settings = {
   revolution: true,
   bantay: true,
   buwis: true,
+  bagsak: false,
   strictPass: false,
   memoryMode: false,
   difficulty: 'normal',
@@ -467,8 +470,14 @@ export function penaltyFor(hand: Card[], grandFinish: boolean): { penalty: numbe
   return { penalty, multipliers };
 }
 
+/** With Bagsak on, last round's winner: they pay double unless they win this round too. */
+export function defendingChampion(s: GameState): number {
+  return s.settings.bagsak && s.history.length ? s.history[s.history.length - 1].winner : -1;
+}
+
 function endRound(s: GameState, winner: number, finishingCombo: Combo): GameState {
   const grandFinish = finishingCombo.type === 'quads' || finishingCombo.type === 'straightflush';
+  const champion = defendingChampion(s);
   const penalties: number[] = [];
   const multipliers: Multiplier[][] = [];
   for (let p = 0; p < PLAYERS; p++) {
@@ -478,6 +487,10 @@ function endRound(s: GameState, winner: number, finishingCombo: Combo): GameStat
       continue;
     }
     const r = penaltyFor(s.hands[p], grandFinish);
+    if (p === champion) {
+      r.multipliers.push({ label: 'Fallen champion', factor: 2 });
+      r.penalty *= 2;
+    }
     penalties.push(r.penalty);
     multipliers.push(r.multipliers);
   }

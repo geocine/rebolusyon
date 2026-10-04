@@ -152,6 +152,16 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
+            <span className="tw-tag ink">OPTIONAL</span> <Term m="bagsak" />
+          </h4>
+          <p>
+            Off by default. Win a round and you’re the champion to beat: if someone else wins the next one, your penalty is{' '}
+            <b>doubled</b>. Pairs well with Buwis, since it punishes a champion who can’t turn the tribute into another win.
+          </p>
+        </section>
+
+        <section className="twist">
+          <h4>
             <span className="tw-tag ink">MODE</span> <Term m="memory" />
           </h4>
           <p>
@@ -167,6 +177,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             <li><b>×2</b> with 10–12 cards left</li>
             <li><b>×3</b> if you never played (13)</li>
             <li><b>×2</b> if caught holding any Two</li>
+            <li><b>×2</b> for last round’s winner if they lose this one (<i>Bagsak</i>, when on)</li>
             <li><b>×2</b> for everyone if the winner goes out on Four of a Kind or a Straight Flush (<i>Grand Finish</i>)</li>
           </ul>
           <p>The winner collects it all. Highest total after the last round wins the match.</p>
@@ -274,6 +285,7 @@ export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { 
       <Toggle label={<Term m="revolution" />} desc={MECHANICS.revolution.desc} value={settings.revolution} onChange={(v) => set('revolution', v)} />
       <Toggle label={<Term m="bantay" />} desc={MECHANICS.bantay.desc} value={settings.bantay} onChange={(v) => set('bantay', v)} />
       <Toggle label={<Term m="buwis" />} desc={MECHANICS.buwis.desc} value={settings.buwis} onChange={(v) => set('buwis', v)} />
+      <Toggle label={<Term m="bagsak" />} desc={MECHANICS.bagsak.desc} value={settings.bagsak} onChange={(v) => set('bagsak', v)} />
       <Toggle label="Strict pass" desc="Once you pass, you sit out until the table clears." value={settings.strictPass} onChange={(v) => set('strictPass', v)} />
       <Toggle label={<Term m="memory" />} desc="Hide the card tracker. One 4-second peek per round." value={settings.memoryMode} onChange={(v) => set('memoryMode', v)} />
 
@@ -434,6 +446,13 @@ export function RoundEndModal({
           {game.settings.buwis && !last && (
             <p className="note">
               {tributeNote(result, personas)}
+            </p>
+          )}
+          {game.settings.bagsak && !last && (
+            <p className="note">
+              {result.winner === 0
+                ? 'Bagsak (Fall) next round: you pay double unless you win again.'
+                : `Bagsak (Fall) next round: ${personas[result.winner].name} pays double unless they win again.`}
             </p>
           )}
           {host && <HostNote text={host} />}

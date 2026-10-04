@@ -156,6 +156,27 @@ describe('scoring', () => {
   });
 });
 
+describe('bagsak', () => {
+  const lastWonBy = (winner: number) => [{ winner }] as GameState['history'];
+
+  it('doubles the last winner’s penalty when someone else goes out', () => {
+    let s = stateWith([[0], [mk(6, C), mk(12, D)], [mk(7, C)], [mk(8, C)]], { history: lastWonBy(1) }, { bagsak: true });
+    s = play(s, 0, [0]);
+    const r = s.history[1];
+    expect(r.penalties).toEqual([0, 8, 1, 1]);
+    expect(r.multipliers[1].map((m) => m.label)).toContain('Fallen champion');
+    expect(r.deltas[0]).toBe(10);
+  });
+
+  it('leaves penalties alone when the champion defends or the rule is off', () => {
+    const hands = () => [[0], [mk(6, C), mk(12, D)], [mk(7, C)], [mk(8, C)]];
+    const defended = play(stateWith(hands(), { history: lastWonBy(0) }, { bagsak: true }), 0, [0]);
+    expect(defended.history[1].penalties).toEqual([0, 4, 1, 1]);
+    const off = play(stateWith(hands(), { history: lastWonBy(1) }, { bagsak: false }), 0, [0]);
+    expect(off.history[1].penalties).toEqual([0, 4, 1, 1]);
+  });
+});
+
 describe('buwis tribute', () => {
   it('moves the payer’s best card to the winner and back again', () => {
     let s = createMatch({ ...DEFAULT_SETTINGS }, 42);
@@ -184,6 +205,7 @@ describe('AI self-play', () => {
     { strictPass: true },
     { revolution: false, bantay: false, buwis: false },
     { memoryMode: true },
+    { bagsak: true },
   ];
 
   it('plays hundreds of full matches with only legal moves', () => {

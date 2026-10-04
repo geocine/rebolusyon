@@ -3,6 +3,7 @@ export const MECHANICS = {
   revolution: { name: 'Rebolusyon', en: 'Revolution', desc: 'Four of a Kind flips the card order.' },
   bantay: { name: 'Bantay', en: 'Guard', desc: 'If the next player has 1 card, your single must be your strongest.' },
   buwis: { name: 'Buwis', en: 'Tribute', desc: 'The biggest loser gives their best card to the last winner.' },
+  bagsak: { name: 'Bagsak', en: 'Fall', desc: 'Last round’s winner pays double if they don’t win again.' },
   memory: { name: 'Alaala', en: 'Memory', desc: 'No card tracker. Count cards in your head.' },
   peek: { name: 'Sulyap', en: 'Peek', desc: 'A 4-second look at the tracker, once per round.' },
 } as const;

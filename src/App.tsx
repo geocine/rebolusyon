@@ -647,6 +647,7 @@ export default function App() {
     g.settings.revolution && 'revolution',
     g.settings.bantay && 'bantay',
     g.settings.buwis && 'buwis',
+    g.settings.bagsak && 'bagsak',
     memoryMode && 'memory',
   ].filter(Boolean) as Mechanic[];
 

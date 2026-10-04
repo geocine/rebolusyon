@@ -4,7 +4,7 @@
  */
 import { type Card, type Rng, RANK_TWO, power, rankOf, rankPower, suitOf } from './cards';
 import { type Combo, beats, classify } from './combos';
-import { type GameState, PLAYERS, isLeading, penaltyFor } from './game';
+import { type GameState, PLAYERS, defendingChampion, isLeading, penaltyFor } from './game';
 
 export interface Sim {
   hands: Card[][];
@@ -20,6 +20,8 @@ export interface Sim {
   strict: boolean;
   winner: number;
   grand: boolean;
+  /** Bagsak: this seat pays double unless it wins (-1 when the rule is off). */
+  champion: number;
   /** Cached shedding plans per player; dropped whenever they stop matching the hand. */
   plans: (Combo[] | null)[];
 }
@@ -39,6 +41,7 @@ export function simFrom(s: GameState, hands: Card[][]): Sim {
     strict: s.settings.strictPass,
     winner: -1,
     grand: false,
+    champion: defendingChampion(s),
     plans: [null, null, null, null],
   };
 }
@@ -311,7 +314,7 @@ export function deltasOf(sim: Sim): number[] {
     // Ran out of steps: score it by hand size, which is what usually decides it.
     return sim.hands.map((h) => -h.length);
   }
-  const pens = sim.hands.map((h, p) => (p === sim.winner ? 0 : penaltyFor(h, sim.grand).penalty));
+  const pens = sim.hands.map((h, p) => (p === sim.winner ? 0 : penaltyFor(h, sim.grand).penalty * (p === sim.champion ? 2 : 1)));
   const total = pens.reduce((a, b) => a + b, 0);
   return pens.map((x, p) => (p === sim.winner ? total : -x));
 }
