@@ -2,16 +2,32 @@ import { AnimatePresence, motion } from 'motion/react';
 import type { Card } from '../engine/cards';
 import type { Persona } from '../engine/ai';
 import { CardView } from './CardView';
+import { type AvatarMood, PixelAvatar, SPRITES } from './PixelAvatar';
 
 export type SeatPosition = 'left' | 'top' | 'right' | 'bottom';
 
-export function Avatar({ persona, size = 56, active }: { persona: Pick<Persona, 'color' | 'initials'>; size?: number; active?: boolean }) {
+interface AvatarProps {
+  persona: Pick<Persona, 'color' | 'initials'>;
+  size?: number;
+  active?: boolean;
+  talking?: boolean;
+  mood?: AvatarMood;
+}
+
+export function Avatar({ persona, size = 56, active, talking, mood }: AvatarProps) {
+  const pixel = persona.initials in SPRITES;
   return (
     <div
-      className={`avatar ${active ? 'active' : ''}`}
+      className={`avatar ${active ? 'active' : ''} ${pixel ? 'pixel' : ''}`}
       style={{ width: size, height: size, ['--persona' as string]: persona.color }}
     >
-      <span>{persona.initials}</span>
+      {pixel ? (
+        <div className="avatar-tile">
+          <PixelAvatar id={persona.initials} active={active} talking={talking} mood={mood} />
+        </div>
+      ) : (
+        <span>{persona.initials}</span>
+      )}
     </div>
   );
 }
@@ -54,7 +70,7 @@ export function Seat({ player, persona, cards, score, position, isTurn, passed, 
     <div className={`seat seat-${position} ${isTurn ? 'is-turn' : ''}`} data-player={player}>
       <div className="seat-id">
         <div className="seat-avatar-wrap">
-          <Avatar persona={persona} active={isTurn} />
+          <Avatar persona={persona} active={isTurn} talking={!!bubble} />
           <Bubble text={bubble} position={position} />
         </div>
         <div className="seat-meta">

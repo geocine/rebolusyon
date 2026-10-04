@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { Fragment, type ReactNode, useMemo } from 'react';
+import { Fragment, type ReactNode, useEffect, useMemo, useState } from 'react';
 import { PERSONAS } from '../engine/ai';
 import { MECHANICS, Term } from '../mechanics';
 import { HOST, LESSONS, STAMPS, type Lesson } from '../tutorial';
@@ -17,11 +17,23 @@ export function Rich({ text }: { text: string }) {
   );
 }
 
+/** True while a line of `text` would take to say out loud. */
+function useTalking(text: string) {
+  const [talking, setTalking] = useState(true);
+  useEffect(() => {
+    setTalking(true);
+    const t = window.setTimeout(() => setTalking(false), Math.min(4500, 500 + text.length * 30));
+    return () => clearTimeout(t);
+  }, [text]);
+  return talking;
+}
+
 /** Tita Cora speaking from inside a dialog. */
 export function HostNote({ text }: { text: string }) {
+  const talking = useTalking(text);
   return (
     <motion.div className="host-note" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-      <Avatar persona={HOST} size={40} active />
+      <Avatar persona={HOST} size={40} active talking={talking} />
       <p>
         <span className="host-name">{HOST.name}</span>
         <Rich text={text} />
@@ -45,10 +57,11 @@ interface CoachProps {
 
 export function Coach({ lesson, step, text, cta, canShow, onNext, onShow, onRetry, onExit }: CoachProps) {
   const steps = LESSONS[lesson].steps.length;
+  const talking = useTalking(text);
   return (
     <motion.aside className="coach" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }} transition={{ type: 'spring', stiffness: 320, damping: 26 }}>
       <div className="coach-host">
-        <Avatar persona={HOST} size={44} active />
+        <Avatar persona={HOST} size={44} active talking={talking} />
       </div>
       <div className="coach-body">
         <div className="coach-head">
@@ -281,7 +294,7 @@ export function Diploma({ onPlay, onTitle }: { onPlay: () => void; onTitle: () =
         <div className="dp-sigs">
           {SIGNATURES.map(({ seat, quote }) => (
             <div key={seat} className="dp-sig">
-              <Avatar persona={PERSONAS[seat]} size={34} />
+              <Avatar persona={PERSONAS[seat]} size={34} mood="happy" />
               <div>
                 <div className="dp-sig-name" style={{ color: PERSONAS[seat].color }}>
                   {PERSONAS[seat].name}

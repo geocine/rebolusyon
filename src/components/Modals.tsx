@@ -377,7 +377,7 @@ export function RoundEndModal({
       {result && (
         <>
           <div className="re-head">
-            <Avatar persona={personas[result.winner]} size={72} active />
+            <Avatar persona={personas[result.winner]} size={72} active mood="happy" />
             <div>
               <div className="eyebrow">
                 Round {result.round} of {game.settings.rounds}
@@ -464,7 +464,7 @@ export function MatchEndModal({ open, game, personas, onAgain, onTitle }: { open
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 + [0.3, 0.6, 0][i], type: 'spring', stiffness: 200, damping: 18 }}
           >
-            <Avatar persona={personas[p]} size={i === 1 ? 84 : 64} active={i === 1} />
+            <Avatar persona={personas[p]} size={i === 1 ? 84 : 64} active={i === 1} mood={i === 1 ? 'happy' : undefined} />
             <div className="pd-name">{personas[p].name}</div>
             <div className="pd-score">{game.scores[p]}</div>
             <div className="pd-block">{[2, 1, 3][i]}</div>
