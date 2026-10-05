@@ -267,8 +267,8 @@ export default function App() {
               showBanner(
                 {
                   kind: 'rev',
-                  title: uprising ? 'ALSA! REBOLUSYON!' : 'REBOLUSYON!',
-                  sub: `${uprising ? `The underdog rises. ${name(e.player)}` : name(e.player)} flipped the table. Lower beats higher. 3♣ is king.`,
+                  title: uprising ? 'RESBAK! REBOLUSYON!' : 'REBOLUSYON!',
+                  sub: `${uprising ? `Payback from last place. ${name(e.player)}` : name(e.player)} flipped the table. Lower beats higher. 3♣ is king.`,
                 },
                 2600,
               );

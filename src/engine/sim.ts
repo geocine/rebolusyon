@@ -27,7 +27,7 @@ export interface Sim {
   grand: boolean;
   /** Patong and Huling Hirit penalty factor per seat. */
   stakes: number[];
-  /** Alsa: this seat's Three of a Kind also flips the order (-1 when nobody qualifies). */
+  /** Resbak: this seat's Three of a Kind also flips the order (-1 when nobody qualifies). */
   underdog: number;
   /** Cached shedding plans per player; dropped whenever they stop matching the hand. */
   plans: (Combo[] | null)[];

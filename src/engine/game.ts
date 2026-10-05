@@ -425,7 +425,7 @@ const contenders = (hands: Card[][], topBy: number) => [0, 1, 2, 3].filter((p) =
 /** Leads after a clear: whoever is on top, or the next seat in play if they already went out. */
 const clearLeader = (hands: Card[][], topBy: number) => (hands[topBy].length ? topBy : nextInPlay(hands, topBy));
 
-/** With Alsa on, the sole last-place player of the match can start a Rebolusyon with Three of a Kind. */
+/** With Resbak on, the sole last-place player of the match can start a Rebolusyon with Three of a Kind. */
 export function underdogSeat(s: GameState): number {
   if (!s.settings.revolution || !s.settings.alsa) return -1;
   const low = Math.min(...s.scores);

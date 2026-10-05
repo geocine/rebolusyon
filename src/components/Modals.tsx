@@ -149,7 +149,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
           </h4>
           <p>
             Whoever is <b>alone in last place</b> wears the Underdog tag, and their <b>Three of a Kind</b> starts a Rebolusyon,
-            just like Four of a Kind does for everyone else. Sitting on low junk? Rise up.
+            just like Four of a Kind does for everyone else. Sitting on low junk? Time for payback.
           </p>
         </section>
 

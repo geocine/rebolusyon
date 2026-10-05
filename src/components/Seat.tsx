@@ -81,7 +81,7 @@ interface SeatProps {
   isLeader: boolean;
   /** Carries the Patong: leads the match, pays double if they lose this round. */
   bounty: boolean;
-  /** Alone in last place with Alsa on: their Three of a Kind flips the order. */
+  /** Alone in last place with Resbak on: their Three of a Kind flips the order. */
   underdog: boolean;
   /** Finishing place in a played-out round; 0 while still holding cards. */
   place: number;

@@ -141,7 +141,7 @@ describe('turn flow', () => {
     expect(s.events.some((e) => e.kind === 'play' && e.flipped)).toBe(true);
   });
 
-  it('Alsa lets only the sole last-place player flip with Three of a Kind', () => {
+  it('Resbak lets only the sole last-place player flip with Three of a Kind', () => {
     const trips = [mk(4, C), mk(4, S), mk(4, H)];
     const hands = () => [[...trips, mk(9, C)], [mk(6, C), mk(6, D)], [mk(7, C), mk(7, D)], [mk(8, C), mk(8, D)]];
     const flipsWith = (scores: number[], rules: Partial<Settings> = {}) =>
