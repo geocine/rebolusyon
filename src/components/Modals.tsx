@@ -7,7 +7,7 @@ import { PLACE_POINTS, bountySeat, isHulingHirit, pickTributePayer, withMode } f
 import type { Persona } from '../engine/ai';
 import { CardView } from './CardView';
 import { Avatar } from './Seat';
-import { MECHANICS, MODES, Term, ordinal } from '../mechanics';
+import { MECHANICS, MODES, Term, groupsOf, ordinal } from '../mechanics';
 import { usePhone } from '../hooks';
 import { DIFFICULTIES } from '../difficulty';
 import { HostNote } from './Tutorial';
@@ -122,12 +122,13 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag teal">BOTH MODES</span> <Term m="bantay" />
+            <span className="tw-tag teal">REBOLUSYON · OPTIONAL IN KLASIKO</span> <Term m="bantay" />
           </h4>
           <p>
             If the player <b>after you</b> is down to one card, any single you play must be your <b>strongest</b>. No feeding them
             a 4♣ to go out on.
           </p>
+          <p>Klasiko plays without it by default. It’s a common house rule, so you can switch it on in Settings.</p>
         </section>
 
         <section className="twist">
@@ -310,7 +311,7 @@ function Segmented<T extends string | number>({ value, options, onChange }: { va
   );
 }
 
-export function ModePicker({ value, onChange }: { value: RuleMode; onChange: (m: RuleMode) => void }) {
+export function ModePicker({ value, klasikoBantay, onChange }: { value: RuleMode; klasikoBantay: boolean; onChange: (m: RuleMode) => void }) {
   return (
     <div className="mode-picker" role="radiogroup" aria-label="Mode">
       {MODES.map((m) => {
@@ -362,7 +363,7 @@ export function ModePicker({ value, onChange }: { value: RuleMode; onChange: (m:
               </span>
               <span className="mc-tag">{m.tagline}</span>
               <span className="mc-groups">
-                {m.groups.map((g) => (
+                {groupsOf(m, klasikoBantay).map((g) => (
                   <span key={g.title} className={`mc-group tone-${g.tone} ${g.off ? 'off' : ''}`}>
                     <i>{g.title}</i>
                     <span className="mc-rules">
@@ -390,10 +391,22 @@ export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { 
   return (
     <Modal open={open} onClose={onClose} className="settings">
       <h2 className="modal-title">Settings</h2>
-      {inMatch && <p className="note">A new mode takes effect next match. Opponent difficulty, pace, sound, vibration and memory mode apply right away.</p>}
+      {inMatch && <p className="note">A new mode or house rule takes effect next match. Opponent difficulty, pace, sound, vibration and memory mode apply right away.</p>}
 
       <h4 className="section-label">Mode</h4>
-      <ModePicker value={settings.mode} onChange={(m) => onChange(withMode(settings, m))} />
+      <ModePicker value={settings.mode} klasikoBantay={settings.klasikoBantay} onChange={(m) => onChange(withMode(settings, m))} />
+      {settings.mode === 'klasiko' && (
+        <Toggle
+          label={
+            <>
+              House rule: <Term m="bantay" />
+            </>
+          }
+          desc="Many tables play it: if the next player has one card left, any single you play must be your strongest."
+          value={settings.klasikoBantay}
+          onChange={(v) => onChange(withMode({ ...settings, klasikoBantay: v }))}
+        />
+      )}
 
       <h4 className="section-label">Challenge</h4>
       <Toggle label={<Term m="memory" />} desc="Hide the card tracker. One 4-second peek per round." value={settings.memoryMode} onChange={(v) => set('memoryMode', v)} />

@@ -227,7 +227,7 @@ describe('Klasiko plays every round out', () => {
   });
 
   it('skips finished players in turn order and for Bantay', () => {
-    const s = stateWith([[], [mk(9, C)], [mk(4, D), mk(6, C)], [mk(5, C), mk(12, D)]], { turn: 3, firstPlay: false, finished: [0] }, klasiko);
+    const s = stateWith([[], [mk(9, C)], [mk(4, D), mk(6, C)], [mk(5, C), mk(12, D)]], { turn: 3, firstPlay: false, finished: [0] }, { ...klasiko, bantay: true });
     expect(validatePlay(s, 3, [mk(5, C)]).ok).toBe(false);
     const after = play(s, 3, [mk(12, D)]);
     expect(after.turn).toBe(1);
@@ -277,6 +277,12 @@ describe('rule modes', () => {
 
   it('the default settings match the Rebolusyon mode', () => {
     expect(withMode(DEFAULT_SETTINGS)).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('Bantay is opt-in for Klasiko and always on for Rebolusyon', () => {
+    expect(withMode(DEFAULT_SETTINGS, 'klasiko').bantay).toBe(false);
+    expect(withMode({ ...DEFAULT_SETTINGS, klasikoBantay: true }, 'klasiko').bantay).toBe(true);
+    expect(withMode({ ...DEFAULT_SETTINGS, klasikoBantay: false }, 'rebolusyon').bantay).toBe(true);
   });
 });
 

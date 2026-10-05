@@ -27,7 +27,7 @@ import {
 } from './engine/game';
 import { castOf, chooseTributeReturn, decide, drawCast, personaAt } from './engine/ai';
 import { lineFor, type Moment } from './lines';
-import { Term, modeOf, ordinal, termText } from './mechanics';
+import { Term, groupsOf, modeOf, ordinal, termText } from './mechanics';
 import { loadLastCast, loadSettings, loadStats, saveLastCast, saveSettings, saveStats, type LifetimeStats } from './storage';
 import { ActionBar, PlayerHand } from './components/PlayerHand';
 import { Avatar, BountyChip, PassStamp, PlaceChip, Seat, type SeatPosition, UnderdogChip } from './components/Seat';
@@ -709,7 +709,7 @@ export default function App() {
   const underdog = underdogSeat(g);
   const finalDouble = isHulingHirit(g);
   const mode = modeOf(g.settings.mode);
-  const modeTip = `${mode.name} (${mode.en}): ${mode.groups.flatMap((x) => x.rules.flatMap((r) => (r.m ? [termText(r.m)] : []))).join(', ')}`;
+  const modeTip = `${mode.name} (${mode.en}): ${groupsOf(mode, g.settings.bantay).flatMap((x) => x.rules.flatMap((r) => (r.m ? [termText(r.m)] : []))).join(', ')}`;
 
   const pointed = tutStep?.point?.filter((c) => g.hands[HUMAN].includes(c)) ?? [];
   const hostText = tutStep ? textOf(tutStep.say, g) : null;
