@@ -122,7 +122,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag teal">REBOLUSYON · OPTIONAL IN KLASIKO</span> <Term m="bantay" />
+            <span className="tw-tag sage">REBOLUSYON · OPTIONAL IN KLASIKO</span> <Term m="bantay" />
           </h4>
           <p>
             If the player <b>after you</b> is down to one card, any single you play must be your <b>strongest</b>. No feeding them
@@ -133,7 +133,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag pink">REBOLUSYON · FLIP</span> <Term m="revolution" />
+            <span className="tw-tag clay">REBOLUSYON · FLIP</span> <Term m="revolution" />
           </h4>
           <p>
             Play <b>Four of a Kind</b> and the world flips. Within every combo type, <b>lower beats higher</b>. 3♣ becomes the
@@ -145,7 +145,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag pink">REBOLUSYON · FLIP</span> <Term m="resbak" />
+            <span className="tw-tag clay">REBOLUSYON · FLIP</span> <Term m="resbak" />
           </h4>
           <p>
             Whoever is <b>alone in last place</b> wears the Underdog tag, and their <b>Three of a Kind</b> starts a Rebolusyon,
@@ -194,7 +194,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag teal">KLASIKO</span> Play it out
+            <span className="tw-tag sage">KLASIKO</span> Play it out
           </h4>
           <p>
             Going out first doesn’t end the round. Finished players sit out while the rest keep playing for <b>2nd</b> and{' '}

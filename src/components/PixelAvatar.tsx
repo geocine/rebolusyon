@@ -79,7 +79,7 @@ export const SPRITES: Record<string, Sprite> = {
       '..BBBPBPPBPBBB..',
       '.BBBBbBBBBbBBBB.',
     ],
-    palette: { H: '#dcd8e4', h: '#a9a3b8', S: '#d9a070', s: '#b57a4c', K: '#8a5a2b', W: '#e4f2ff', C: '#ee8a78', B: '#93b38c', b: '#6c8c66', P: '#fff6e0' },
+    palette: { H: '#e3dccf', h: '#b3a998', S: '#d9a070', s: '#b57a4c', K: '#8a5a2b', W: '#f3e9d8', C: '#ee8a78', B: '#93b38c', b: '#6c8c66', P: '#fff6e0' },
     eyes: [
       [5, 8],
       [10, 8],
@@ -207,7 +207,7 @@ export const SPRITES: Record<string, Sprite> = {
       '..BBBAAAAAABBB..',
       '.BBBBAAAAAABBBB.',
     ],
-    palette: { H: '#3a2418', h: '#5e3c28', S: '#d29a6a', s: '#ae744a', C: '#ee8a78', B: '#4fb6b0', A: '#f3e9d8' },
+    palette: { H: '#3a2418', h: '#5e3c28', S: '#d29a6a', s: '#ae744a', C: '#ee8a78', B: '#7f8a48', A: '#f3e9d8' },
     eyes: [
       [5, 8],
       [10, 8],
@@ -216,7 +216,7 @@ export const SPRITES: Record<string, Sprite> = {
     fx: [
       {
         className: 'fx-fidget',
-        palette: { Y: '#e8c04a', e: '#e58fa0' },
+        palette: { Y: '#d4a24c', e: '#c08a96' },
         rows: ['............e...', '...........Y....', '..........Y.....', ...Array(13).fill('................')],
       },
     ],
@@ -241,7 +241,7 @@ export const SPRITES: Record<string, Sprite> = {
       '..BBBBWssWBBBB..',
       '.BBBBBBbBBBBBBB.',
     ],
-    palette: { H: '#2b211c', S: '#c98a5a', s: '#a46a3e', F: '#221a15', L: '#3f6b8a', M: '#2b211c', W: '#f3e9d8', B: '#6f8fe0', b: '#4f6cb8' },
+    palette: { H: '#2b211c', S: '#c98a5a', s: '#a46a3e', F: '#221a15', L: '#5a4a3c', M: '#2b211c', W: '#f3e9d8', B: '#a8774c', b: '#835a38' },
     eyes: [
       [5, 8],
       [10, 8],
@@ -275,7 +275,7 @@ export const SPRITES: Record<string, Sprite> = {
       '..BBBBBssBBBBB..',
       '.BBBBDBBBBDBBBB.',
     ],
-    palette: { K: '#ece4f2', R: '#ece4f2', H: '#241a22', P: '#e0608a', S: '#e2ab80', s: '#bf8458', C: '#ee8a78', B: '#e0608a', D: '#f3e9d8' },
+    palette: { K: '#e6d7bc', R: '#e6d7bc', H: '#221a15', P: '#a8552f', S: '#e2ab80', s: '#bf8458', C: '#ee8a78', B: '#6f8799', D: '#f3e9d8' },
     eyes: [
       [5, 8],
       [10, 8],
@@ -302,7 +302,7 @@ export const SPRITES: Record<string, Sprite> = {
       '..WWWWWssWWWWW..',
       '.WWWWVWWWWVWWWW.',
     ],
-    palette: { H: '#8a8494', h: '#c9c4d0', c: '#a083d6', S: '#c08458', s: '#9c6440', M: '#4a4450', W: '#f3e9d8', V: '#a083d6' },
+    palette: { H: '#8c847a', h: '#cfc6b8', c: '#2b221a', S: '#c08458', s: '#9c6440', M: '#4a423a', W: '#f3e9d8', V: '#b5544a' },
     eyes: [
       [5, 8],
       [10, 8],

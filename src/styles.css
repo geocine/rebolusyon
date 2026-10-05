@@ -1981,8 +1981,8 @@ button {
   border-radius: 4px;
   color: var(--ink);
 }
-.tw-tag.pink { background: var(--clay); }
-.tw-tag.teal { background: var(--sage); }
+.tw-tag.clay { background: var(--clay); }
+.tw-tag.sage { background: var(--sage); }
 .tw-tag.gold { background: var(--gold); }
 .tw-tag.ink { background: var(--paper); }
 .rank-strip,
