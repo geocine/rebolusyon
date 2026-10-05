@@ -1,12 +1,12 @@
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { makeCard } from '../engine/cards';
-import type { Cast, Difficulty, RuleMode } from '../engine/game';
+import type { Difficulty, RuleMode } from '../engine/game';
 import { MODES, modeOf } from '../mechanics';
-import { castOf } from '../engine/ai';
 import { DIFFICULTIES } from '../difficulty';
 import type { LifetimeStats } from '../storage';
 import { CardView } from './CardView';
+import { ModePicker } from './Modals';
 import { Avatar } from './Seat';
 import { HOST } from '../tutorial';
 
@@ -14,8 +14,8 @@ const HERO = [makeCard(0, 0), makeCard(12, 0), makeCard(12, 1), makeCard(12, 2),
 
 interface Props {
   stats: LifetimeStats;
-  cast: Cast;
   mode: RuleMode;
+  klasikoBantay: boolean;
   onMode: (m: RuleMode) => void;
   difficulty: Difficulty;
   onDifficulty: (d: Difficulty) => void;
@@ -26,7 +26,7 @@ interface Props {
   onSettings: () => void;
 }
 
-export function TitleScreen({ stats, cast, mode, onMode, difficulty, onDifficulty, onPlay, onLearn, graduated, onRules, onSettings }: Props) {
+export function TitleScreen({ stats, mode, klasikoBantay, onMode, difficulty, onDifficulty, onPlay, onLearn, graduated, onRules, onSettings }: Props) {
   const [flipped, setFlipped] = useState(false);
   useEffect(() => {
     const t = setInterval(() => setFlipped((f) => !f), 3600);
@@ -90,8 +90,8 @@ export function TitleScreen({ stats, cast, mode, onMode, difficulty, onDifficult
               Settings
             </button>
           </div>
-          <span className="ts-pick-label">Rules</span>
-          <div className="segmented ts-diff ts-mode" role="radiogroup" aria-label="Rules">
+          <span className="ts-pick-label">Mode</span>
+          <div className="segmented ts-diff ts-mode" role="radiogroup" aria-label="Mode">
             {MODES.map((m) => (
               <button key={m.value} role="radio" aria-checked={mode === m.value} className={mode === m.value ? 'on' : ''} onClick={() => onMode(m.value)} title={`${m.name} (${m.en})`}>
                 {m.name}
@@ -111,22 +111,29 @@ export function TitleScreen({ stats, cast, mode, onMode, difficulty, onDifficult
           <p className="ts-fair">No peeking: bots only see their own hand, the cards played, and who passed. Same as you.</p>
         </motion.div>
 
-        <motion.div className="roster-head" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.95 }}>
-          <h3>Tonight’s table</h3>
-        </motion.div>
-        <motion.div className="roster" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}>
-          {castOf({ cast }).slice(1).map((p) => (
-            <div key={p.name} className="roster-card" style={{ ['--persona' as string]: p.color }}>
-              <Avatar persona={p} size={48} />
-              <div>
-                <div className="rc-name">{p.name}</div>
-                <div className="rc-title">{p.title}</div>
-                <div className="rc-blurb">{p.blurb}</div>
-                <div className="rc-tell">{p.tell}</div>
-              </div>
-            </div>
-          ))}
-        </motion.div>
+        <motion.section className="ts-modes" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.95 }}>
+          <h3>Two ways to play</h3>
+          <ul className="ts-basics">
+            <li>
+              Both modes start the same. Whoever holds <b>3♣</b> opens, and the goal is to shed all 13 cards.
+            </li>
+            <li>
+              Beat the table with the <b>same number of cards</b> (a single, pair, triple or five-card hand), or pass.
+            </li>
+            <li>
+              Twos are high, and ties break by suit: ♣ &lt; ♠ &lt; <span className="r">♥</span> &lt; <span className="r">♦</span>. When
+              everyone passes, the last player to play leads anything.
+            </li>
+          </ul>
+          <ModePicker className="ts-mode-cards" value={mode} klasikoBantay={klasikoBantay} onChange={onMode} />
+          <p className="ts-modes-foot">
+            Pick one here or above. Combos, scoring and every twist are in{' '}
+            <button type="button" className="link" onClick={onRules}>
+              How to play
+            </button>
+            .
+          </p>
+        </motion.section>
 
         {stats.matches > 0 && (
           <div className="ts-stats">

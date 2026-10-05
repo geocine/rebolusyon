@@ -313,9 +313,9 @@ function Segmented<T extends string | number>({ value, options, onChange }: { va
   );
 }
 
-export function ModePicker({ value, klasikoBantay, onChange }: { value: RuleMode; klasikoBantay: boolean; onChange: (m: RuleMode) => void }) {
+export function ModePicker({ value, klasikoBantay, onChange, className = '' }: { value: RuleMode; klasikoBantay: boolean; onChange: (m: RuleMode) => void; className?: string }) {
   return (
-    <div className="mode-picker" role="radiogroup" aria-label="Mode">
+    <div className={`mode-picker ${className}`} role="radiogroup" aria-label="Mode">
       {MODES.map((m) => {
         const on = value === m.value;
         const mid = (m.hero.length - 1) / 2;
@@ -393,7 +393,7 @@ export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { 
   return (
     <Modal open={open} onClose={onClose} className="settings">
       <h2 className="modal-title">Settings</h2>
-      {inMatch && <p className="note">A new mode or house rule takes effect next match. Opponent difficulty, pace, sound, vibration and memory mode apply right away.</p>}
+      {inMatch && <p className="note">Changing the mode or house rule restarts the match. A new round count starts next match. Everything else applies right away.</p>}
 
       <h4 className="section-label">Mode</h4>
       <ModePicker value={settings.mode} klasikoBantay={settings.klasikoBantay} onChange={(m) => onChange(withMode(settings, m))} />

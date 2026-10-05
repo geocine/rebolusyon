@@ -896,76 +896,67 @@ button {
   display: flex;
   gap: 10px;
 }
-.roster-head {
+.ts-modes {
+  width: 100%;
   margin-top: 42px;
-  margin-bottom: 14px;
-  text-align: center;
 }
-.roster-head h3 {
-  margin: 0;
+.ts-modes h3 {
+  margin: 0 0 12px;
+  text-align: center;
   font-family: var(--display);
   font-weight: 400;
   font-size: 18px;
   letter-spacing: 0.06em;
   color: var(--gold-2);
 }
-.roster-head p {
-  margin: 4px 0 0;
+.ts-basics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+.ts-basics li {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--ink-2);
+  border: 1px solid var(--line);
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--paper) 85%, transparent);
+}
+.ts-basics b {
+  color: var(--paper);
+}
+.ts-basics .r {
+  color: #d96a4f;
+}
+.ts-mode-cards {
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+}
+.ts-modes-foot {
+  margin: 12px 0 0;
+  text-align: center;
   font-size: 13px;
-  opacity: 0.65;
+  opacity: 0.7;
 }
-.rc-tell {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed color-mix(in srgb, var(--persona) 35%, transparent);
-  font-size: 12.5px;
-  font-weight: 700;
-  color: color-mix(in srgb, var(--persona) 55%, var(--paper));
+.link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gold-2);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
 }
-.roster {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 14px;
-  width: 100%;
-}
-.roster > .roster-card {
-  flex: 0 1 calc((100% - 2 * 14px) / 3);
-  min-width: 220px;
-}
-.roster-card {
-  position: relative;
-  display: flex;
-  gap: 14px;
-  padding: 18px;
-  border-radius: 16px;
-  background:
-    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--persona) 24%, transparent), transparent 58%),
-    var(--ink-2);
-  border: 2px solid color-mix(in srgb, var(--persona) 55%, transparent);
-  box-shadow: 5px 5px 0 color-mix(in srgb, var(--persona) 30%, #000);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.roster-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 7px 7px 0 color-mix(in srgb, var(--persona) 45%, #000);
-}
-.rc-name {
-  font-family: var(--display);
-  font-size: 16px;
-  color: var(--persona);
-}
-.rc-title {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  opacity: 0.6;
-  margin: 2px 0 6px;
-}
-.rc-blurb {
-  font-size: 14px;
-  line-height: 1.4;
-  opacity: 0.85;
+@media (max-width: 860px) {
+  .ts-basics,
+  .ts-mode-cards {
+    grid-template-columns: 1fr;
+  }
 }
 .ts-stats {
   margin-top: 26px;
@@ -2822,9 +2813,6 @@ kbd {
   .rules-grid {
     grid-template-columns: 1fr;
   }
-  .roster > .roster-card {
-    flex-basis: 100%;
-  }
 }
 
 .tb-pips {
@@ -3405,9 +3393,6 @@ kbd {
   }
   .ts-actions .btn {
     width: 100%;
-  }
-  .roster {
-    gap: 10px;
   }
 }
 

@@ -187,12 +187,26 @@ export default function App() {
     setPeekRound(0);
   };
 
-  const startMatch = () => {
+  const startMatchWith = (rules: Settings) => {
     resetTable();
     setTut(null);
     saveLastCast(nextCast);
-    setGame(createMatch(settings, undefined, nextCast));
+    setGame(createMatch(rules, undefined, nextCast));
     setNextCast(drawCast(Math.random, nextCast));
+  };
+  const startMatch = () => startMatchWith(settings);
+
+  /** A different mode or house rule can't apply to a match already being played, so it starts a fresh one. */
+  const changeSettings = (next: Settings) => {
+    const g = game;
+    const live = g && !tut && g.phase !== 'matchEnd';
+    const rulesChanged = live && (next.mode !== g.settings.mode || next.bantay !== g.settings.bantay);
+    if (!rulesChanged) return updateSettings(next);
+    const what = next.mode !== g.settings.mode ? `Switch to ${modeOf(next.mode).name}?` : `Turn Bantay ${next.bantay ? 'on' : 'off'}?`;
+    if (!confirm(`${what} This restarts the match with the new rules.`)) return;
+    updateSettings(next);
+    setShowSettings(false);
+    startMatchWith(next);
   };
 
   const startLesson = (lesson: number, status: TutorialState['status'] = 'intro') => {
@@ -654,8 +668,8 @@ export default function App() {
       <>
         <TitleScreen
           stats={stats}
-          cast={nextCast}
           mode={settings.mode}
+          klasikoBantay={settings.klasikoBantay}
           onMode={(m) => updateSettings(withMode(settings, m))}
           difficulty={settings.difficulty}
           onDifficulty={(d) => updateSettings({ ...settings, difficulty: d })}
@@ -893,7 +907,7 @@ export default function App() {
         }}
       />
       <RulesModal open={showRules} onClose={() => setShowRules(false)} />
-      <SettingsModal open={showSettings} onClose={() => setShowSettings(false)} settings={settings} onChange={updateSettings} inMatch />
+      <SettingsModal open={showSettings} onClose={() => setShowSettings(false)} settings={settings} onChange={changeSettings} inMatch={!tut} />
     </div>
   );
 }

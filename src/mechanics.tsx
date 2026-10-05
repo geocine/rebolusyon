@@ -125,5 +125,5 @@ export const modeOf = (m: RuleMode) => MODES.find((x) => x.value === m) ?? MODES
 /** A mode's rule groups as they'll actually be played; Bantay is an opt-in house rule in Klasiko. */
 export function groupsOf(mode: ModeInfo, klasikoBantay: boolean): RuleGroup[] {
   if (mode.value !== 'klasiko' || klasikoBantay) return mode.groups;
-  return mode.groups.map((g) => (g === GUARD ? { ...GUARD, rules: [], off: 'None. Bantay is an optional house rule. Turn it on below.' } : g));
+  return mode.groups.map((g) => (g === GUARD ? { ...GUARD, rules: [], off: 'None. Bantay is an optional house rule you can turn on in Settings.' } : g));
 }
