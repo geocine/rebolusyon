@@ -177,7 +177,7 @@ const KLASIKO_LESSONS: Lesson[] = [
   },
   {
     id: 'fives',
-    short: 'Five cards',
+    short: 'Hands',
     title: 'Five-card hands',
     tagline: 'Straights, flushes and full houses, and the ladder they climb.',
     setup: (base) =>

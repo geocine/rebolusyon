@@ -34,7 +34,7 @@ import { ActionBar, PlayerHand } from './components/PlayerHand';
 import { Avatar, BountyChip, PassStamp, PlaceChip, Seat, type SeatPosition, UnderdogChip } from './components/Seat';
 import { TrickArea } from './components/TrickArea';
 import { Tracker } from './components/Tracker';
-import { ExchangeModal, RoundEndModal, RulesModal, SettingsModal } from './components/Modals';
+import { type ConfirmAsk, ConfirmModal, ExchangeModal, RoundEndModal, RulesModal, SettingsModal } from './components/Modals';
 import { MatchEndModal } from './components/MatchEnd';
 import { Banner, type BannerData } from './components/Banner';
 import { TitleScreen } from './components/TitleScreen';
@@ -96,6 +96,7 @@ export default function App() {
   const [game, setGame] = useState<GameState | null>(null);
   const [showRules, setShowRules] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [ask, setAsk] = useState<ConfirmAsk | null>(null);
   const [resultOpen, setResultOpen] = useState(false);
   const [matchOpen, setMatchOpen] = useState(false);
   const [nextCast, setNextCast] = useState(() => drawCast(Math.random, loadLastCast()));
@@ -211,12 +212,37 @@ export default function App() {
     const live = g && !tut && g.phase !== 'matchEnd';
     const rulesChanged = live && (next.mode !== g.settings.mode || next.bantay !== g.settings.bantay);
     if (!rulesChanged) return updateSettings(next);
-    const what = next.mode !== g.settings.mode ? `Switch to ${modeOf(next.mode).name}?` : `Turn Bantay ${next.bantay ? 'on' : 'off'}?`;
-    if (!confirm(`${what} This restarts the match with the new rules.`)) return;
-    updateSettings(next);
-    setShowSettings(false);
-    startMatchWith(next);
+    const switching = next.mode !== g.settings.mode;
+    setAsk({
+      kicker: 'New rules, new deal',
+      title: switching ? `Switch to ${modeOf(next.mode).name}?` : `Turn Bantay ${next.bantay ? 'on' : 'off'}?`,
+      body: switching
+        ? `${modeOf(next.mode).tagline} This match ends here and the cards are dealt again.`
+        : 'Rules can’t change mid-hand, so this match ends here and the cards are dealt again.',
+      yes: 'Deal again',
+      no: 'Keep playing',
+      mode: switching ? next.mode : undefined,
+      onYes: () => {
+        setAsk(null);
+        updateSettings(next);
+        setShowSettings(false);
+        startMatchWith(next);
+      },
+    });
   };
+
+  const leaveMatch = () =>
+    setAsk({
+      kicker: 'Uuwi na? · Heading home?',
+      title: 'Leave this match?',
+      body: 'Your hand and the scores so far go back in the box.',
+      yes: 'Leave',
+      no: 'Stay',
+      onYes: () => {
+        setAsk(null);
+        setGame(null);
+      },
+    });
 
   const startLesson = (course: RuleMode, lesson: number, status: TutorialState['status'] = 'intro') => {
     resetTable();
@@ -412,7 +438,7 @@ export default function App() {
   /* ------------------------------ AI driver ------------------------------ */
 
   const tutLesson = tut ? COURSES[tut.course][tut.lesson] : null;
-  const paused = showRules || showSettings || (!!tut && tut.status !== 'play');
+  const paused = showRules || showSettings || !!ask || (!!tut && tut.status !== 'play');
 
   useEffect(() => {
     if (!game || paused) return;
@@ -600,7 +626,7 @@ export default function App() {
   };
 
   const modalOpen =
-    showRules || showSettings || resultOpen || matchOpen || (game?.phase === 'exchange' && game.exchange?.to === HUMAN) || (!!tut && tut.status !== 'play');
+    showRules || showSettings || !!ask || resultOpen || matchOpen || (game?.phase === 'exchange' && game.exchange?.to === HUMAN) || (!!tut && tut.status !== 'play');
 
   const mustPass = !!game && myTurn && !isLeading(game) && !myOptions.length && canPass(game, HUMAN);
   const autoPassing = mustPass && !!game?.settings.autoPass && !tut && !modalOpen;
@@ -754,7 +780,7 @@ export default function App() {
   return (
     <div className={`game ${g.revolution ? 'rev' : ''} ${shake ? `shake-${shake % 2}` : ''} ${trackerOpen ? 'tracker-open' : ''} ${tut ? 'tutoring' : ''}`}>
       <header className="topbar">
-        <button className="logo-small" onClick={() => (tut ? exitTutorial() : confirm('Leave this match?') && setGame(null))} title="Back to title">
+        <button className="logo-small" onClick={() => (tut ? exitTutorial() : leaveMatch())} title="Back to title">
           REBOLUSYON
         </button>
         <div className="tb-round" title={`${tut ? 'Lesson' : 'Round'} ${g.round} of ${g.settings.rounds}`}>
@@ -951,6 +977,7 @@ export default function App() {
       />
       <RulesModal open={showRules} onClose={() => setShowRules(false)} />
       <SettingsModal open={showSettings} onClose={() => setShowSettings(false)} settings={settings} onChange={changeSettings} inMatch={!tut} />
+      <ConfirmModal ask={ask} onCancel={() => setAsk(null)} />
     </div>
   );
 }

@@ -2330,6 +2330,65 @@ kbd {
   gap: 10px;
   margin: 8px 0 4px;
 }
+/* Settings: just the name and the one-liner; the full rules live on the title screen and in How to play. */
+.mode-picker.compact {
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.mode-picker.compact .mc-art,
+.mode-picker.compact .mc-groups {
+  display: none;
+}
+.mode-picker.compact .mc-body {
+  gap: 4px;
+  padding: 10px 12px 12px;
+}
+.mode-picker.compact .mc-head b {
+  font-size: 16px;
+}
+.mode-picker.compact .mc-badge {
+  display: none;
+}
+.mode-picker.compact .mc-tag {
+  font-size: 12px;
+}
+
+/* Yes/no questions from the table. */
+.modal.confirm {
+  width: min(420px, 100%);
+  text-align: center;
+}
+.cf-art {
+  position: relative;
+  height: 104px;
+  margin: -4px 0 10px;
+  display: grid;
+  place-items: center;
+}
+.cf-card {
+  position: absolute;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+}
+.cf-kicker {
+  font-family: var(--display);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--clay);
+}
+.modal.confirm .modal-title {
+  margin: 6px 0 8px;
+}
+.cf-body {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+.modal.confirm .modal-actions {
+  justify-content: center;
+  flex-wrap: wrap;
+}
 .mode-card {
   --mc: var(--gold);
   display: flex;
@@ -3342,9 +3401,20 @@ kbd {
     right: 48px;
     top: -4px;
   }
+  /* Under the avatar, so it doesn't cover the top seat's cards. */
   .bubble-top {
-    left: 50px;
-    top: 0;
+    left: -6px;
+    top: calc(100% + 8px);
+  }
+  .bubble-top::after {
+    left: 22px;
+    top: -5px;
+  }
+  .seat-left .seat-name,
+  .seat-right .seat-name {
+    max-width: 84px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* trick */

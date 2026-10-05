@@ -193,7 +193,7 @@ export function LessonIntro({ course, index, cleared, graduated, onStart, onPick
           ×
         </button>
         <div className="tut-eyebrow">
-          Pusoy School · {modeOf(course).name} · Lesson {index + 1} of {lessons.length}
+          {modeOf(course).name} · Lesson {index + 1} of {lessons.length}
         </div>
         <h2 className="tut-title">{l.title}</h2>
         {l.term && (

@@ -8,6 +8,7 @@ import type { Persona } from '../engine/ai';
 import { hasOrigin, rotationOf, takeOrigin } from '../flight';
 import { CardView } from './CardView';
 import { type Flight, FlyingCard } from './FlyingCard';
+import { usePhone } from '../hooks';
 
 const jitter = (c: number, spread: number) => (((c * 2654435761) >>> 0) % 1000) / 1000 * spread - spread / 2;
 
@@ -31,6 +32,8 @@ export function TrickArea({ trick, revolution, personas, memoryMode, discard, fi
   const visible = hideTrick ? [] : plays.slice(-3);
   const top = visible[visible.length - 1];
   const topKey = top?.combo?.cards.join('-') ?? '';
+  /** How far each older play rises behind the newest; phone cards are smaller, so is the stage. */
+  const lift = usePhone() ? 16 : 34;
 
   const [flights, setFlights] = useState<Flight[]>([]);
   const [airborne, setAirborne] = useState<Set<Card>>(() => new Set());
@@ -109,7 +112,7 @@ export function TrickArea({ trick, revolution, personas, memoryMode, discard, fi
             <motion.div
               key={combo.cards.join('-')}
               className={`trick-play depth-${depth}`}
-              animate={{ scale: 1 - depth * 0.16, y: -depth * 34, opacity: depth ? 0.55 : 1, rotate: depth ? jitter(combo.cards[0], 10) : 0 }}
+              animate={{ scale: 1 - depth * 0.16, y: -depth * lift, opacity: depth ? 0.55 : 1, rotate: depth ? jitter(combo.cards[0], 10) : 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 28 }}
               style={{ zIndex: 10 - depth }}
             >

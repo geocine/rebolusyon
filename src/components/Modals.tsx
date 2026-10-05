@@ -1,5 +1,5 @@
 import { AnimatePresence, type PanInfo, motion, useDragControls } from 'motion/react';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
 import { type Card, makeCard, rankOf } from '../engine/cards';
 import { describeCombo, isPowerRank } from '../engine/combos';
 import type { Exchange, GameState, RoundResult, RuleMode, Settings } from '../engine/game';
@@ -12,8 +12,18 @@ import { usePhone } from '../hooks';
 import { DIFFICULTIES } from '../difficulty';
 import { HostNote } from './Tutorial';
 
-export function Modal({ open, onClose, children, wide, className = '' }: { open: boolean; onClose?: () => void; children: ReactNode; wide?: boolean; className?: string }) {
-  const phone = usePhone();
+interface ModalProps {
+  open: boolean;
+  onClose?: () => void;
+  children: ReactNode;
+  wide?: boolean;
+  className?: string;
+  /** On phones, slide up as a bottom sheet. Off for short questions that read better centered. */
+  sheet?: boolean;
+}
+
+export function Modal({ open, onClose, children, wide, className = '', sheet = true }: ModalProps) {
+  const phone = usePhone() && sheet;
   const drag = useDragControls();
   const motionProps = phone
     ? {
@@ -58,6 +68,64 @@ export function Modal({ open, onClose, children, wide, className = '' }: { open:
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+export interface ConfirmAsk {
+  kicker: string;
+  title: string;
+  body: ReactNode;
+  yes: string;
+  no: string;
+  /** Show this mode's hand fanned above the question. */
+  mode?: RuleMode;
+  onYes: () => void;
+}
+
+/** The table's own yes/no dialog. */
+export function ConfirmModal({ ask, onCancel }: { ask: ConfirmAsk | null; onCancel: () => void }) {
+  const last = useRef(ask);
+  if (ask) last.current = ask;
+  const a = ask ?? last.current;
+  const hero = a?.mode ? MODES.find((m) => m.value === a.mode) : undefined;
+  return (
+    <Modal open={!!ask} onClose={onCancel} className="confirm" sheet={false}>
+      {a && (
+        <>
+          {hero && (
+            <div className={`cf-art mode-${hero.value}`} aria-hidden="true">
+              {hero.hero.map((c, i) => {
+                const mid = (hero.hero.length - 1) / 2;
+                return (
+                  <CardView
+                    key={c}
+                    card={c}
+                    size="md"
+                    powerCard={c === hero.crown}
+                    className="cf-card"
+                    style={{ zIndex: 5 - Math.abs(i - mid) }}
+                    initial={{ y: 30, opacity: 0, rotate: 0 }}
+                    animate={{ x: (i - mid) * 26, y: Math.abs(i - mid) * 6, opacity: 1, rotate: (i - mid) * 12 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 + i * 0.05 }}
+                  />
+                );
+              })}
+            </div>
+          )}
+          <div className="cf-kicker">{a.kicker}</div>
+          <h2 className="modal-title">{a.title}</h2>
+          <p className="cf-body">{a.body}</p>
+          <div className="modal-actions">
+            <button className="btn ghost" onClick={onCancel}>
+              {a.no}
+            </button>
+            <button className="btn primary" onClick={a.onYes} autoFocus>
+              {a.yes}
+            </button>
+          </div>
+        </>
+      )}
+    </Modal>
   );
 }
 
@@ -397,7 +465,7 @@ export function SettingsModal({ open, onClose, settings, onChange, inMatch }: { 
       {inMatch && <p className="note">Changing the mode or house rule restarts the match. A new round count starts next match. Everything else applies right away.</p>}
 
       <h4 className="section-label">Mode</h4>
-      <ModePicker value={settings.mode} klasikoBantay={settings.klasikoBantay} onChange={(m) => onChange(withMode(settings, m))} />
+      <ModePicker className="compact" value={settings.mode} klasikoBantay={settings.klasikoBantay} onChange={(m) => onChange(withMode(settings, m))} />
       {settings.mode === 'klasiko' && (
         <Toggle
           label={
