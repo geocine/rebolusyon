@@ -139,6 +139,35 @@ const mini = (cards: Card[], rev = false) => (
 
 /* ---------------------------------- Rules --------------------------------- */
 
+const [CLUBS, SPADES, HEARTS, DIAMONDS] = [0, 1, 2, 3];
+const FIVE_EXAMPLES: { name: string; note: string; cards: Card[] }[] = [
+  {
+    name: 'Straight',
+    note: 'Five in a row, any suits. Highest card decides. No 2s.',
+    cards: [makeCard(2, CLUBS), makeCard(3, DIAMONDS), makeCard(4, SPADES), makeCard(5, HEARTS), makeCard(6, CLUBS)],
+  },
+  {
+    name: 'Flush',
+    note: 'Five of one suit. Suit decides, then high card.',
+    cards: [makeCard(0, HEARTS), makeCard(4, HEARTS), makeCard(6, HEARTS), makeCard(8, HEARTS), makeCard(10, HEARTS)],
+  },
+  {
+    name: 'Full House',
+    note: 'A triple plus a pair. The triple decides.',
+    cards: [makeCard(5, CLUBS), makeCard(5, SPADES), makeCard(5, DIAMONDS), makeCard(1, CLUBS), makeCard(1, HEARTS)],
+  },
+  {
+    name: 'Four of a Kind',
+    note: 'Four of a rank plus any fifth card.',
+    cards: [makeCard(10, CLUBS), makeCard(10, SPADES), makeCard(10, HEARTS), makeCard(10, DIAMONDS), makeCard(1, SPADES)],
+  },
+  {
+    name: 'Straight Flush',
+    note: 'A straight all in one suit. Beats everything.',
+    cards: [makeCard(6, SPADES), makeCard(7, SPADES), makeCard(8, SPADES), makeCard(9, SPADES), makeCard(10, SPADES)],
+  },
+];
+
 export function RulesModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Modal open={open} onClose={onClose} wide className="rules">
@@ -161,18 +190,22 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
           <p className="small">3♣ is the weakest card in the deck. 2♦ is the strongest.</p>
         </section>
 
-        <section>
+        <section className="rules-combos">
           <h4>Combinations</h4>
           <ul className="combos">
             <li><b>Single</b> · <b>Pair</b> · <b>Triple</b></li>
             <li>
               <b>Five-card hands</b>, weakest to strongest:
-              <ol>
-                <li>Straight <span className="small">(2s can’t be in straights)</span></li>
-                <li>Flush <span className="small">(compared by suit, then high card)</span></li>
-                <li>Full House</li>
-                <li>Four of a Kind + any kicker</li>
-                <li>Straight Flush</li>
+              <ol className="five-ladder">
+                {FIVE_EXAMPLES.map((h) => (
+                  <li key={h.name}>
+                    <span className="fl-name">
+                      <b>{h.name}</b>
+                      <span className="small">{h.note}</span>
+                    </span>
+                    {mini(h.cards)}
+                  </li>
+                ))}
               </ol>
             </li>
           </ul>

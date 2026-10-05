@@ -2239,6 +2239,9 @@ button {
   line-height: 1.5;
   font-size: 14px;
 }
+.rules-grid .rules-combos {
+  grid-row: span 2;
+}
 .rules-grid section.twist {
   background: linear-gradient(160deg, rgba(207, 106, 63, 0.07), rgba(243, 233, 216, 0.02));
 }
@@ -2289,6 +2292,28 @@ button {
 }
 .combos ol {
   margin: 4px 0;
+}
+.five-ladder {
+  padding-left: 18px;
+}
+.five-ladder li {
+  padding: 7px 0;
+  border-top: 1px solid var(--line);
+}
+.five-ladder li:first-child {
+  border-top: 0;
+}
+.five-ladder li::marker {
+  font-family: var(--display);
+  color: var(--gold);
+}
+.five-ladder .fl-name {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 5px;
+}
+.five-ladder .fl-name .small {
+  opacity: 0.75;
 }
 kbd {
   font-family: var(--body);
