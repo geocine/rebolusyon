@@ -964,6 +964,23 @@ button {
 .ts-home .ts-stats {
   margin-top: clamp(10px, 2.4vh, 26px);
 }
+.swap {
+  display: inline-grid;
+  justify-items: center;
+}
+.swap > * {
+  grid-area: 1 / 1;
+}
+.swap > :not(.on) {
+  visibility: hidden;
+}
+.ts-pick-desc .swap,
+.hero-caption .swap {
+  display: grid;
+}
+.ts-modes-actions .ts-learn .swap {
+  justify-items: start;
+}
 .ts-links .ts-link-learn {
   border-color: color-mix(in srgb, var(--gold) 70%, transparent);
   color: var(--gold-2);
@@ -1084,8 +1101,12 @@ button {
   .ts-modes-tabs {
     display: block;
   }
+  /* One card at a time, both in the same slot so the slot keeps the taller card's height. */
+  .ts-mode-cards .mode-card {
+    grid-area: 1 / 1;
+  }
   .ts-mode-cards .mode-card:not(.on) {
-    display: none;
+    visibility: hidden;
   }
   .ts-mode-cards .mc-art {
     display: none;

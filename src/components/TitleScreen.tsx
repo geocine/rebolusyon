@@ -37,6 +37,22 @@ const screen = {
   transition: { duration: 0.25 },
 };
 
+/**
+ * Every variant of a label laid in the same spot, only the current one visible, so the spot is always
+ * as big as its longest variant and switching never nudges the layout.
+ */
+function Swap<K extends string>({ value, options }: { value: K; options: { key: K; text: string }[] }) {
+  return (
+    <span className="swap">
+      {options.map((o) => (
+        <span key={o.key} className={o.key === value ? 'on' : undefined} aria-hidden={o.key !== value}>
+          {o.text}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function ModeSwitch({ mode, onMode }: { mode: RuleMode; onMode: (m: RuleMode) => void }) {
   return (
     <div className="segmented ts-diff ts-mode" role="radiogroup" aria-label="Mode">
@@ -57,17 +73,18 @@ export function TitleScreen({ stats, mode, klasikoBantay, onMode, difficulty, on
     return () => clearInterval(t);
   }, []);
   const order = flipped ? [...HERO].reverse() : HERO;
-  const info = modeOf(mode);
   const done = graduated.includes(mode);
-  const learnLabel = done ? `Replay the ${info.name} walkthrough` : mode === 'klasiko' ? 'New? Learn to play' : 'Learn Rebolusyon';
-  const learn = {
-    title: done ? `Replay the ${info.name} walkthrough` : mode === 'klasiko' ? 'New to Pusoy Dos? Learn it first' : 'Learn Rebolusyon first',
-    sub: done
+  const learnLabel = (m: RuleMode) =>
+    graduated.includes(m) ? `Replay the ${modeOf(m).name} walkthrough` : m === 'klasiko' ? 'New? Learn to play' : 'Learn Rebolusyon';
+  const learnTitle = (m: RuleMode) =>
+    graduated.includes(m) ? `Replay the ${modeOf(m).name} walkthrough` : m === 'klasiko' ? 'New to Pusoy Dos? Learn it first' : 'Learn Rebolusyon first';
+  const learnSub = (m: RuleMode) =>
+    graduated.includes(m)
       ? `${HOST.name}’s Pusoy School · you graduated ✓`
-      : mode === 'klasiko'
+      : m === 'klasiko'
         ? `3 minutes with ${HOST.name}. Four small hands, every rule.`
-        : `2 minutes with ${HOST.name}. You play every twist yourself.`,
-  };
+        : `2 minutes with ${HOST.name}. You play every twist yourself.`;
+  const byMode = (text: (m: RuleMode) => string) => <Swap value={mode} options={MODES.map((m) => ({ key: m.value, text: text(m.value) }))} />;
 
   return (
     <div className={`title-screen ${flipped ? 'rev' : ''}`}>
@@ -116,11 +133,19 @@ export function TitleScreen({ stats, mode, klasikoBantay, onMode, difficulty, on
                 />
               ))}
             </div>
-            <div className="hero-caption">{flipped ? 'In Rebolusyon mode it can flip: the 3♣ is king' : 'Normal order: the Twos rule'}</div>
+            <div className="hero-caption">
+              <Swap
+                value={flipped ? 'flip' : 'normal'}
+                options={[
+                  { key: 'normal', text: 'Normal order: the Twos rule' },
+                  { key: 'flip', text: 'In Rebolusyon mode it can flip: the 3♣ is king' },
+                ]}
+              />
+            </div>
 
             <motion.div className="ts-actions" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
               <button className="btn primary huge" onClick={onPlay}>
-                Play {info.name}
+                {byMode((m) => `Play ${modeOf(m).name}`)}
               </button>
               <div className="ts-picks">
                 <div className="ts-pick">
@@ -138,10 +163,10 @@ export function TitleScreen({ stats, mode, klasikoBantay, onMode, difficulty, on
                   </div>
                 </div>
               </div>
-              <p className="ts-pick-desc">{info.tagline}</p>
+              <p className="ts-pick-desc">{byMode((m) => modeOf(m).tagline)}</p>
               <div className="ts-links">
                 <button className={`btn ghost ${done ? '' : 'ts-link-learn'}`} onClick={() => onLearn(mode)}>
-                  {learnLabel}
+                  {byMode(learnLabel)}
                 </button>
                 <button className="btn ghost" onClick={() => setView('modes')}>
                   Two ways to play
@@ -205,12 +230,12 @@ export function TitleScreen({ stats, mode, klasikoBantay, onMode, difficulty, on
               <button className={`ts-learn ${done ? 'done' : ''}`} onClick={() => onLearn(mode)}>
                 <Avatar persona={HOST} size={34} />
                 <span>
-                  <b>{learn.title}</b>
-                  <small>{learn.sub}</small>
+                  <b>{byMode(learnTitle)}</b>
+                  <small>{byMode(learnSub)}</small>
                 </span>
               </button>
               <button className="btn primary" onClick={onPlay}>
-                Play {info.name}
+                {byMode((m) => `Play ${modeOf(m).name}`)}
               </button>
             </div>
             <p className="ts-modes-foot">
