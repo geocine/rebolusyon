@@ -6,6 +6,8 @@ import { sampleWorld } from './belief';
 import { rolloutMove, simFrom } from './sim';
 import { think } from './search';
 
+const REBOLUSYON = withMode(DEFAULT_SETTINGS, 'rebolusyon');
+
 const C = 0, H = 2, D = 3;
 
 function playToRoundEnd(s: GameState, rng = mulberry32(1)): GameState {
@@ -19,7 +21,7 @@ function playToRoundEnd(s: GameState, rng = mulberry32(1)): GameState {
 
 describe('public facts', () => {
   it('records a hard "could not beat it" fact when a pass skips a winning chance', () => {
-    const base = createMatch({ ...DEFAULT_SETTINGS, bantay: false }, 1);
+    const base = createMatch({ ...REBOLUSYON, bantay: false }, 1);
     let s: GameState = {
       ...base,
       hands: [[mk(5, C), mk(9, C)], [mk(3, D)], [mk(7, C), mk(8, C)], [mk(10, C), mk(11, C)]],
@@ -36,7 +38,7 @@ describe('public facts', () => {
   });
 
   it('records the tribute payer’s ceiling, visible only to the two players involved', () => {
-    let s = playToRoundEnd(createMatch({ ...DEFAULT_SETTINGS }, 42));
+    let s = playToRoundEnd(createMatch({ ...REBOLUSYON }, 42));
     s = nextRound(s);
     const ex = s.exchange!;
     const ceiling = s.facts.find((f) => f.kind === 'maxSingle');
@@ -48,7 +50,7 @@ describe('public facts', () => {
 
 describe('belief sampling', () => {
   it('deals plausible hidden hands of the right sizes', () => {
-    let s = createMatch({ ...DEFAULT_SETTINGS }, 7);
+    let s = createMatch({ ...REBOLUSYON }, 7);
     const rng = mulberry32(2);
     for (let i = 0; i < 12; i++) {
       const d = decide(s, s.turn, PERSONAS[s.turn], 'normal', rng);
@@ -65,7 +67,7 @@ describe('belief sampling', () => {
   });
 
   it('never gives a player a card above their known ceiling', () => {
-    const base = createMatch({ ...DEFAULT_SETTINGS }, 3);
+    const base = createMatch({ ...REBOLUSYON }, 3);
     const s: GameState = {
       ...base,
       facts: [{ kind: 'maxSingle', player: 1, card: mk(6, C), rev: false }],
@@ -79,10 +81,10 @@ describe('belief sampling', () => {
 });
 
 describe('rollout policy', () => {
-  const variants: Partial<Settings>[] = [{}, { strictPass: true }, { revolution: false, bantay: false }, withMode(DEFAULT_SETTINGS, 'klasiko')];
+  const variants: Partial<Settings>[] = [{}, { strictPass: true }, { revolution: false, bantay: false }, withMode(REBOLUSYON, 'klasiko')];
   it('only makes moves the real engine accepts', () => {
     for (let m = 0; m < 40; m++) {
-      let s = createMatch({ ...DEFAULT_SETTINGS, ...variants[m % variants.length], buwis: false }, 500 + m);
+      let s = createMatch({ ...REBOLUSYON, ...variants[m % variants.length], buwis: false }, 500 + m);
       const rng = mulberry32(m);
       for (let i = 0; i < 500 && s.phase === 'playing'; i++) {
         const p = s.turn;
@@ -107,7 +109,7 @@ describe('rollout policy', () => {
 
 describe('search', () => {
   it('always returns a legal move and a win estimate', () => {
-    let s = createMatch({ ...DEFAULT_SETTINGS, buwis: false }, 77);
+    let s = createMatch({ ...REBOLUSYON, buwis: false }, 77);
     const rng = mulberry32(4);
     let estimates = 0;
     for (let i = 0; i < 400 && s.phase === 'playing'; i++) {
@@ -131,7 +133,7 @@ describe('search', () => {
   }, 60_000);
 
   it('plays a Klasiko round out to the last place with legal moves', () => {
-    let s = createMatch({ ...withMode(DEFAULT_SETTINGS, 'klasiko'), rounds: 1 }, 91);
+    let s = createMatch({ ...withMode(REBOLUSYON, 'klasiko'), rounds: 1 }, 91);
     const rng = mulberry32(8);
     for (let i = 0; i < 600 && s.phase === 'playing'; i++) {
       const p = s.turn;
@@ -149,7 +151,7 @@ describe('search', () => {
   }, 60_000);
 
   it('never peeks: reshuffling the hidden cards between opponents changes nothing', () => {
-    let s = createMatch({ ...DEFAULT_SETTINGS, buwis: false }, 11);
+    let s = createMatch({ ...REBOLUSYON, buwis: false }, 11);
     const rng = mulberry32(6);
     let checked = 0;
     for (let i = 0; i < 400 && s.phase === 'playing'; i++) {
@@ -176,7 +178,7 @@ describe('search', () => {
   }, 60_000);
 
   it('takes the win when it can go out', () => {
-    const base = createMatch({ ...DEFAULT_SETTINGS, bantay: false }, 1);
+    const base = createMatch({ ...REBOLUSYON, bantay: false }, 1);
     const s: GameState = {
       ...base,
       hands: [[mk(1, C), mk(2, C)], [mk(12, D), mk(12, H)], [mk(7, C), mk(7, D)], [mk(10, C), mk(11, C)]],

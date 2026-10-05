@@ -63,21 +63,15 @@ export const MODE_RULES: Record<RuleMode, ModeRules> = {
 export const PLACE_POINTS = [3, 1, -1, -3] as const;
 
 export function withMode(s: Settings, mode: RuleMode = s.mode): Settings {
-  const m = mode in MODE_RULES ? mode : 'rebolusyon';
+  const m = mode in MODE_RULES ? mode : 'klasiko';
   const rules = MODE_RULES[m];
   return { ...s, mode: m, ...rules, bantay: rules.bantay || (m === 'klasiko' && s.klasikoBantay) };
 }
 
+/** New players start on Klasiko and ease into Rebolusyon's twists. */
 export const DEFAULT_SETTINGS: Settings = {
-  mode: 'rebolusyon',
-  revolution: true,
-  bantay: true,
-  buwis: true,
-  patong: true,
-  hirit: true,
-  resbak: true,
-  strictPass: false,
-  playOut: false,
+  mode: 'klasiko',
+  ...MODE_RULES.klasiko,
   klasikoBantay: false,
   memoryMode: false,
   difficulty: 'normal',

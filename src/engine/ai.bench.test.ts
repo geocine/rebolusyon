@@ -4,10 +4,12 @@
  */
 import { describe, expect, it } from 'vitest';
 import { RANK_TWO, mulberry32, rankOf } from './cards';
-import { type Difficulty, type GameState, DEFAULT_SETTINGS, createMatch, isLeading, legalPlays, pass, play } from './game';
+import { type Difficulty, type GameState, DEFAULT_SETTINGS, createMatch, isLeading, legalPlays, pass, play, withMode } from './game';
 import { PERSONAS, decide } from './ai';
 import { think } from './search';
 import { playout, rolloutMove, simFrom } from './sim';
+
+const REBOLUSYON = withMode(DEFAULT_SETTINGS, 'rebolusyon');
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -32,7 +34,7 @@ function tournament(hero: Bot, villain: Bot, rounds: number) {
   for (let r = 0; r < rounds; r++) {
     const seat = r % 4;
     const bots = [0, 1, 2, 3].map((p) => (p === seat ? hero : villain));
-    const settings = { ...DEFAULT_SETTINGS, buwis: false, rounds: 1 };
+    const settings = { ...REBOLUSYON, buwis: false, rounds: 1 };
     const g = playRound(createMatch(settings, 1000 + Math.floor(r / 4)), bots);
     const res = g.history[g.history.length - 1];
     if (res.winner === seat) wins++;
@@ -63,7 +65,7 @@ bench('AI benchmark', () => {
   }, 600_000);
 
   it('playout speed', () => {
-    const s = createMatch(DEFAULT_SETTINGS, 5);
+    const s = createMatch(REBOLUSYON, 5);
     const rng = mulberry32(3);
     const t0 = performance.now();
     const n = 2000;
@@ -105,7 +107,7 @@ bench('AI benchmark', () => {
       let twosHeld = 0;
       let twosSaved = 0;
       for (let r = 0; r < ROUNDS; r++) {
-        let g = createMatch({ ...DEFAULT_SETTINGS, buwis: false, rounds: 1 }, 2000 + r);
+        let g = createMatch({ ...REBOLUSYON, buwis: false, rounds: 1 }, 2000 + r);
         for (let i = 0; i < 400 && g.phase === 'playing'; i++) {
           const p = g.turn;
           const options = isLeading(g) ? [] : legalPlays(g, p);

@@ -3,6 +3,7 @@ import { type CSSProperties, useMemo } from 'react';
 import type { Persona } from '../engine/ai';
 import { type GameState, standings } from '../engine/game';
 import { usePhone } from '../hooks';
+import { HOST } from '../tutorial';
 import { Modal } from './Modals';
 import { Avatar } from './Seat';
 import { Confetti } from './Tutorial';
@@ -63,7 +64,17 @@ function Crown() {
   );
 }
 
-export function MatchEndModal({ open, game, personas, onAgain, onTitle }: { open: boolean; game: GameState; personas: Persona[]; onAgain: () => void; onTitle: () => void }) {
+interface MatchEndProps {
+  open: boolean;
+  game: GameState;
+  personas: Persona[];
+  onAgain: () => void;
+  onTitle: () => void;
+  onLearn: () => void;
+  onTryRebolusyon: () => void;
+}
+
+export function MatchEndModal({ open, game, personas, onAgain, onTitle, onLearn, onTryRebolusyon }: MatchEndProps) {
   const phone = usePhone();
   const order = standings(game);
   const youWon = order[0] === 0;
@@ -195,6 +206,23 @@ export function MatchEndModal({ open, game, personas, onAgain, onTitle }: { open
           </motion.div>
         ))}
       </div>
+
+      {game.settings.mode === 'klasiko' && (
+        <div className="me-next">
+          <div>
+            <b>Ready for the twists?</b>
+            <span>
+              <i>Rebolusyon</i> adds table flips, stakes and comebacks. {HOST.name} can walk you through it in 2 minutes.
+            </span>
+          </div>
+          <button className="btn ghost small" onClick={onLearn}>
+            Learn it
+          </button>
+          <button className="btn ghost small" onClick={onTryRebolusyon}>
+            Play Rebolusyon
+          </button>
+        </div>
+      )}
 
       <div className="modal-actions">
         <button className="btn ghost" onClick={onTitle}>

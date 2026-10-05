@@ -362,6 +362,7 @@ export function ModePicker({ value, klasikoBantay, onChange, className = '' }: {
               <span className="mc-head">
                 <b>{m.name}</b>
                 <span className="mc-en">{m.en}</span>
+                <span className="mc-badge">{m.badge}</span>
               </span>
               <span className="mc-tag">{m.tagline}</span>
               <span className="mc-groups">

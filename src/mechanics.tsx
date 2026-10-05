@@ -52,6 +52,8 @@ export interface ModeInfo {
   value: RuleMode;
   name: string;
   en: string;
+  /** Where the mode sits on the way in: Klasiko first, Rebolusyon next. */
+  badge: string;
   tagline: string;
   /** A little fanned hand that sums the mode up; `crown` is the card that rules it. */
   hero: Card[];
@@ -65,12 +67,34 @@ const GUARD: RuleGroup = {
   rules: [{ m: 'bantay', text: 'If the next player has one card left, any single you play must be your strongest.' }],
 };
 
-/** The two ways to play. Each bundles rules that only make sense together. */
+const KLASIKO: ModeInfo = {
+  value: 'klasiko',
+  name: 'Klasiko',
+  en: 'Classic',
+  badge: 'Start here',
+  tagline: 'Straight Pusoy Dos. Every round is played out to the last card, and the Twos always rule.',
+  hero: [makeCard(11, 1), makeCard(12, 3), makeCard(10, 2)],
+  crown: makeCard(12, 3),
+  groups: [
+    {
+      title: 'Round',
+      tone: 'paper',
+      rules: [{ name: 'Play it out', text: `Going out first doesn’t end the round. The rest play on, and whoever is left holding cards is the Talo (loser). ${placePointsText}.` }],
+    },
+    { title: 'Flip', tone: 'clay', rules: [], off: 'None. The order never changes.' },
+    { title: 'Stakes', tone: 'gold', rules: [], off: 'None. Every round is worth the same.' },
+    GUARD,
+  ],
+};
+
+/** The two ways to play, easiest first. Each bundles rules that only make sense together. */
 export const MODES: ModeInfo[] = [
+  KLASIKO,
   {
     value: 'rebolusyon',
     name: 'Rebolusyon',
     en: 'House rules',
+    badge: 'Next step',
     tagline: 'The full fiesta. Flips, stakes, and comebacks to the last hand.',
     hero: [makeCard(12, 1), makeCard(0, 0), makeCard(12, 3)],
     crown: makeCard(0, 0),
@@ -97,24 +121,6 @@ export const MODES: ModeInfo[] = [
           { m: 'hirit', text: 'The final round counts double, so no lead is safe.' },
         ],
       },
-      GUARD,
-    ],
-  },
-  {
-    value: 'klasiko',
-    name: 'Klasiko',
-    en: 'Classic',
-    tagline: 'Straight Pusoy Dos. Every round is played out to the last card, and the Twos always rule.',
-    hero: [makeCard(11, 1), makeCard(12, 3), makeCard(10, 2)],
-    crown: makeCard(12, 3),
-    groups: [
-      {
-        title: 'Round',
-        tone: 'paper',
-        rules: [{ name: 'Play it out', text: `Going out first doesn’t end the round. The rest play on, and whoever is left holding cards is the Talo (loser). ${placePointsText}.` }],
-      },
-      { title: 'Flip', tone: 'clay', rules: [], off: 'None. The order never changes.' },
-      { title: 'Stakes', tone: 'gold', rules: [], off: 'None. Every round is worth the same.' },
       GUARD,
     ],
   },

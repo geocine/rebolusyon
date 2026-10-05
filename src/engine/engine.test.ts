@@ -21,6 +21,8 @@ import {
 } from './game';
 import { PERSONAS, REGULARS, castOf, chooseTributeReturn, decide, drawCast, personaAt } from './ai';
 
+const REBOLUSYON = withMode(DEFAULT_SETTINGS, 'rebolusyon');
+
 // rank indices: 3=0 4=1 5=2 6=3 7=4 8=5 9=6 10=7 J=8 Q=9 K=10 A=11 2=12; suits ♣0 ♠1 ♥2 ♦3
 const C = 0, S = 1, H = 2, D = 3;
 
@@ -72,7 +74,7 @@ describe('ordering', () => {
 });
 
 function stateWith(hands: number[][], patch: Partial<GameState> = {}, settings: Partial<Settings> = {}): GameState {
-  const base = createMatch({ ...DEFAULT_SETTINGS, ...settings }, 1);
+  const base = createMatch({ ...REBOLUSYON, ...settings }, 1);
   const holder = hands.findIndex((h) => h.includes(THREE_OF_CLUBS));
   return {
     ...base,
@@ -200,7 +202,7 @@ describe('who sits at the table', () => {
   });
 
   it('the bots in a match are the ones its cast names', () => {
-    const s = createMatch(DEFAULT_SETTINGS, 1, ['YOU', 'BE', 'AJ', 'TB']);
+    const s = createMatch(REBOLUSYON, 1, ['YOU', 'BE', 'AJ', 'TB']);
     expect(castOf(s).map((p) => p.name)).toEqual(['You', 'Bea', 'Ate Joy', 'Tito Boy']);
     expect(personaAt(nextRoundAfterPlay(s), 2).name).toBe('Ate Joy');
   });
@@ -213,7 +215,7 @@ function nextRoundAfterPlay(s: GameState): GameState {
 }
 
 describe('Klasiko plays every round out', () => {
-  const klasiko = withMode(DEFAULT_SETTINGS, 'klasiko');
+  const klasiko = withMode(REBOLUSYON, 'klasiko');
 
   it('keeps going after the first finish, and the next seat in play leads once the table passes', () => {
     let s = stateWith([[0], [mk(5, C), mk(9, D)], [mk(4, D), mk(6, C)], [mk(7, C), mk(8, D)]], {}, klasiko);
@@ -261,7 +263,7 @@ describe('Klasiko plays every round out', () => {
 
 describe('rule modes', () => {
   it('a mode overrides every rule flag, whatever was stored before', () => {
-    const scrambled = { ...DEFAULT_SETTINGS, revolution: false, bantay: false, buwis: false, patong: false, hirit: true, resbak: true, strictPass: true };
+    const scrambled = { ...REBOLUSYON, revolution: false, bantay: false, buwis: false, patong: false, hirit: true, resbak: true, strictPass: true };
     for (const mode of Object.keys(MODE_RULES) as RuleMode[]) {
       const s = withMode(scrambled, mode);
       expect(s.mode).toBe(mode);
@@ -269,20 +271,21 @@ describe('rule modes', () => {
     }
   });
 
-  it('an unknown stored mode falls back to Rebolusyon', () => {
-    const s = withMode({ ...DEFAULT_SETTINGS, mode: 'bogus' as RuleMode, patong: false });
-    expect(s.mode).toBe('rebolusyon');
-    expect(s.patong).toBe(true);
+  it('an unknown stored mode falls back to Klasiko', () => {
+    const s = withMode({ ...REBOLUSYON, mode: 'bogus' as RuleMode });
+    expect(s.mode).toBe('klasiko');
+    expect(s).toMatchObject(MODE_RULES.klasiko);
   });
 
-  it('the default settings match the Rebolusyon mode', () => {
+  it('new players start on Klasiko, and the defaults match that mode', () => {
+    expect(DEFAULT_SETTINGS.mode).toBe('klasiko');
     expect(withMode(DEFAULT_SETTINGS)).toEqual(DEFAULT_SETTINGS);
   });
 
   it('Bantay is opt-in for Klasiko and always on for Rebolusyon', () => {
-    expect(withMode(DEFAULT_SETTINGS, 'klasiko').bantay).toBe(false);
-    expect(withMode({ ...DEFAULT_SETTINGS, klasikoBantay: true }, 'klasiko').bantay).toBe(true);
-    expect(withMode({ ...DEFAULT_SETTINGS, klasikoBantay: false }, 'rebolusyon').bantay).toBe(true);
+    expect(withMode(REBOLUSYON, 'klasiko').bantay).toBe(false);
+    expect(withMode({ ...REBOLUSYON, klasikoBantay: true }, 'klasiko').bantay).toBe(true);
+    expect(withMode({ ...REBOLUSYON, klasikoBantay: false }, 'rebolusyon').bantay).toBe(true);
   });
 });
 
@@ -313,7 +316,7 @@ describe('comeback stakes', () => {
 
 describe('buwis tribute', () => {
   it('moves the payer’s best card to the winner and back again', () => {
-    let s = createMatch({ ...DEFAULT_SETTINGS }, 42);
+    let s = createMatch({ ...REBOLUSYON }, 42);
     const rng = mulberry32(5);
     let guard = 0;
     while (s.phase === 'playing' && guard++ < 500) {
@@ -348,7 +351,7 @@ describe('AI self-play', () => {
     const wins = [0, 0, 0, 0];
     const difficulties = ['easy', 'normal', 'hard'] as const;
     for (let m = 0; m < 60; m++) {
-      const settings = { ...DEFAULT_SETTINGS, ...variants[m % variants.length], rounds: 4 };
+      const settings = { ...REBOLUSYON, ...variants[m % variants.length], rounds: 4 };
       let s = createMatch(settings, 1000 + m);
       const rng = mulberry32(m);
       let guard = 0;
@@ -381,7 +384,7 @@ describe('AI self-play', () => {
 
   it('the opening AI move always includes 3♣', () => {
     for (let seed = 0; seed < 30; seed++) {
-      const s = createMatch({ ...DEFAULT_SETTINGS }, seed);
+      const s = createMatch({ ...REBOLUSYON }, seed);
       const d = decide(s, s.turn, PERSONAS[s.turn], 'hard', mulberry32(seed));
       expect(d.combo?.cards).toContain(THREE_OF_CLUBS);
       expect(legalPlays(s, s.turn).every((c) => c.cards.includes(THREE_OF_CLUBS))).toBe(true);

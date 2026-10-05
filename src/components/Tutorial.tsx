@@ -323,7 +323,7 @@ export function Diploma({ onPlay, onTitle }: { onPlay: () => void; onTitle: () =
               Back to title
             </button>
             <button className="btn primary" onClick={onPlay} autoFocus>
-              Play a real match
+              Play Rebolusyon
             </button>
           </div>
         </div>

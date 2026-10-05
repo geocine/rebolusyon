@@ -195,6 +195,11 @@ export default function App() {
     setNextCast(drawCast(Math.random, nextCast));
   };
   const startMatch = () => startMatchWith(settings);
+  const playRebolusyon = () => {
+    const next = withMode(settings, 'rebolusyon');
+    updateSettings(next);
+    startMatchWith(next);
+  };
 
   /** A different mode or house rule can't apply to a match already being played, so it starts a fresh one. */
   const changeSettings = (next: Settings) => {
@@ -894,7 +899,7 @@ export default function App() {
           />
         )}
         {tut?.status === 'fail' && lastResult && <LessonFail key="fail" winner={lastResult.winner} onRetry={() => startLesson(tut.lesson, 'play')} onExit={exitTutorial} />}
-        {tut?.status === 'grad' && <Diploma key="grad" onPlay={startMatch} onTitle={exitTutorial} />}
+        {tut?.status === 'grad' && <Diploma key="grad" onPlay={playRebolusyon} onTitle={exitTutorial} />}
       </AnimatePresence>
       <MatchEndModal
         open={matchOpen}
@@ -905,6 +910,8 @@ export default function App() {
           setMatchOpen(false);
           setGame(null);
         }}
+        onLearn={() => startLesson(0)}
+        onTryRebolusyon={playRebolusyon}
       />
       <RulesModal open={showRules} onClose={() => setShowRules(false)} />
       <SettingsModal open={showSettings} onClose={() => setShowSettings(false)} settings={settings} onChange={changeSettings} inMatch={!tut} />
