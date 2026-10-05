@@ -964,6 +964,10 @@ button {
 .ts-home .ts-stats {
   margin-top: clamp(10px, 2.4vh, 26px);
 }
+.ts-links .ts-link-learn {
+  border-color: color-mix(in srgb, var(--gold) 70%, transparent);
+  color: var(--gold-2);
+}
 
 /* Two ways to play */
 .ts-inner.ts-modes-view {

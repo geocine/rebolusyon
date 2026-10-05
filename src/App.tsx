@@ -6,6 +6,7 @@ import { type Combo, classify, describeCombo, isPowerRank } from './engine/combo
 import {
   type GameEvent,
   type GameState,
+  type RuleMode,
   type Settings,
   HUMAN,
   bountySeat,
@@ -43,10 +44,11 @@ import { useFullscreen, usePhone } from './hooks';
 import { askAI } from './aiClient';
 import { withFlight } from './flight';
 import type { Thought } from './engine/search';
-import { LESSONS, loadTutorial, saveTutorial, textOf, tutorBotMove, type TutorialProgress } from './tutorial';
+import { COURSES, loadTutorial, saveTutorial, textOf, tutorBotMove, type TutorialProgress } from './tutorial';
 import { Coach, Diploma, LessonClear, LessonFail, LessonIntro } from './components/Tutorial';
 
 interface TutorialState {
+  course: RuleMode;
   lesson: number;
   step: number;
   status: 'intro' | 'play' | 'clear' | 'fail' | 'grad';
@@ -196,11 +198,12 @@ export default function App() {
     setNextCast(drawCast(Math.random, nextCast));
   };
   const startMatch = () => startMatchWith(settings);
-  const playRebolusyon = () => {
-    const next = withMode(settings, 'rebolusyon');
+  const playMode = (mode: RuleMode) => {
+    const next = withMode(settings, mode);
     updateSettings(next);
     startMatchWith(next);
   };
+  const playRebolusyon = () => playMode('rebolusyon');
 
   /** A different mode or house rule can't apply to a match already being played, so it starts a fresh one. */
   const changeSettings = (next: Settings) => {
@@ -215,12 +218,13 @@ export default function App() {
     startMatchWith(next);
   };
 
-  const startLesson = (lesson: number, status: TutorialState['status'] = 'intro') => {
+  const startLesson = (course: RuleMode, lesson: number, status: TutorialState['status'] = 'intro') => {
     resetTable();
+    setMatchOpen(false);
     setTrackerOpen(false);
     scriptPos.current = [0, 0, 0, 0];
-    setGame(LESSONS[lesson].setup(settings));
-    setTut({ lesson, step: 0, status, rejected: null });
+    setGame(COURSES[course][lesson].setup(settings));
+    setTut({ course, lesson, step: 0, status, rejected: null });
   };
 
   const exitTutorial = () => {
@@ -362,7 +366,7 @@ export default function App() {
             sfx.lose();
             say(e.winner, 'win');
           }
-          const lesson = tutRef.current && LESSONS[tutRef.current.lesson];
+          const lesson = tutRef.current && COURSES[tutRef.current.course][tutRef.current.lesson];
           if (lesson) {
             if (lesson.bill && won) later(() => setResultOpen(true), 1300);
             break;
@@ -407,7 +411,7 @@ export default function App() {
 
   /* ------------------------------ AI driver ------------------------------ */
 
-  const tutLesson = tut ? LESSONS[tut.lesson] : null;
+  const tutLesson = tut ? COURSES[tut.course][tut.lesson] : null;
   const paused = showRules || showSettings || (!!tut && tut.status !== 'play');
 
   useEffect(() => {
@@ -457,7 +461,7 @@ export default function App() {
 
   useEffect(() => {
     if (!game || !tut || tut.status !== 'play') return;
-    const lesson = LESSONS[tut.lesson];
+    const lesson = COURSES[tut.course][tut.lesson];
     const last = game.history[game.history.length - 1];
     if (last && last.winner !== HUMAN) {
       setTut({ ...tut, status: 'fail' });
@@ -486,7 +490,7 @@ export default function App() {
     }
   }, [game, tut]);
 
-  const tutStep = tut?.status === 'play' ? (LESSONS[tut.lesson].steps[tut.step] ?? null) : null;
+  const tutStep = tut?.status === 'play' ? (COURSES[tut.course][tut.lesson].steps[tut.step] ?? null) : null;
 
   useEffect(() => {
     const g = gameRef.current;
@@ -498,11 +502,11 @@ export default function App() {
 
   const nextStep = () => setTut((t) => t && { ...t, step: t.step + 1, rejected: null });
 
-  const graduate = () => {
+  const graduate = (course: RuleMode) => {
     setTut((t) => t && { ...t, status: 'grad' });
     sfx.win();
     setProgress((p) => {
-      const next = { ...p, graduated: true };
+      const next = { ...p, graduated: p.graduated.includes(course) ? p.graduated : [...p.graduated, course] };
       saveTutorial(next);
       return next;
     });
@@ -691,7 +695,7 @@ export default function App() {
           difficulty={settings.difficulty}
           onDifficulty={(d) => updateSettings({ ...settings, difficulty: d })}
           onPlay={startMatch}
-          onLearn={() => startLesson(0)}
+          onLearn={(course) => startLesson(course, 0)}
           graduated={progress.graduated}
           onRules={() => setShowRules(true)}
           onSettings={() => setShowSettings(true)}
@@ -819,9 +823,10 @@ export default function App() {
           <AnimatePresence>
             {tut && tutStep && hostText && !tutStep.inModal && (
               <Coach
-                key={tut.lesson}
+                key={`${tut.course}-${tut.lesson}`}
                 lesson={tut.lesson}
                 step={tut.step}
+                steps={COURSES[tut.course][tut.lesson].steps.length}
                 text={hostText}
                 cta={tutStep.until ? null : (tutStep.cta ?? 'Next')}
                 canShow={myTurn && pointed.length > 0 && pointed.some((c) => !selected.has(c))}
@@ -830,7 +835,7 @@ export default function App() {
                   sfx.select();
                   setSelected(new Set(pointed));
                 }}
-                onRetry={() => startLesson(tut.lesson, 'play')}
+                onRetry={() => startLesson(tut.course, tut.lesson, 'play')}
                 onExit={exitTutorial}
               />
             )}
@@ -906,18 +911,31 @@ export default function App() {
       <RoundEndModal open={resultOpen} result={lastResult} game={g} personas={personas} onNext={onNext} host={hostInModal} nextLabel={tut ? tutStep?.cta : undefined} />
       <AnimatePresence>
         {tut?.status === 'intro' && (
-          <LessonIntro key={`intro-${tut.lesson}`} index={tut.lesson} cleared={progress.cleared} onStart={() => setTut((t) => t && { ...t, status: 'play' })} onPick={(i) => startLesson(i)} onExit={exitTutorial} />
+          <LessonIntro
+            key={`intro-${tut.course}-${tut.lesson}`}
+            course={tut.course}
+            index={tut.lesson}
+            cleared={progress.cleared}
+            graduated={progress.graduated}
+            onStart={() => setTut((t) => t && { ...t, status: 'play' })}
+            onPick={(i) => startLesson(tut.course, i)}
+            onCourse={(course) => startLesson(course, 0)}
+            onExit={exitTutorial}
+          />
         )}
         {tut?.status === 'clear' && (
           <LessonClear
-            key={`clear-${tut.lesson}`}
+            key={`clear-${tut.course}-${tut.lesson}`}
+            course={tut.course}
             index={tut.lesson}
-            onReplay={() => startLesson(tut.lesson, 'play')}
-            onNext={() => (tut.lesson + 1 < LESSONS.length ? startLesson(tut.lesson + 1) : graduate())}
+            onReplay={() => startLesson(tut.course, tut.lesson, 'play')}
+            onNext={() => (tut.lesson + 1 < COURSES[tut.course].length ? startLesson(tut.course, tut.lesson + 1) : graduate(tut.course))}
           />
         )}
-        {tut?.status === 'fail' && lastResult && <LessonFail key="fail" winner={lastResult.winner} onRetry={() => startLesson(tut.lesson, 'play')} onExit={exitTutorial} />}
-        {tut?.status === 'grad' && <Diploma key="grad" onPlay={playRebolusyon} onTitle={exitTutorial} />}
+        {tut?.status === 'fail' && lastResult && <LessonFail key="fail" winner={lastResult.winner} onRetry={() => startLesson(tut.course, tut.lesson, 'play')} onExit={exitTutorial} />}
+        {tut?.status === 'grad' && (
+          <Diploma key={`grad-${tut.course}`} course={tut.course} onPlay={() => playMode(tut.course)} onNextCourse={() => startLesson('rebolusyon', 0)} onTitle={exitTutorial} />
+        )}
       </AnimatePresence>
       <MatchEndModal
         open={matchOpen}
@@ -928,7 +946,7 @@ export default function App() {
           setMatchOpen(false);
           setGame(null);
         }}
-        onLearn={() => startLesson(0)}
+        onLearn={() => startLesson('rebolusyon', 0)}
         onTryRebolusyon={playRebolusyon}
       />
       <RulesModal open={showRules} onClose={() => setShowRules(false)} />

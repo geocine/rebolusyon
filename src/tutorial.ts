@@ -1,5 +1,5 @@
 import { type Card, RANKS, SUITS, cardLabel, makeCard, mulberry32, rankOf } from './engine/cards';
-import { type GameState, type Settings, HUMAN, canPass, createMatch, pass, play, validatePlay } from './engine/game';
+import { type GameState, type RuleMode, type Settings, HUMAN, MODE_RULES, canPass, createMatch, pass, play, validatePlay } from './engine/game';
 import { PERSONAS, decide } from './engine/ai';
 import type { Mechanic } from './mechanics';
 
@@ -37,7 +37,7 @@ export interface Step {
 }
 
 /** What the player is expected to do, used by tests to prove every lesson can be cleared. */
-export type SolutionMove = { play: Card[] } | { try: Card[] } | { give: Card } | { tap: true };
+export type SolutionMove = { play: Card[] } | { try: Card[] } | { give: Card } | { pass: true } | { tap: true };
 
 export type BotMove = Card[] | 'pass';
 
@@ -64,11 +64,14 @@ const has = (g: GameState, card: Card) => g.played.includes(card);
 const over = (g: GameState) => g.phase === 'roundEnd' || g.phase === 'matchEnd';
 const myTurnToLead = (g: GameState) => g.phase === 'playing' && g.turn === HUMAN && (!g.trick.top || g.trick.done);
 
-function table(base: Settings, lesson: number, hands: Card[][], extra: Partial<GameState> = {}, rules: Partial<Settings> = {}): GameState {
-  const m = createMatch(
-    { ...base, revolution: true, bantay: true, buwis: false, patong: false, hirit: false, resbak: false, strictPass: false, playOut: false, memoryMode: false, rounds: LESSONS.length, ...rules },
-    1,
-  );
+/** Each course's table, with one twist switched on at a time. Lessons end when you go out unless they turn `playOut` on. */
+const COURSE_RULES: Record<RuleMode, Partial<Settings>> = {
+  klasiko: { mode: 'klasiko', ...MODE_RULES.klasiko, playOut: false },
+  rebolusyon: { mode: 'rebolusyon', ...MODE_RULES.rebolusyon, buwis: false, patong: false, hirit: false, resbak: false },
+};
+
+function table(base: Settings, course: RuleMode, lesson: number, hands: Card[][], extra: Partial<GameState> = {}, rules: Partial<Settings> = {}): GameState {
+  const m = createMatch({ ...base, ...COURSE_RULES[course], memoryMode: false, rounds: COURSES[course].length, ...rules }, 1);
   const turn = extra.turn ?? HUMAN;
   return {
     ...m,
@@ -91,15 +94,16 @@ function table(base: Settings, lesson: number, hands: Card[][], extra: Partial<G
 
 const PASSES: BotMove[] = ['pass', 'pass', 'pass', 'pass'];
 
-export const LESSONS: Lesson[] = [
+const KLASIKO_LESSONS: Lesson[] = [
   {
     id: 'basics',
-    short: 'Basics',
+    short: 'Singles',
     title: 'Pusoy Dos in 60 seconds',
     tagline: 'Never played? Start here. Four cards, one trick, one win.',
     setup: (base) =>
       table(
         base,
+        'klasiko',
         0,
         [cs('3♣ 8♠ 8♥ A♦'), cs('6♣ 10♠ J♥ Q♣ 4♦ 5♠'), cs('K♣ 7♦ 9♥ 4♥ 5♦ Q♥'), cs('5♣ 7♣ 9♣ J♣ 10♦ 6♥')],
         { firstPlay: true },
@@ -131,9 +135,111 @@ export const LESSONS: Lesson[] = [
         until: over,
       },
     ],
-    clear: 'That’s Pusoy Dos. Now for the twists that make this table chaotic.',
+    clear: 'That’s the heart of Pusoy Dos: beat what’s on top, or pass. Next, cards that travel in pairs and threes.',
     solution: [{ play: [c('3♣')] }, { play: [c('A♦')] }, { play: cs('8♠ 8♥') }],
   },
+  {
+    id: 'pairs',
+    short: 'Pairs',
+    title: 'Pairs, triples and passing',
+    tagline: 'Match the count, beat the cards, and know when to sit one out.',
+    setup: (base) =>
+      table(base, 'klasiko', 1, [cs('4♦ 9♣ 9♥ K♠ K♥ K♦'), cs('J♣ J♠ 5♠ 7♦ 10♥ Q♣'), cs('6♣ 6♥ 8♠ 10♣ A♠ 2♣'), cs('J♥ J♦ 3♥ 7♣ 8♥ Q♦ A♥')]),
+    bots: { 1: [cs('J♣ J♠'), 'pass', 'pass'], 2: PASSES, 3: [cs('J♥ J♦'), [c('3♥')], 'pass'] },
+    steps: [
+      {
+        say: 'A **pair** is two cards of the same rank. You lead, so play anything you like. Start with your **pair of 9s**.',
+        point: cs('9♣ 9♥'),
+        until: (g) => g.turn === HUMAN && has(g, c('J♦')),
+      },
+      {
+        say: 'Lola beat you with Jacks, then Mika beat *her* with Jacks. Same rank, so the pair with the **higher suit** wins, and Mika has the J♦. You *could* split your Kings to beat it, but three Kings together are worth more. Tap **Pass**.',
+        shout: [2, 'Pass. Jacks are too rich for me.'],
+        until: (g) => g.trick.passed[HUMAN],
+      },
+      {
+        say: 'Passing is fine: you just sit out until the table clears. When everyone passes, the last player to play, Mika, **leads anything**. Watch…',
+        until: (g) => g.turn === HUMAN && has(g, c('3♥')),
+      },
+      {
+        say: 'A single **3♥**. Tiny. Beat it with your **4♦**.',
+        point: [c('4♦')],
+        until: (g) => (has(g, c('4♦')) && myTurnToLead(g)) || over(g),
+      },
+      {
+        say: 'Nobody beat it, so the table is yours. Three of a kind is a **Triple**, and only a higher triple can answer it. Lead your **Kings** and you’re out!',
+        point: cs('K♠ K♥ K♦'),
+        until: over,
+      },
+    ],
+    clear: 'Same number of cards, higher cards. Ties go to the higher suit. And passing is a move, not a defeat.',
+    solution: [{ play: cs('9♣ 9♥') }, { pass: true }, { play: [c('4♦')] }, { play: cs('K♠ K♥ K♦') }],
+  },
+  {
+    id: 'fives',
+    short: 'Five cards',
+    title: 'Five-card hands',
+    tagline: 'Straights, flushes and full houses, and the ladder they climb.',
+    setup: (base) =>
+      table(base, 'klasiko', 2, [
+        cs('4♣ 5♦ 6♠ 7♥ 8♣ 3♥ 3♠ 3♦ 9♥ 9♦'),
+        cs('3♣ 6♣ 10♣ J♣ K♣ 2♥ 5♠'),
+        cs('A♣ A♠ 7♦ 8♦ Q♥ 2♠'),
+        cs('10♦ J♦ Q♠ K♥ 4♥ 2♦'),
+      ]),
+    bots: { 1: [cs('3♣ 6♣ 10♣ J♣ K♣'), ...PASSES], 2: PASSES, 3: PASSES },
+    steps: [
+      {
+        say: 'Five cards can go down together as one **hand**. Weakest to strongest: **Straight** (five in a row) < **Flush** (five of one suit) < **Full House** (a triple plus a pair) < **Four of a Kind** (plus any card) < **Straight Flush**.',
+        cta: 'Got it, Tita',
+      },
+      {
+        say: 'You have a **Straight**: 4, 5, 6, 7, 8. Suits don’t matter in a straight, and Twos can’t be in one. Lead it.',
+        point: cs('4♣ 5♦ 6♠ 7♥ 8♣'),
+        until: (g) => g.turn === HUMAN && has(g, c('K♣')),
+      },
+      {
+        say: 'Lola answered with a **Flush**, all clubs. Any flush beats any straight. But a **Full House** beats any flush, even one made of 3s. Play your three 3s and two 9s.',
+        point: cs('3♥ 3♠ 3♦ 9♥ 9♦'),
+        shout: [1, 'All clubs, apo. Beat that!'],
+        until: over,
+      },
+    ],
+    clear: 'Five-card hands are answered only by five-card hands, and the type matters more than the ranks.',
+    solution: [{ tap: true }, { play: cs('4♣ 5♦ 6♠ 7♥ 8♣') }, { play: cs('3♥ 3♠ 3♦ 9♥ 9♦') }],
+  },
+  {
+    id: 'playout',
+    short: 'Scoring',
+    title: 'Play it out',
+    tagline: 'Going out first is only the start. Stay out of last place.',
+    setup: (base) => table(base, 'klasiko', 3, [cs('9♣ 9♦'), cs('4♦'), cs('K♠ 5♣'), cs('2♣ 6♥ 7♠')], {}, { playOut: true }),
+    bots: { 1: ['pass', [c('4♦')]], 2: ['pass', [c('K♠')], 'pass', 'pass'], 3: ['pass', [c('2♣')], [c('6♥')], [c('7♠')]] },
+    bill: true,
+    steps: [
+      {
+        say: 'In Klasiko, going out first doesn’t end the round. Everyone else **plays on** for 2nd, 3rd and last place. Last is the **Talo** (loser). You’re one play away: lead your **pair of 9s**.',
+        point: cs('9♣ 9♦'),
+        until: (g) => g.hands[HUMAN].length === 0,
+      },
+      {
+        say: '**1st place!** Nobody could answer a pair. Now sit back and watch them fight to stay out of last.',
+        shout: [2, 'Hoy, wait for me!'],
+        until: over,
+      },
+      {
+        say: 'Places score: **1st +3**, **2nd +1**, **3rd −1**, **Talo −3**. A match is a few rounds, and the best total takes it. Poor Kuya got stuck with his 5♣.',
+        shout: [2, 'Talo na naman. Again!'],
+        inModal: true,
+        cta: 'Got it',
+      },
+    ],
+    clear: 'You know Pusoy Dos now. Shed your cards, keep your Twos for when you need control, and never be the Talo.',
+    solution: [{ play: cs('9♣ 9♦') }, { tap: true }],
+  },
+];
+
+const REBOLUSYON_LESSONS: Lesson[] = [
   {
     id: 'rebolusyon',
     short: 'Rebolusyon',
@@ -141,7 +247,7 @@ export const LESSONS: Lesson[] = [
     term: 'revolution',
     tagline: 'Turn the worst hand at the table into the best one.',
     setup: (base) =>
-      table(base, 1, [
+      table(base, 'rebolusyon', 0, [
         cs('5♣ 5♠ 5♥ 5♦ 9♣ 4♥ 3♦'),
         cs('A♣ A♠ K♦ J♣ 10♥ 8♣'),
         cs('2♣ 2♠ 2♥ A♦ K♥ Q♠'),
@@ -180,7 +286,7 @@ export const LESSONS: Lesson[] = [
     title: 'Guard the last card',
     term: 'bantay',
     tagline: 'Someone is down to one card. Don’t feed them.',
-    setup: (base) => table(base, 2, [cs('4♣ 9♠ 9♥ 2♦'), cs('A♠'), cs('6♣ 7♥ 8♦ J♠ Q♥'), cs('5♦ 10♣ K♠ J♦ 6♦')]),
+    setup: (base) => table(base, 'rebolusyon', 1, [cs('4♣ 9♠ 9♥ 2♦'), cs('A♠'), cs('6♣ 7♥ 8♦ J♠ Q♥'), cs('5♦ 10♣ K♠ J♦ 6♦')]),
     bots: { 1: PASSES, 2: PASSES, 3: PASSES },
     steps: [
       {
@@ -218,7 +324,8 @@ export const LESSONS: Lesson[] = [
     setup: (base) =>
       table(
         base,
-        3,
+        'rebolusyon',
+        2,
         [cs('3♦ 4♣ 7♠ 9♥ J♣ K♦ 2♠'), cs('3♣ 6♠ 9♦ J♥ K♠ A♣'), cs('5♣ 6♥ 8♠ 10♦ Q♣ A♥'), cs('4♥ 7♦ 8♣ 10♠ Q♥ K♥')],
         { phase: 'exchange', exchange: { from: 2, to: HUMAN, given: c('2♠'), returned: null } },
         { buwis: true },
@@ -256,7 +363,7 @@ export const LESSONS: Lesson[] = [
     title: 'Make them pay',
     tagline: 'Losers pay per card. Multipliers stack. Finish with a bang.',
     setup: (base) =>
-      table(base, 4, [
+      table(base, 'rebolusyon', 3, [
         cs('7♣ 7♠ 7♥ 7♦ 9♣ J♦'),
         cs('2♥ 3♣ 3♠ 4♦ 5♥ 6♣ 8♥ 10♣ Q♦ K♣'),
         cs('2♣ 2♠ A♥ K♥ 4♣ 6♠ 8♦'),
@@ -292,6 +399,9 @@ export const LESSONS: Lesson[] = [
   },
 ];
 
+/** Klasiko teaches Pusoy Dos from zero; Rebolusyon assumes it and teaches the twists. */
+export const COURSES: Record<RuleMode, Lesson[]> = { klasiko: KLASIKO_LESSONS, rebolusyon: REBOLUSYON_LESSONS };
+
 export const textOf = (t: Text, g: GameState) => (typeof t === 'function' ? t(g) : t);
 
 /** A bot's turn in a lesson: its next scripted move, or a sensible one if the script no longer fits. */
@@ -315,7 +425,8 @@ export const STAMPS = [
 
 export interface TutorialProgress {
   cleared: string[];
-  graduated: boolean;
+  /** Courses finished. */
+  graduated: RuleMode[];
 }
 
 const KEY = 'rebolusyon.tutorial.v1';
@@ -323,9 +434,12 @@ const KEY = 'rebolusyon.tutorial.v1';
 export function loadTutorial(): TutorialProgress {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? { cleared: [], graduated: false, ...JSON.parse(raw) } : { cleared: [], graduated: false };
+    const p = raw ? JSON.parse(raw) : {};
+    // Before there were two courses, `graduated` was a flag for the only one, Rebolusyon.
+    const graduated: RuleMode[] = Array.isArray(p.graduated) ? p.graduated : p.graduated === true ? ['rebolusyon'] : [];
+    return { cleared: Array.isArray(p.cleared) ? p.cleared : [], graduated };
   } catch {
-    return { cleared: [], graduated: false };
+    return { cleared: [], graduated: [] };
   }
 }
 

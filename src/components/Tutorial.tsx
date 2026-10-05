@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { Fragment, type ReactNode, useEffect, useMemo, useState } from 'react';
 import { PERSONAS } from '../engine/ai';
-import { MECHANICS, Term } from '../mechanics';
-import { HOST, LESSONS, STAMPS, type Lesson } from '../tutorial';
+import type { RuleMode } from '../engine/game';
+import { MECHANICS, Term, modeOf } from '../mechanics';
+import { COURSES, HOST, STAMPS, type Lesson } from '../tutorial';
 import { Avatar } from './Seat';
 import { Icon } from './Icons';
 
@@ -45,6 +46,7 @@ export function HostNote({ text }: { text: string }) {
 interface CoachProps {
   lesson: number;
   step: number;
+  steps: number;
   text: string;
   /** Present when the step waits for a tap. */
   cta: string | null;
@@ -55,8 +57,7 @@ interface CoachProps {
   onExit: () => void;
 }
 
-export function Coach({ lesson, step, text, cta, canShow, onNext, onShow, onRetry, onExit }: CoachProps) {
-  const steps = LESSONS[lesson].steps.length;
+export function Coach({ lesson, step, steps, text, cta, canShow, onNext, onShow, onRetry, onExit }: CoachProps) {
   const talking = useTalking(text);
   return (
     <motion.aside className="coach" initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 30, opacity: 0 }} transition={{ type: 'spring', stiffness: 320, damping: 26 }}>
@@ -143,10 +144,10 @@ export function Confetti({ pieces = 70 }: { pieces?: number }) {
   );
 }
 
-function LessonMap({ current, cleared, onPick }: { current: number; cleared: string[]; onPick: (i: number) => void }) {
+function LessonMap({ course, current, cleared, onPick }: { course: RuleMode; current: number; cleared: string[]; onPick: (i: number) => void }) {
   return (
     <div className="tut-map">
-      {LESSONS.map((l, i) => (
+      {COURSES[course].map((l, i) => (
         <button key={l.id} className={`tut-stop ${i === current ? 'now' : ''} ${cleared.includes(l.id) ? 'done' : ''}`} onClick={() => onPick(i)} title={l.title}>
           <span className="tut-stop-dot">{cleared.includes(l.id) ? '✓' : i + 1}</span>
           <span className="tut-stop-label">{l.short}</span>
@@ -171,8 +172,20 @@ const pop = {
   transition: { type: 'spring' as const, stiffness: 260, damping: 18 },
 };
 
-export function LessonIntro({ index, cleared, onStart, onPick, onExit }: { index: number; cleared: string[]; onStart: () => void; onPick: (i: number) => void; onExit: () => void }) {
-  const l: Lesson = LESSONS[index];
+interface LessonIntroProps {
+  course: RuleMode;
+  index: number;
+  cleared: string[];
+  graduated: RuleMode[];
+  onStart: () => void;
+  onPick: (i: number) => void;
+  onCourse: (course: RuleMode) => void;
+  onExit: () => void;
+}
+
+export function LessonIntro({ course, index, cleared, graduated, onStart, onPick, onCourse, onExit }: LessonIntroProps) {
+  const lessons = COURSES[course];
+  const l: Lesson = lessons[index];
   return (
     <Scrim>
       <motion.div className="tut-card" {...pop}>
@@ -180,7 +193,7 @@ export function LessonIntro({ index, cleared, onStart, onPick, onExit }: { index
           ×
         </button>
         <div className="tut-eyebrow">
-          {HOST.name}’s Pusoy School · Lesson {index + 1} of {LESSONS.length}
+          Pusoy School · {modeOf(course).name} · Lesson {index + 1} of {lessons.length}
         </div>
         <h2 className="tut-title">{l.title}</h2>
         {l.term && (
@@ -190,11 +203,16 @@ export function LessonIntro({ index, cleared, onStart, onPick, onExit }: { index
           </div>
         )}
         <p className="tut-tagline">{l.tagline}</p>
-        <LessonMap current={index} cleared={cleared} onPick={onPick} />
+        <LessonMap course={course} current={index} cleared={cleared} onPick={onPick} />
         <div className="tut-actions">
-          {index === 0 && (
-            <button className="btn ghost" onClick={() => onPick(1)}>
-              I know Pusoy Dos. Skip to the twists
+          {index === 0 && course === 'klasiko' && (
+            <button className="btn ghost" onClick={() => onCourse('rebolusyon')}>
+              I know Pusoy Dos. Teach me the twists
+            </button>
+          )}
+          {index === 0 && course === 'rebolusyon' && !graduated.includes('klasiko') && (
+            <button className="btn ghost" onClick={() => onCourse('klasiko')}>
+              New to Pusoy Dos? Learn Klasiko first
             </button>
           )}
           <button className="btn primary" onClick={onStart} autoFocus>
@@ -206,10 +224,10 @@ export function LessonIntro({ index, cleared, onStart, onPick, onExit }: { index
   );
 }
 
-export function LessonClear({ index, onReplay, onNext }: { index: number; onReplay: () => void; onNext: () => void }) {
-  const l = LESSONS[index];
+export function LessonClear({ course, index, onReplay, onNext }: { course: RuleMode; index: number; onReplay: () => void; onNext: () => void }) {
+  const l = COURSES[course][index];
   const stamp = STAMPS[index % STAMPS.length];
-  const last = index === LESSONS.length - 1;
+  const last = index === COURSES[course].length - 1;
   return (
     <Scrim className="celebrate">
       <Confetti />
@@ -268,13 +286,39 @@ export function LessonFail({ winner, onRetry, onExit }: { winner: number; onRetr
   );
 }
 
-const SIGNATURES = [
-  { seat: 1, quote: 'Very good, apo. Now go easy on Lola.' },
-  { seat: 2, quote: 'Rematch, pare. Right now.' },
-  { seat: 3, quote: 'Noted. I’ll be counting your Twos.' },
-];
+const DIPLOMAS: Record<RuleMode, { title: string; en: string; learned: ReactNode[]; signatures: { seat: number; quote: string }[] }> = {
+  klasiko: {
+    title: 'Manlalaro',
+    en: 'Card player',
+    learned: ['Singles', 'Pairs & Triples', 'Five-card hands', 'Places & Talo'],
+    signatures: [
+      { seat: 1, quote: 'Welcome to the table, apo. Sit, sit.' },
+      { seat: 2, quote: 'Now you can lose to me properly, pare.' },
+      { seat: 3, quote: 'I’ll be watching your Twos.' },
+    ],
+  },
+  rebolusyon: {
+    title: 'Rebolusyonaryo',
+    en: 'Revolutionary',
+    learned: [...(['revolution', 'bantay', 'buwis'] as const).map((m) => <Term key={m} m={m} />), 'Grand Finish'],
+    signatures: [
+      { seat: 1, quote: 'Very good, apo. Now go easy on Lola.' },
+      { seat: 2, quote: 'Rematch, pare. Right now.' },
+      { seat: 3, quote: 'Noted. I’ll be counting your Twos.' },
+    ],
+  },
+};
 
-export function Diploma({ onPlay, onTitle }: { onPlay: () => void; onTitle: () => void }) {
+interface DiplomaProps {
+  course: RuleMode;
+  onPlay: () => void;
+  /** Klasiko graduates go on to the Rebolusyon course. */
+  onNextCourse: () => void;
+  onTitle: () => void;
+}
+
+export function Diploma({ course, onPlay, onNextCourse, onTitle }: DiplomaProps) {
+  const d = DIPLOMAS[course];
   return (
     <Scrim className="celebrate">
       <Confetti pieces={110} />
@@ -289,19 +333,18 @@ export function Diploma({ onPlay, onTitle }: { onPlay: () => void; onTitle: () =
           <div className="dp-name">You</div>
           <div className="dp-certifies">are now a certified</div>
           <div className="dp-title">
-            Rebolusyonaryo
-            <small>(Revolutionary)</small>
+            {d.title}
+            <small>({d.en})</small>
           </div>
           <div className="dp-learned">
-            {(['revolution', 'bantay', 'buwis'] as const).map((m) => (
-              <span key={m} className="dp-chip">
-                <Term m={m} />
+            {d.learned.map((x, i) => (
+              <span key={i} className="dp-chip">
+                {x}
               </span>
             ))}
-            <span className="dp-chip">Grand Finish</span>
           </div>
           <div className="dp-sigs">
-            {SIGNATURES.map(({ seat, quote }) => (
+            {d.signatures.map(({ seat, quote }) => (
               <div key={seat} className="dp-sig">
                 <Avatar persona={PERSONAS[seat]} size={34} mood="happy" />
                 <div>
@@ -313,17 +356,29 @@ export function Diploma({ onPlay, onTitle }: { onPlay: () => void; onTitle: () =
               </div>
             ))}
           </div>
-          <p className="dp-extra">
-            Real matches in <b>Rebolusyon</b> mode raise the stakes: the leader carries a <Term m="patong" /> and the final round
-            counts double, so no lead is safe. Want it harder? Turn on <Term m="memory" /> in Settings: no tracker, count the cards
-            yourself.
-          </p>
+          {course === 'klasiko' ? (
+            <p className="dp-extra">
+              Play a few <b>Klasiko</b> matches first. When it clicks, <b>Rebolusyon</b> mode flips the order, taxes the losers and
+              rewards comebacks, and {HOST.name} teaches it in four short lessons.
+            </p>
+          ) : (
+            <p className="dp-extra">
+              Real matches in <b>Rebolusyon</b> mode raise the stakes: the leader carries a <Term m="patong" /> and the final round
+              counts double, so no lead is safe. Want it harder? Turn on <Term m="memory" /> in Settings: no tracker, count the cards
+              yourself.
+            </p>
+          )}
           <div className="tut-actions">
             <button className="btn ghost" onClick={onTitle}>
               Back to title
             </button>
+            {course === 'klasiko' && (
+              <button className="btn ghost" onClick={onNextCourse}>
+                Learn Rebolusyon
+              </button>
+            )}
             <button className="btn primary" onClick={onPlay} autoFocus>
-              Play Rebolusyon
+              Play {modeOf(course).name}
             </button>
           </div>
         </div>

@@ -21,8 +21,10 @@ interface Props {
   difficulty: Difficulty;
   onDifficulty: (d: Difficulty) => void;
   onPlay: () => void;
-  onLearn: () => void;
-  graduated: boolean;
+  /** Opens the walkthrough for that mode. */
+  onLearn: (course: RuleMode) => void;
+  /** Walkthroughs already finished. */
+  graduated: RuleMode[];
   onRules: () => void;
   onSettings: () => void;
   fullscreen: { available: boolean; on: boolean; toggle: () => void };
@@ -56,7 +58,16 @@ export function TitleScreen({ stats, mode, klasikoBantay, onMode, difficulty, on
   }, []);
   const order = flipped ? [...HERO].reverse() : HERO;
   const info = modeOf(mode);
-  const learnLabel = graduated ? 'Replay the Rebolusyon walkthrough' : 'Learn Rebolusyon';
+  const done = graduated.includes(mode);
+  const learnLabel = done ? `Replay the ${info.name} walkthrough` : mode === 'klasiko' ? 'New? Learn to play' : 'Learn Rebolusyon';
+  const learn = {
+    title: done ? `Replay the ${info.name} walkthrough` : mode === 'klasiko' ? 'New to Pusoy Dos? Learn it first' : 'Learn Rebolusyon first',
+    sub: done
+      ? `${HOST.name}’s Pusoy School · you graduated ✓`
+      : mode === 'klasiko'
+        ? `3 minutes with ${HOST.name}. Four small hands, every rule.`
+        : `2 minutes with ${HOST.name}. You play every twist yourself.`,
+  };
 
   return (
     <div className={`title-screen ${flipped ? 'rev' : ''}`}>
@@ -129,11 +140,11 @@ export function TitleScreen({ stats, mode, klasikoBantay, onMode, difficulty, on
               </div>
               <p className="ts-pick-desc">{info.tagline}</p>
               <div className="ts-links">
+                <button className={`btn ghost ${done ? '' : 'ts-link-learn'}`} onClick={() => onLearn(mode)}>
+                  {learnLabel}
+                </button>
                 <button className="btn ghost" onClick={() => setView('modes')}>
                   Two ways to play
-                </button>
-                <button className="btn ghost" onClick={onLearn}>
-                  {learnLabel}
                 </button>
                 <button className="btn ghost" onClick={onRules}>
                   How to play
@@ -191,11 +202,11 @@ export function TitleScreen({ stats, mode, klasikoBantay, onMode, difficulty, on
             </div>
             <ModePicker className="ts-mode-cards" value={mode} klasikoBantay={klasikoBantay} onChange={onMode} />
             <div className="ts-modes-actions">
-              <button className={`ts-learn ${graduated ? 'done' : ''}`} onClick={onLearn}>
+              <button className={`ts-learn ${done ? 'done' : ''}`} onClick={() => onLearn(mode)}>
                 <Avatar persona={HOST} size={34} />
                 <span>
-                  <b>{graduated ? 'Replay the walkthrough' : 'Learn Rebolusyon first'}</b>
-                  <small>{graduated ? `${HOST.name}’s Pusoy School · you graduated ✓` : `2 minutes with ${HOST.name}. You play every twist yourself.`}</small>
+                  <b>{learn.title}</b>
+                  <small>{learn.sub}</small>
                 </span>
               </button>
               <button className="btn primary" onClick={onPlay}>
