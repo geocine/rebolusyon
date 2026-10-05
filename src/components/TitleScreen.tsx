@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { makeCard } from '../engine/cards';
 import type { Difficulty, RuleMode } from '../engine/game';
 import { MODES, modeOf } from '../mechanics';
@@ -41,7 +41,7 @@ const screen = {
  * Every variant of a label laid in the same spot, only the current one visible, so the spot is always
  * as big as its longest variant and switching never nudges the layout.
  */
-function Swap<K extends string>({ value, options }: { value: K; options: { key: K; text: string }[] }) {
+function Swap<K extends string>({ value, options }: { value: K; options: { key: K; text: ReactNode }[] }) {
   return (
     <span className="swap">
       {options.map((o) => (
@@ -84,7 +84,7 @@ export function TitleScreen({ stats, mode, klasikoBantay, onMode, difficulty, on
       : m === 'klasiko'
         ? `3 minutes with ${HOST.name}. Four small hands, every rule.`
         : `2 minutes with ${HOST.name}. You play every twist yourself.`;
-  const byMode = (text: (m: RuleMode) => string) => <Swap value={mode} options={MODES.map((m) => ({ key: m.value, text: text(m.value) }))} />;
+  const byMode = (text: (m: RuleMode) => ReactNode) => <Swap value={mode} options={MODES.map((m) => ({ key: m.value, text: text(m.value) }))} />;
 
   return (
     <div className={`title-screen ${flipped ? 'rev' : ''}`}>
@@ -145,7 +145,11 @@ export function TitleScreen({ stats, mode, klasikoBantay, onMode, difficulty, on
 
             <motion.div className="ts-actions" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
               <button className="btn primary huge" onClick={onPlay}>
-                {byMode((m) => `Play ${modeOf(m).name}`)}
+                {byMode((m) => (
+                  <>
+                    Play <span className="play-name">{modeOf(m).name}</span>
+                  </>
+                ))}
               </button>
               <div className="ts-picks">
                 <div className="ts-pick">

@@ -1116,6 +1116,12 @@ button {
   .ts-home .hero-fan {
     margin-top: 8px;
   }
+  .ts-home .btn.huge {
+    line-height: 1.05;
+  }
+  .ts-home .btn.huge .play-name {
+    display: block;
+  }
   .ts-home .hero-caption {
     margin-bottom: 12px;
   }
