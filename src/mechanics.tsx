@@ -9,7 +9,6 @@ export const MECHANICS = {
   patong: { name: 'Patong', en: 'Bounty', desc: 'The match leader pays double if they lose a round.' },
   hirit: { name: 'Huling Hirit', en: 'Last Hurrah', desc: 'The final round counts double.' },
   alsa: { name: 'Alsa', en: 'Uprising', desc: 'The player in last place can start a Rebolusyon with Three of a Kind.' },
-  puwesto: { name: 'Puwesto', en: 'Places', desc: 'Everyone plays until one is left holding cards. Score by finishing place.' },
   memory: { name: 'Alaala', en: 'Memory', desc: 'No card tracker. Count cards in your head.' },
   peek: { name: 'Sulyap', en: 'Peek', desc: 'A 4-second look at the tracker, once per round.' },
 } as const;
@@ -29,7 +28,10 @@ export function Term({ m, gloss = true, english = false }: { m: Mechanic; gloss?
 
 export const termText = (m: Mechanic) => `${MECHANICS[m].name} (${MECHANICS[m].en})`;
 
-export const ordinal = (place: number) => ['1st', '2nd', '3rd', '4th'][place - 1] ?? `${place}th`;
+/** Finishing places as the table calls them: whoever is left holding cards is the Talo (loser). */
+export const placeLabel = (place: number) => ['1st', '2nd', '3rd', 'Talo'][place - 1] ?? `${place}th`;
+
+export const placePointsText = PLACE_POINTS.map((v, i) => `${placeLabel(i + 1)} ${v > 0 ? `+${v}` : `−${-v}`}`).join(', ');
 
 /** One rule as a mode card explains it: its name (a mechanic, or plain words) and what it does. */
 export interface RuleLine {
@@ -109,7 +111,7 @@ export const MODES: ModeInfo[] = [
       {
         title: 'Round',
         tone: 'paper',
-        rules: [{ m: 'puwesto', text: `Going out first doesn’t end the round. The rest play on until one is left holding cards. Places score ${PLACE_POINTS.map((v) => (v > 0 ? `+${v}` : `−${-v}`)).join(', ')}.` }],
+        rules: [{ name: 'Play it out', text: `Going out first doesn’t end the round. The rest play on, and whoever is left holding cards is the Talo (loser). ${placePointsText}.` }],
       },
       { title: 'Flip', tone: 'clay', rules: [], off: 'None. The order never changes.' },
       { title: 'Stakes', tone: 'gold', rules: [], off: 'None. Every round is worth the same.' },

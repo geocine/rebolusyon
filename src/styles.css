@@ -1210,6 +1210,10 @@ button {
 .chip.place-2 {
   background: var(--sage);
 }
+.chip.place-4 {
+  background: var(--red);
+  color: var(--paper);
+}
 .seat.is-out .seat-avatar-wrap {
   opacity: 0.6;
   filter: saturate(0.6);

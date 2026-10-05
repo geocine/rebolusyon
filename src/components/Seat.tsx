@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import type { Card } from '../engine/cards';
 import type { Persona } from '../engine/ai';
-import { MECHANICS, ordinal } from '../mechanics';
+import { MECHANICS, placeLabel } from '../mechanics';
 import { CardView } from './CardView';
 import { type AvatarMood, PixelAvatar, SPRITES } from './PixelAvatar';
 
@@ -90,8 +90,8 @@ interface SeatProps {
 
 export function PlaceChip({ place }: { place: number }) {
   return (
-    <span className={`chip place place-${place}`} title={`Out of cards: finished ${ordinal(place)} this round`}>
-      {ordinal(place).toUpperCase()}
+    <span className={`chip place place-${place}`} title={`Out of cards: finished ${placeLabel(place)} this round`}>
+      {placeLabel(place).toUpperCase()}
     </span>
   );
 }

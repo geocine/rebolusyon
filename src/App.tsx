@@ -27,7 +27,7 @@ import {
 } from './engine/game';
 import { castOf, chooseTributeReturn, decide, drawCast, personaAt } from './engine/ai';
 import { lineFor, type Moment } from './lines';
-import { Term, groupsOf, modeOf, ordinal, termText } from './mechanics';
+import { Term, groupsOf, modeOf, placeLabel, termText } from './mechanics';
 import { loadLastCast, loadSettings, loadStats, saveLastCast, saveSettings, saveStats, type LifetimeStats } from './storage';
 import { ActionBar, PlayerHand } from './components/PlayerHand';
 import { Avatar, BountyChip, PassStamp, PlaceChip, Seat, type SeatPosition, UnderdogChip } from './components/Seat';
@@ -317,13 +317,13 @@ export default function App() {
               sfx.win();
               haptic.win();
             } else sfx.clear();
-            showBanner({ kind: 'info', title: first ? 'You go out first!' : `You finish ${ordinal(e.place)}`, sub: 'Sit back. The others play on for the places that are left.' }, 2600);
+            showBanner({ kind: 'info', title: first ? 'You go out first!' : `You finish ${placeLabel(e.place)}`, sub: 'Sit back. The others play on for the places that are left.' }, 2600);
           } else {
             sfx.clear();
             showBanner(
               {
                 kind: first ? 'warn' : 'info',
-                title: `${name(e.player)} goes out ${ordinal(e.place)}`,
+                title: `${name(e.player)} goes out ${placeLabel(e.place)}`,
                 sub: first ? 'The round keeps going. Play on for 2nd, 3rd and last.' : 'Don’t be the one left holding cards.',
               },
               2400,
@@ -690,7 +690,7 @@ export default function App() {
   else if (!myTurn) {
     const c = selArr.length ? classify(selArr) : null;
     const done = g.finished.indexOf(HUMAN);
-    if (done >= 0) status = { tone: 'ok', text: `You finished ${ordinal(done + 1)} · ${personas[g.turn].name} is thinking…` };
+    if (done >= 0) status = { tone: 'ok', text: `You finished ${placeLabel(done + 1)} · ${personas[g.turn].name} is thinking…` };
     else status = { tone: 'idle', text: c ? `${describeCombo(c)} · waiting for your turn` : `${personas[g.turn].name} is thinking…` };
   } else if (!selArr.length) {
     if (g.firstPlay) status = { tone: 'idle', text: 'Your opening — must include 3♣' };

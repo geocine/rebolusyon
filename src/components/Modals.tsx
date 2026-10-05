@@ -3,11 +3,11 @@ import { type ReactNode, useState } from 'react';
 import { type Card, makeCard, rankOf } from '../engine/cards';
 import { describeCombo, isPowerRank } from '../engine/combos';
 import type { Exchange, GameState, RoundResult, RuleMode, Settings } from '../engine/game';
-import { PLACE_POINTS, bountySeat, isHulingHirit, pickTributePayer, withMode } from '../engine/game';
+import { bountySeat, isHulingHirit, pickTributePayer, withMode } from '../engine/game';
 import type { Persona } from '../engine/ai';
 import { CardView } from './CardView';
 import { Avatar } from './Seat';
-import { MECHANICS, MODES, Term, groupsOf, ordinal } from '../mechanics';
+import { MECHANICS, MODES, Term, groupsOf, placeLabel, placePointsText } from '../mechanics';
 import { usePhone } from '../hooks';
 import { DIFFICULTIES } from '../difficulty';
 import { HostNote } from './Tutorial';
@@ -194,12 +194,12 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag teal">KLASIKO</span> <Term m="puwesto" />
+            <span className="tw-tag teal">KLASIKO</span> Play it out
           </h4>
           <p>
             Going out first doesn’t end the round. Finished players sit out while the rest keep playing for <b>2nd</b> and{' '}
-            <b>3rd</b>, until one player is left holding cards. If the player who went out was on top and everyone passes,
-            the next player still in the round leads.
+            <b>3rd</b>. Whoever is left holding cards is the <b>Talo</b> (loser). If the player who went out was on top and
+            everyone passes, the next player still in the round leads.
           </p>
           <p>Each place scores: {placePointsText}. No multipliers, no twists. Every round is worth the same.</p>
         </section>
@@ -264,6 +264,8 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
             <dd>grandma · big brother · big sister · uncle · mister (older man)</dd>
             <dt>Sari-sari · Suki · Utang</dt>
             <dd>corner shop · regular customer · debt</dd>
+            <dt>Talo</dt>
+            <dd>loser; in Klasiko, the one left holding cards</dd>
             <dt>Anak · Apo · Iho</dt>
             <dd>child · grandchild · son (said with affection; <i>mga</i> makes it plural)</dd>
             <dt>Sorry na lang</dt>
@@ -587,8 +589,6 @@ export function RoundEndModal({
   );
 }
 
-const placePointsText = PLACE_POINTS.map((v, i) => `${i === 3 ? 'last' : ordinal(i + 1)} ${v > 0 ? '+' : ''}${v}`).join(', ');
-
 function PlacesTable({ result, game, personas }: { result: RoundResult; game: GameState; personas: Persona[] }) {
   return (
     <>
@@ -606,7 +606,7 @@ function PlacesTable({ result, game, personas }: { result: RoundResult; game: Ga
           {result.places!.map((p, i) => (
             <motion.tr key={p} className={i === 0 ? 'winner' : ''} initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.08 }}>
               <td>
-                <span className={`chip place place-${i + 1}`}>{ordinal(i + 1).toUpperCase()}</span>
+                <span className={`chip place place-${i + 1}`}>{placeLabel(i + 1).toUpperCase()}</span>
               </td>
               <td className="who">
                 <Avatar persona={personas[p]} size={30} />
@@ -620,7 +620,7 @@ function PlacesTable({ result, game, personas }: { result: RoundResult; game: Ga
         </tbody>
       </table>
       <p className="note">
-        <Term m="puwesto" />: everyone plays until one player is left holding cards, then each place scores {placePointsText}.
+        Klasiko plays every round out. Whoever is left holding cards is the Talo (loser). {placePointsText}.
       </p>
     </>
   );
