@@ -6,6 +6,7 @@ import { MODES, modeOf } from '../mechanics';
 import { DIFFICULTIES } from '../difficulty';
 import type { LifetimeStats } from '../storage';
 import { CardView } from './CardView';
+import { Icon } from './Icons';
 import { ModePicker } from './Modals';
 import { Avatar } from './Seat';
 import { HOST } from '../tutorial';
@@ -24,6 +25,7 @@ interface Props {
   graduated: boolean;
   onRules: () => void;
   onSettings: () => void;
+  fullscreen: { available: boolean; on: boolean; toggle: () => void };
 }
 
 const screen = {
@@ -45,7 +47,7 @@ function ModeSwitch({ mode, onMode }: { mode: RuleMode; onMode: (m: RuleMode) =>
   );
 }
 
-export function TitleScreen({ stats, mode, klasikoBantay, onMode, difficulty, onDifficulty, onPlay, onLearn, graduated, onRules, onSettings }: Props) {
+export function TitleScreen({ stats, mode, klasikoBantay, onMode, difficulty, onDifficulty, onPlay, onLearn, graduated, onRules, onSettings, fullscreen }: Props) {
   const [view, setView] = useState<'home' | 'modes'>('home');
   const [flipped, setFlipped] = useState(false);
   useEffect(() => {
@@ -59,6 +61,16 @@ export function TitleScreen({ stats, mode, klasikoBantay, onMode, difficulty, on
   return (
     <div className={`title-screen ${flipped ? 'rev' : ''}`}>
       <div className="ts-sunburst" aria-hidden="true" />
+      {fullscreen.available && (
+        <button
+          className="btn ghost small icon-btn ts-fullscreen"
+          onClick={fullscreen.toggle}
+          title={fullscreen.on ? 'Exit full screen (F)' : 'Full screen (F)'}
+          aria-pressed={fullscreen.on}
+        >
+          <Icon name={fullscreen.on ? 'shrink' : 'expand'} size={16} />
+        </button>
+      )}
       <AnimatePresence mode="wait" initial={false}>
         {view === 'home' ? (
           <motion.div key="home" className="ts-inner ts-home" {...screen}>

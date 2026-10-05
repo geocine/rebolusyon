@@ -1,4 +1,4 @@
-type IconName = 'help' | 'gear' | 'grid' | 'sort' | 'bulb' | 'cycle' | 'clear' | 'home';
+type IconName = 'help' | 'gear' | 'grid' | 'sort' | 'bulb' | 'cycle' | 'clear' | 'home' | 'expand' | 'shrink';
 
 const PATHS: Record<IconName, string> = {
   help: 'M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.6-3 4.5M12 17.5h.01M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z',
@@ -9,6 +9,8 @@ const PATHS: Record<IconName, string> = {
   cycle: 'M21 12a9 9 0 0 1-15.5 6.3L3 16M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M3 21v-5h5',
   clear: 'M18 6 6 18M6 6l12 12',
   home: 'M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z',
+  expand: 'M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5',
+  shrink: 'M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5',
 };
 
 export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {

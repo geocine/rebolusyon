@@ -896,6 +896,17 @@ button {
   display: flex;
   gap: 10px;
 }
+@media (max-width: 520px) {
+  .tb-fullscreen {
+    display: none;
+  }
+}
+.ts-fullscreen {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  right: calc(12px + env(safe-area-inset-right));
+  z-index: 2;
+}
 /* Home: everything above the fold, sized off the viewport height. */
 .ts-inner.ts-home {
   min-height: 100%;
@@ -1093,6 +1104,7 @@ button {
   }
   .ts-modes-head {
     grid-template-columns: auto 1fr;
+    padding-right: 44px;
   }
   .ts-modes-head h2 {
     justify-self: end;

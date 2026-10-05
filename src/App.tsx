@@ -39,7 +39,7 @@ import { Banner, type BannerData } from './components/Banner';
 import { TitleScreen } from './components/TitleScreen';
 import { Icon } from './components/Icons';
 import { haptic, setHapticsEnabled } from './haptics';
-import { usePhone } from './hooks';
+import { useFullscreen, usePhone } from './hooks';
 import { askAI } from './aiClient';
 import { withFlight } from './flight';
 import type { Thought } from './engine/search';
@@ -109,6 +109,7 @@ export default function App() {
   const [peeking, setPeeking] = useState(false);
   const [dealing, setDealing] = useState(false);
   const [statusFlash, setStatusFlash] = useState<string | null>(null);
+  const fullscreen = useFullscreen();
   const cycleIdx = useRef(-1);
   const lastSeq = useRef(0);
   const prevTurn = useRef(-1);
@@ -633,6 +634,17 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   });
 
+  useEffect(() => {
+    if (!fullscreen.available) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() !== 'f' || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.target instanceof HTMLElement && e.target.closest('input, textarea')) return;
+      fullscreen.toggle();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
   const onNext = () => {
     if (!game) return;
     if (tut) {
@@ -683,6 +695,7 @@ export default function App() {
           graduated={progress.graduated}
           onRules={() => setShowRules(true)}
           onSettings={() => setShowSettings(true)}
+          fullscreen={fullscreen}
         />
         <RulesModal open={showRules} onClose={() => setShowRules(false)} />
         <SettingsModal open={showSettings} onClose={() => setShowSettings(false)} settings={settings} onChange={updateSettings} inMatch={false} />
@@ -774,6 +787,11 @@ export default function App() {
             <Icon name="gear" size={16} />
             <span className="btn-label">Settings</span>
           </button>
+          {fullscreen.available && (
+            <button className="btn ghost small icon-btn tb-fullscreen" onClick={fullscreen.toggle} title={fullscreen.on ? 'Exit full screen (F)' : 'Full screen (F)'} aria-pressed={fullscreen.on}>
+              <Icon name={fullscreen.on ? 'shrink' : 'expand'} size={16} />
+            </button>
+          )}
         </div>
       </header>
 
