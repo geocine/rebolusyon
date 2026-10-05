@@ -149,7 +149,7 @@ describe('turn flow', () => {
     expect(flipsWith([-12, 6, 3, 3])).toBe(true);
     expect(flipsWith([-12, -12, 12, 12])).toBe(false);
     expect(flipsWith([5, -12, 4, 3])).toBe(false);
-    expect(flipsWith([-12, 6, 3, 3], { alsa: false })).toBe(false);
+    expect(flipsWith([-12, 6, 3, 3], { resbak: false })).toBe(false);
   });
 
   it('ends the round and scores penalties when a hand empties', () => {
@@ -261,7 +261,7 @@ describe('Klasiko plays every round out', () => {
 
 describe('rule modes', () => {
   it('a mode overrides every rule flag, whatever was stored before', () => {
-    const scrambled = { ...DEFAULT_SETTINGS, revolution: false, bantay: false, buwis: false, patong: false, hirit: true, alsa: true, strictPass: true };
+    const scrambled = { ...DEFAULT_SETTINGS, revolution: false, bantay: false, buwis: false, patong: false, hirit: true, resbak: true, strictPass: true };
     for (const mode of Object.keys(MODE_RULES) as RuleMode[]) {
       const s = withMode(scrambled, mode);
       expect(s.mode).toBe(mode);
@@ -339,7 +339,7 @@ describe('AI self-play', () => {
     { strictPass: true },
     { revolution: false, bantay: false, buwis: false },
     { memoryMode: true },
-    { patong: false, hirit: false, alsa: false },
+    { patong: false, hirit: false, resbak: false },
   ];
 
   it('plays hundreds of full matches with only legal moves', () => {

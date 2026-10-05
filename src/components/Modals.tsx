@@ -145,7 +145,7 @@ export function RulesModal({ open, onClose }: { open: boolean; onClose: () => vo
 
         <section className="twist">
           <h4>
-            <span className="tw-tag pink">REBOLUSYON · FLIP</span> <Term m="alsa" />
+            <span className="tw-tag pink">REBOLUSYON · FLIP</span> <Term m="resbak" />
           </h4>
           <p>
             Whoever is <b>alone in last place</b> wears the Underdog tag, and their <b>Three of a Kind</b> starts a Rebolusyon,

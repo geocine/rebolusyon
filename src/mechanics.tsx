@@ -8,7 +8,7 @@ export const MECHANICS = {
   buwis: { name: 'Buwis', en: 'Tribute', desc: 'The biggest loser gives their best card to the last winner.' },
   patong: { name: 'Patong', en: 'Bounty', desc: 'The match leader pays double if they lose a round.' },
   hirit: { name: 'Huling Hirit', en: 'Last Hurrah', desc: 'The final round counts double.' },
-  alsa: { name: 'Resbak', en: 'Payback', desc: 'The player in last place can start a Rebolusyon with Three of a Kind.' },
+  resbak: { name: 'Resbak', en: 'Payback', desc: 'The player in last place can start a Rebolusyon with Three of a Kind.' },
   memory: { name: 'Alaala', en: 'Memory', desc: 'No card tracker. Count cards in your head.' },
   peek: { name: 'Sulyap', en: 'Peek', desc: 'A 4-second look at the tracker, once per round.' },
 } as const;
@@ -85,7 +85,7 @@ export const MODES: ModeInfo[] = [
         tone: 'clay',
         rules: [
           { m: 'revolution', text: 'Four of a Kind flips the order, so 3s beat Twos until someone flips it back.' },
-          { m: 'alsa', text: 'Whoever is alone in last place can flip it with just Three of a Kind.' },
+          { m: 'resbak', text: 'Whoever is alone in last place can flip it with just Three of a Kind.' },
         ],
       },
       {

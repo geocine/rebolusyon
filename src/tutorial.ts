@@ -66,7 +66,7 @@ const myTurnToLead = (g: GameState) => g.phase === 'playing' && g.turn === HUMAN
 
 function table(base: Settings, lesson: number, hands: Card[][], extra: Partial<GameState> = {}, rules: Partial<Settings> = {}): GameState {
   const m = createMatch(
-    { ...base, revolution: true, bantay: true, buwis: false, patong: false, hirit: false, alsa: false, strictPass: false, playOut: false, memoryMode: false, rounds: LESSONS.length, ...rules },
+    { ...base, revolution: true, bantay: true, buwis: false, patong: false, hirit: false, resbak: false, strictPass: false, playOut: false, memoryMode: false, rounds: LESSONS.length, ...rules },
     1,
   );
   const turn = extra.turn ?? HUMAN;

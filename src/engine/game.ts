@@ -34,7 +34,7 @@ export interface Settings {
   /** The final round's penalties are doubled. */
   hirit: boolean;
   /** The match's last-place player can start a Rebolusyon with Three of a Kind. */
-  alsa: boolean;
+  resbak: boolean;
   /** Once you pass, you're out until the trick clears. */
   strictPass: boolean;
   /** After someone goes out, the rest keep playing for 2nd, 3rd and last; places score `PLACE_POINTS`. */
@@ -52,11 +52,11 @@ export interface Settings {
   autoPass: boolean;
 }
 
-type ModeRules = Pick<Settings, 'revolution' | 'alsa' | 'bantay' | 'buwis' | 'patong' | 'hirit' | 'strictPass' | 'playOut'>;
+type ModeRules = Pick<Settings, 'revolution' | 'resbak' | 'bantay' | 'buwis' | 'patong' | 'hirit' | 'strictPass' | 'playOut'>;
 
 export const MODE_RULES: Record<RuleMode, ModeRules> = {
-  rebolusyon: { revolution: true, alsa: true, bantay: true, buwis: true, patong: true, hirit: true, strictPass: false, playOut: false },
-  klasiko: { revolution: false, alsa: false, bantay: false, buwis: false, patong: false, hirit: false, strictPass: false, playOut: true },
+  rebolusyon: { revolution: true, resbak: true, bantay: true, buwis: true, patong: true, hirit: true, strictPass: false, playOut: false },
+  klasiko: { revolution: false, resbak: false, bantay: false, buwis: false, patong: false, hirit: false, strictPass: false, playOut: true },
 };
 
 /** Points for finishing 1st, 2nd, 3rd and last when a round is played out. */
@@ -75,7 +75,7 @@ export const DEFAULT_SETTINGS: Settings = {
   buwis: true,
   patong: true,
   hirit: true,
-  alsa: true,
+  resbak: true,
   strictPass: false,
   playOut: false,
   klasikoBantay: false,
@@ -427,7 +427,7 @@ const clearLeader = (hands: Card[][], topBy: number) => (hands[topBy].length ? t
 
 /** With Resbak on, the sole last-place player of the match can start a Rebolusyon with Three of a Kind. */
 export function underdogSeat(s: GameState): number {
-  if (!s.settings.revolution || !s.settings.alsa) return -1;
+  if (!s.settings.revolution || !s.settings.resbak) return -1;
   const low = Math.min(...s.scores);
   return low < 0 && s.scores.filter((v) => v === low).length === 1 ? s.scores.indexOf(low) : -1;
 }

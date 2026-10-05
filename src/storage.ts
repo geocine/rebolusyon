@@ -31,7 +31,10 @@ function read<T>(key: string, fallback: T): T {
   }
 }
 
-export const loadSettings = () => withMode(read<Settings>(SETTINGS_KEY, DEFAULT_SETTINGS));
+export function loadSettings(): Settings {
+  const { alsa: _renamedToResbak, ...stored } = read<Settings & { alsa?: boolean }>(SETTINGS_KEY, DEFAULT_SETTINGS);
+  return withMode(stored);
+}
 export const saveSettings = (s: Settings) => localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
 export const loadStats = () => read<LifetimeStats>(STATS_KEY, EMPTY_STATS);
 

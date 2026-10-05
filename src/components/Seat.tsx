@@ -106,7 +106,7 @@ export function BountyChip() {
 
 export function UnderdogChip() {
   return (
-    <span className="chip underdog" title={`${MECHANICS.alsa.name} (${MECHANICS.alsa.en}): ${MECHANICS.alsa.desc}`}>
+    <span className="chip underdog" title={`${MECHANICS.resbak.name} (${MECHANICS.resbak.en}): ${MECHANICS.resbak.desc}`}>
       UNDERDOG
     </span>
   );
