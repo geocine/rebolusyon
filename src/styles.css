@@ -3504,9 +3504,8 @@ kbd {
     gap: 4px;
   }
   .discard {
-    left: auto;
-    right: -4px;
-    bottom: 0;
+    left: -4px;
+    bottom: 14px;
     transform: scale(0.75);
   }
 
