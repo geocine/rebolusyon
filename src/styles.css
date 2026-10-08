@@ -3600,6 +3600,9 @@ kbd {
   .pass-btn {
     --pass-r: 16px;
   }
+  .pass-count {
+    display: none;
+  }
   .me.my-turn .play-btn:not(:disabled) {
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent), 0 8px 24px color-mix(in srgb, var(--accent) 35%, transparent);
   }
@@ -4045,6 +4048,9 @@ kbd {
   }
   .pass-btn {
     --pass-r: 14px;
+  }
+  .pass-count {
+    display: none;
   }
   .hand {
     height: calc(var(--cw) * 1.4 + 46px);
